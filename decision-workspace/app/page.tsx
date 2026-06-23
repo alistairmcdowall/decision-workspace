@@ -69,7 +69,6 @@ export default function Home() {
               <h2 className="mb-3 text-xl font-semibold">Summary</h2>
               <p className="leading-7 text-slate-300">{result.summary}</p>
             </section>
-
             {result.clarifiers.length > 0 && (
               <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
                 <h2 className="mb-3 text-xl font-semibold">
@@ -99,6 +98,27 @@ export default function Home() {
                 </div>
               </section>
             )}
+            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+  <h2 className="mb-3 text-xl font-semibold">Judge Comparison</h2>
+
+  <div className="space-y-4">
+    <div>
+      <h3 className="font-semibold text-slate-100">Areas of Agreement</h3>
+      <p className="leading-7 text-slate-300">{result.agreement}</p>
+    </div>
+
+    <div>
+      <h3 className="font-semibold text-slate-100">Areas of Tension</h3>
+      <p className="leading-7 text-slate-300">{result.tension}</p>
+    </div>
+
+    <div>
+      <h3 className="font-semibold text-slate-100">Highest Uncertainty</h3>
+      <p className="leading-7 text-slate-300">{result.uncertainty}</p>
+    </div>
+  </div>
+</section>
+
 
             {result.analysis && (
               <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">

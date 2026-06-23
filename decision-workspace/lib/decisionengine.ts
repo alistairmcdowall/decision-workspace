@@ -2,6 +2,9 @@ export type DecisionResult = {
     summary: string;
     clarifiers: string[];
     analysis: JudgeOutput;
+    agreement: string;
+    tension: string;
+    uncertainty: string;
   };
   
   type JudgeOutput = {
@@ -122,6 +125,12 @@ export type DecisionResult = {
           "If this portfolio produced less wealth but made retirement more reliable, would that be acceptable?",
         ],
         analysis: judges,
+agreement:
+  "All judges agree that a first-pass answer should be provided rather than refusing to answer until every detail is known.",
+tension:
+  "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.",
+uncertainty:
+  "The largest unknown is how much volatility the user can realistically tolerate during a major drawdown.",
       };
     }
   
@@ -134,6 +143,22 @@ export type DecisionResult = {
         "Is there a hidden constraint that would change the answer?",
       ],
       analysis: judges,
+      agreement:
+  "All judges agree that a first-pass answer should be provided rather than refusing to answer until every detail is known.",
+
+tension:
+  "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.",
+
+uncertainty:
+  "The largest unknown is how much volatility the user can realistically tolerate during a major drawdown.",
+  agreement:
+  "The judges agree that the decision should be evaluated using practical constraints and explicit assumptions.",
+
+tension:
+  "There may be tension between protecting against downside and pursuing opportunity.",
+
+uncertainty:
+  "The highest-value unknowns have not yet been fully identified.",
     };
   }
   
