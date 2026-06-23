@@ -5,64 +5,109 @@ export type DecisionResult = {
   };
   
   type JudgeOutput = {
-    guardian: string;
-    pragmatist: string;
-    auditor: string;
-    reframer: string;
+    Guardian: string;
+    Pragmatist: string;
+    Auditor: string;
+    Reframer: string;
   };
   
   function classifyDecision(input: string) {
     const lower = input.toLowerCase();
   
     if (
-      lower.includes("portfolio") ||
-      lower.includes("invest") ||
-      lower.includes("500k")
-    ) {
-      return "portfolio";
-    }
-  
-    return "general";
+        lower.includes("portfolio") ||
+        lower.includes("invest") ||
+        lower.includes("500k") ||
+        lower.includes("money")
+      ) {
+        return "portfolio";
+      }
+    
+      if (
+        lower.includes("singapore") ||
+        lower.includes("move") ||
+        lower.includes("relocate")
+      ) {
+        return "relocation";
+      }
+    
+      if (
+        lower.includes("business") ||
+        lower.includes("startup") ||
+        lower.includes("sell a product")
+      ) {
+        return "business";
+      }
+    
+      return "general";
   }
   
   function guardian(input: string, type: string) {
     if (type === "portfolio") {
-      return "Guardian: The main exposed value is the £500k capital. The key risk is choosing a portfolio that looks attractive on paper but cannot be held through a large drawdown.";
+        return "The primary value at risk is the £500k itself. A portfolio that cannot be held through a severe drawdown is more dangerous than one with slightly lower expected returns.";
+      }
+    
+      if (type === "relocation") {
+        return "The primary value at risk is family stability. The biggest danger is optimising for one factor while damaging schooling, relationships, support networks or long-term quality of life.";
+      }
+    
+      if (type === "business") {
+        return "The primary value at risk is time, capital and opportunity cost. The business should be tested in a way that prevents a small experiment becoming a large failure.";
+      }
+    
+      return "Identify what valuable thing could be harmed if this decision goes wrong.";
     }
-  
-    return "Guardian: Identify what valuable thing could be harmed if this decision goes wrong.";
-  }
-  
-  function pragmatist(input: string, type: string) {
-    if (type === "portfolio") {
-      return "Pragmatist: The user asked for something investable now, so the response must produce concrete portfolio options rather than disappearing into questions.";
-    }
-  
-    return "Pragmatist: Focus on the practical realities that would determine whether this decision works in the real world.";
-  }
-  
-  function auditor(input: string, type: string) {
-    if (type === "portfolio") {
-      return "Auditor: Major unknowns remain: time horizon, tax wrappers, existing assets, retirement target and risk capacity. These should shape refinement, but should not block a first-pass answer.";
-    }
-  
-    return "Auditor: Identify the highest-value unknowns, not every possible missing detail.";
-  }
-  
-  function reframer(input: string, type: string) {
-    if (type === "portfolio") {
-      return "Reframer: The real decision may not be 'what is the perfect portfolio?' but 'which risk-return profile should this £500k occupy?'";
-    }
-  
-    return "Reframer: Check whether the user is asking the real decision or only the surface version of it.";
-  }
-  
+    function pragmatist(input: string, type: string) {
+        if (type === "portfolio") {
+          return "The user asked for an investable portfolio now. The response should provide concrete options rather than disappearing into endless information gathering.";
+        }
+      
+        if (type === "relocation") {
+          return "The practical realities matter most: work, schooling, housing, visas, finances and day-to-day life. A beautiful theory that cannot be implemented has little value.";
+        }
+      
+        if (type === "business") {
+          return "Focus on the fastest route to testing demand. The objective is not to build a company immediately but to discover whether customers actually want the product.";
+        }
+      
+        return "Focus on the practical realities that determine whether this decision succeeds.";
+      }
+      function auditor(input: string, type: string) {
+        if (type === "portfolio") {
+          return "Major unknowns remain: time horizon, tax wrappers, existing assets, retirement target and risk capacity. These should shape refinement, but should not block a first-pass answer.";
+        }
+      
+        if (type === "relocation") {
+          return "Important unknowns include visa requirements, employment implications, financial impact, schooling options and support networks. These should be surfaced explicitly.";
+        }
+      
+        if (type === "business") {
+          return "The largest unknown is whether real customers will pay real money. Most assumptions should be treated as unproven until validated.";
+        }
+      
+        return "Identify the highest-value unknowns, not every possible missing detail.";
+      }
+      function reframer(input: string, type: string) {
+        if (type === "portfolio") {
+          return "The real decision may not be 'what is the perfect portfolio?' but 'which risk-return profile should this capital occupy?'";
+        }
+      
+        if (type === "relocation") {
+          return "The real decision may not be 'should I move?' but 'what combination of lifestyle, opportunity and stability am I trying to optimise for?'";
+        }
+      
+        if (type === "business") {
+          return "The real decision may not be 'should I start a business?' but 'what is the cheapest and fastest way to test whether this opportunity is real?'";
+        }
+      
+        return "Check whether the user is asking the real decision or only the surface version of it.";
+      }
   function runJudges(input: string, type: string): JudgeOutput {
     return {
-      guardian: guardian(input, type),
-      pragmatist: pragmatist(input, type),
-      auditor: auditor(input, type),
-      reframer: reframer(input, type),
+        Guardian: guardian(input, type),
+        Pragmatist: pragmatist(input, type),
+        Auditor: auditor(input, type),
+        Reframer: reframer(input, type),
     };
   }
   
@@ -88,7 +133,7 @@ export type DecisionResult = {
         "Would one downside make this decision unacceptable?",
         "Is there a hidden constraint that would change the answer?",
       ],
-      analysis: Judges,
+      analysis: judges,
     };
   }
   
