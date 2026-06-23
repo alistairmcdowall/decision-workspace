@@ -101,22 +101,65 @@ export default function Home() {
             <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
   <h2 className="mb-3 text-xl font-semibold">Judge Comparison</h2>
 
-  <div className="space-y-4">
-    <div>
-      <h3 className="font-semibold text-slate-100">Areas of Agreement</h3>
-      <p className="leading-7 text-slate-300">{result.agreement}</p>
-    </div>
+  <div className="space-y-6">
+  <div>
+    <h3 className="font-semibold text-slate-100">Areas of Agreement</h3>
+    <p className="leading-7 text-slate-300">
+      {result.comparison.agreement.statement}
+    </p>
 
-    <div>
-      <h3 className="font-semibold text-slate-100">Areas of Tension</h3>
-      <p className="leading-7 text-slate-300">{result.tension}</p>
-    </div>
-
-    <div>
-      <h3 className="font-semibold text-slate-100">Highest Uncertainty</h3>
-      <p className="leading-7 text-slate-300">{result.uncertainty}</p>
-    </div>
+    {result.comparison.agreement.evidence && (
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
+        {result.comparison.agreement.evidence.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    )}
   </div>
+
+  <div>
+    <h3 className="font-semibold text-slate-100">Areas of Tension</h3>
+    <p className="leading-7 text-slate-300">
+      {result.comparison.tension.statement}
+    </p>
+
+    {result.comparison.tension.evidence && (
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
+        {result.comparison.tension.evidence.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    )}
+
+    {result.comparison.tension.whyItMatters && (
+      <p className="mt-2 text-slate-400">
+        <span className="font-semibold text-slate-300">Why it matters: </span>
+        {result.comparison.tension.whyItMatters}
+      </p>
+    )}
+  </div>
+
+  <div>
+    <h3 className="font-semibold text-slate-100">Highest Uncertainty</h3>
+    <p className="leading-7 text-slate-300">
+      {result.comparison.uncertainty.statement}
+    </p>
+
+    {result.comparison.uncertainty.whyItMatters && (
+      <p className="mt-2 text-slate-400">
+        <span className="font-semibold text-slate-300">Why it matters: </span>
+        {result.comparison.uncertainty.whyItMatters}
+      </p>
+    )}
+
+    {result.comparison.uncertainty.potentialImpact && (
+      <p className="mt-2 text-slate-400">
+        <span className="font-semibold text-slate-300">Potential impact: </span>
+        {result.comparison.uncertainty.potentialImpact}
+      </p>
+    )}
+  </div>
+</div>
 </section>
 
 
