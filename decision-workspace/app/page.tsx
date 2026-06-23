@@ -110,9 +110,19 @@ export default function Home() {
                 </button>
 
                 {showAnalysis && (
-                  <p className="mt-4 leading-7 text-slate-300">
-                    {result.analysis}
-                  </p>
+                  <div className="mt-4 space-y-4">
+                  {Object.entries(result.analysis).map(([judge, output]) => (
+                    <div
+                      key={judge}
+                      className="rounded-xl border border-slate-800 bg-slate-950 p-4"
+                    >
+                      <h3 className="mb-2 font-semibold capitalize text-slate-100">
+                        {judge}
+                      </h3>
+                      <p className="leading-7 text-slate-300">{output}</p>
+                    </div>
+                  ))}
+                </div>
                 )}
               </section>
             )}
