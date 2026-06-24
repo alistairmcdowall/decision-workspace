@@ -129,7 +129,12 @@ type ComparisonSection = {
     };
   }
   
-  function synthesise(input: string, type: string, judges: JudgeOutput): DecisionResult {
+  function synthesise(
+    input: string,
+    type: string,
+    judges: JudgeOutput,
+    answers: Record<string, string>
+  ): DecisionResult {
     if (type === "portfolio") {
       return {
         summary:
@@ -225,9 +230,12 @@ clarifiers: [
     };
 }
   
-  export function runDecision(input: string): DecisionResult {
-    const type = classifyDecision(input);
-    const judges = runJudges(input, type);
-  
-    return synthesise(input, type, judges);
-  }
+export function runDecision(
+  input: string,
+  answers: Record<string, string> = {}
+): DecisionResult {
+  const type = classifyDecision(input);
+  const judges = runJudges(input, type);
+
+  return synthesise(input, type, judges, answers);
+}

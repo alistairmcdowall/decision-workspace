@@ -31,7 +31,7 @@ export default function Home() {
     }
 
     setAnswers({});
-    setResult(runDecision(trimmed));
+    setResult(runDecision(trimmed, answers));
     setShowAnalysis(false);
   }
 
@@ -173,12 +173,18 @@ export default function Home() {
                         {["Yes", "No", "Unsure"].map((answer) => (
                           <button
                             key={answer}
-                            onClick={() =>
-                              setAnswers({
+                            onClick={() => {
+                              const updatedAnswers = {
                                 ...answers,
-                                [question]: answer,
-                              })
-                            }
+                                [clarifier.id]: answer,
+                              };
+                            
+                              setAnswers(updatedAnswers);
+                            
+                              if (result) {
+                                setResult(runDecision(decision, updatedAnswers));
+                              }
+                            }}
                             className={`rounded-lg border px-3 py-2 text-sm transition ${
                               answers[question] === answer
                                 ? "border-slate-200 bg-slate-200 text-slate-950"
