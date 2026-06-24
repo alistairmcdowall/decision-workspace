@@ -95,6 +95,23 @@ export default function Home() {
   
     return result?.comparison.tension.statement;
   }
+  function potentialImpactText() {
+    const answer = answers[DRAWDOWN_QUESTION];
+  
+    if (answer === "Yes") {
+      return "This makes a growth-heavy portfolio more plausible, because the user appears less likely to abandon the plan during a severe temporary decline.";
+    }
+  
+    if (answer === "No") {
+      return "This points toward a more defensive portfolio, because avoiding plan abandonment may matter more than maximising expected returns.";
+    }
+  
+    if (answer === "Unsure") {
+      return "This keeps the recommendation sensitive to risk tolerance. The portfolio should probably avoid assuming maximum risk capacity.";
+    }
+  
+    return result?.comparison.uncertainty.potentialImpact;
+  }
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-6 py-12">
@@ -265,7 +282,7 @@ export default function Home() {
                       <span className="font-semibold text-slate-300">
                         Potential impact:{" "}
                       </span>
-                      {result.comparison.uncertainty.potentialImpact}
+                      {potentialImpactText()}
                     </p>
                   )}
                 </div>
