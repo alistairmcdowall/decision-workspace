@@ -155,7 +155,23 @@ type ComparisonSection = {
         uncertaintyStatement =
           "Partly unresolved: risk tolerance remains uncertain.";
       }
+      let potentialImpact =
+      "A high tolerance supports a growth-heavy portfolio; a low tolerance points toward more ballast.";
     
+    if (drawdownAnswer === "Yes") {
+      potentialImpact =
+        "This makes a growth-heavy portfolio more plausible, because the user appears less likely to abandon the plan during a severe temporary decline.";
+    }
+    
+    if (drawdownAnswer === "No") {
+      potentialImpact =
+        "This points toward a more defensive portfolio, because avoiding plan abandonment may matter more than maximising expected returns.";
+    }
+    
+    if (drawdownAnswer === "Unsure") {
+      potentialImpact =
+        "This keeps the recommendation sensitive to risk tolerance. The portfolio should probably avoid assuming maximum risk capacity.";
+    }
       return {
         summary:
           "First-pass view: for £500k to invest now, the response should preserve the user's intent and produce concrete options. A sensible first output is three investable directions: controlled growth, growth core, and maximum growth. The next improvement is to show bear/base/bull outcomes so the user can see the consequences rather than being told what is 'best'.",
@@ -202,8 +218,8 @@ clarifiers: [
               statement: uncertaintyStatement,
               whyItMatters:
                 "This could materially change the equity/bond mix.",
-              potentialImpact:
-                "A high tolerance supports a growth-heavy portfolio; a low tolerance points toward more ballast.",
+              potentialImpact,
+
             },
           },
         };

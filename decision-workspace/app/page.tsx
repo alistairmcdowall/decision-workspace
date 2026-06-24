@@ -35,23 +35,6 @@ export default function Home() {
     setShowAnalysis(false);
   }
 
-  function uncertaintyText() {
-    const answer = answers[DRAWDOWN_QUESTION];
-
-    if (answer === "Yes") {
-      return "Resolved: the user appears willing to tolerate a major temporary drawdown.";
-    }
-
-    if (answer === "No") {
-      return "Resolved: the user may need a more defensive portfolio.";
-    }
-
-    if (answer === "Unsure") {
-      return "Partly resolved: the user is uncertain about tolerating a major drawdown, so portfolio design should not assume high risk tolerance.";
-    }
-
-    return result?.comparison.uncertainty.statement;
-  }
   function summaryText() {
     const answer = answers[DRAWDOWN_QUESTION];
   
@@ -95,23 +78,7 @@ export default function Home() {
   
     return result?.comparison.tension.statement;
   }
-  function potentialImpactText() {
-    const answer = answers[DRAWDOWN_QUESTION];
-  
-    if (answer === "Yes") {
-      return "This makes a growth-heavy portfolio more plausible, because the user appears less likely to abandon the plan during a severe temporary decline.";
-    }
-  
-    if (answer === "No") {
-      return "This points toward a more defensive portfolio, because avoiding plan abandonment may matter more than maximising expected returns.";
-    }
-  
-    if (answer === "Unsure") {
-      return "This keeps the recommendation sensitive to risk tolerance. The portfolio should probably avoid assuming maximum risk capacity.";
-    }
-  
-    return result?.comparison.uncertainty.potentialImpact;
-  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-6 py-12">
@@ -271,7 +238,7 @@ export default function Home() {
                     Highest Uncertainty
                   </h3>
                   <p className="leading-7 text-slate-300">
-                    {uncertaintyText()}
+                    {result.comparison.uncertainty.statement}
                   </p>
 
                   {result.comparison.uncertainty.whyItMatters && (
@@ -288,7 +255,7 @@ export default function Home() {
                       <span className="font-semibold text-slate-300">
                         Potential impact:{" "}
                       </span>
-                      {potentialImpactText()}
+                      {result.comparison.uncertainty.potentialImpact}
                     </p>
                   )}
                 </div>
