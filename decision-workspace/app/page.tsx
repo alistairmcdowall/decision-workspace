@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { runDecision, type DecisionResult } from "@/lib/decisionengine";
 
-const DRAWNDOWN_QUESTION =
+const DRAWDOWN_QUESTION =
   "If £500k temporarily fell to £350k, would you stay invested?";
 
 export default function Home() {
@@ -36,7 +36,7 @@ export default function Home() {
   }
 
   function uncertaintyText() {
-    const answer = answers[DRAWNDOWN_QUESTION];
+    const answer = answers[DRAWDOWN_QUESTION];
 
     if (answer === "Yes") {
       return "Resolved: the user appears willing to tolerate a major temporary drawdown.";
@@ -52,7 +52,32 @@ export default function Home() {
 
     return result?.comparison.uncertainty.statement;
   }
-
+  function summaryText() {
+    const answer = answers[DRAWDOWN_QUESTION];
+  
+    if (answer === "Yes") {
+      return (
+        result?.summary +
+        " The user's response suggests substantial temporary volatility may be acceptable."
+      );
+    }
+  
+    if (answer === "No") {
+      return (
+        result?.summary +
+        " The user's response suggests capital preservation should receive greater emphasis."
+      );
+    }
+  
+    if (answer === "Unsure") {
+      return (
+        result?.summary +
+        " The user's response suggests risk tolerance remains unclear and should be treated cautiously."
+      );
+    }
+  
+    return result?.summary;
+  }
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-6 py-12">
@@ -91,7 +116,7 @@ export default function Home() {
           <div className="mt-8 space-y-6">
             <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
               <h2 className="mb-3 text-xl font-semibold">Summary</h2>
-              <p className="leading-7 text-slate-300">{result.summary}</p>
+              <p className="leading-7 text-slate-300">{summaryText()}</p>
             </section>
 
             {result.clarifiers.length > 0 && (
