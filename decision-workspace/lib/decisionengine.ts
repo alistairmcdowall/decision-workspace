@@ -4,10 +4,16 @@ type ComparisonSection = {
     whyItMatters?: string;
     potentialImpact?: string;
   };
-  
+
+  export type Clarifier = {
+    id: string;
+    question: string;
+    options: string[];
+  };
+
   export type DecisionResult = {
     summary: string;
-    clarifiers: string[];
+    clarifiers: Clarifier[];
     analysis: JudgeOutput;
     comparison: {
       agreement: ComparisonSection;
@@ -128,11 +134,25 @@ type ComparisonSection = {
       return {
         summary:
           "First-pass view: for £500k to invest now, the response should preserve the user's intent and produce concrete options. A sensible first output is three investable directions: controlled growth, growth core, and maximum growth. The next improvement is to show bear/base/bull outcomes so the user can see the consequences rather than being told what is 'best'.",
-        clarifiers: [
-          "If £500k temporarily fell to £350k, would you stay invested?",
-          "If a lower-risk portfolio still appeared likely to meet your target, would you still want maximum growth?",
-          "If this portfolio produced less wealth but made retirement more reliable, would that be acceptable?",
-        ],
+clarifiers: [
+  {
+    id: "portfolio_drawdown_tolerance",
+    question: "If £500k temporarily fell to £350k, would you stay invested?",
+    options: ["Yes", "No", "Unsure"],
+  },
+  {
+    id: "portfolio_growth_preference",
+    question:
+      "If a lower-risk portfolio still appeared likely to meet your target, would you still want maximum growth?",
+    options: ["Yes", "No", "Unsure"],
+  },
+  {
+    id: "portfolio_reliability_preference",
+    question:
+      "If this portfolio produced less wealth but made retirement more reliable, would that be acceptable?",
+    options: ["Yes", "No", "Unsure"],
+  },
+],
         analysis: judges,
         comparison: {
             agreement: {

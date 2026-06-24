@@ -160,9 +160,9 @@ export default function Home() {
                 </h2>
 
                 <div className="space-y-3">
-                  {result.clarifiers.map((question, index) => (
+                  {result.clarifiers.map((clarifier, index) => (
                     <div
-                      key={question}
+                    key={clarifier.id}
                       className="rounded-xl border border-slate-800 bg-slate-950 p-4"
                     >
                       <p className="mb-3 text-slate-300">
