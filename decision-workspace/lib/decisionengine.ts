@@ -172,6 +172,23 @@ type ComparisonSection = {
       potentialImpact =
         "This keeps the recommendation sensitive to risk tolerance. The portfolio should probably avoid assuming maximum risk capacity.";
     }
+    let tensionStatement =
+  "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.";
+
+if (drawdownAnswer === "Yes") {
+  tensionStatement =
+    "The user's willingness to tolerate a major temporary drawdown strengthens the case for growth-oriented options, while Guardian still warns against taking risk the user cannot truly live with.";
+}
+
+if (drawdownAnswer === "No") {
+  tensionStatement =
+    "The user's unwillingness to tolerate a major temporary drawdown strengthens Guardian's concern that protection and staying power should dominate the portfolio design.";
+}
+
+if (drawdownAnswer === "Unsure") {
+  tensionStatement =
+    "The user's uncertainty about tolerating a major drawdown keeps the tension unresolved: growth may still be needed, but the portfolio should not assume high risk tolerance.";
+}
       return {
         summary:
           "First-pass view: for £500k to invest now, the response should preserve the user's intent and produce concrete options. A sensible first output is three investable directions: controlled growth, growth core, and maximum growth. The next improvement is to show bear/base/bull outcomes so the user can see the consequences rather than being told what is 'best'.",
@@ -205,8 +222,7 @@ clarifiers: [
               ],
             },
             tension: {
-              statement:
-                "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.",
+              statement: tensionStatement,
               evidence: [
                 "Guardian: a portfolio that cannot be held through a severe drawdown is dangerous.",
                 "Pragmatist: the user asked for concrete options now.",

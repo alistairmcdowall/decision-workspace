@@ -61,23 +61,7 @@ export default function Home() {
   
     return result?.summary;
   }
-  function tensionText() {
-    const answer = answers[DRAWDOWN_QUESTION];
-  
-    if (answer === "Yes") {
-      return "The user's willingness to tolerate a major temporary drawdown strengthens the case for growth-oriented options, while Guardian still warns against taking risk the user cannot truly live with.";
-    }
-  
-    if (answer === "No") {
-      return "The user's unwillingness to tolerate a major temporary drawdown strengthens Guardian's concern that protection and staying power should dominate the portfolio design.";
-    }
-  
-    if (answer === "Unsure") {
-      return "The user's uncertainty about tolerating a major drawdown keeps the tension unresolved: growth may still be needed, but the portfolio should not assume high risk tolerance.";
-    }
-  
-    return result?.comparison.tension.statement;
-  }
+
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -212,7 +196,7 @@ export default function Home() {
                     Areas of Tension
                   </h3>
                   <p className="leading-7 text-slate-300">
-                    {tensionText()}
+                    {result.comparison.tension.statement}
                   </p>
 
                   {result.comparison.tension.evidence && (
