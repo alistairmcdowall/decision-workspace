@@ -48,7 +48,14 @@ type ComparisonSection = {
       ) {
         return "relocation";
       }
-    
+      if (
+        lower.includes("property") ||
+        lower.includes("rental") ||
+        lower.includes("landlord") ||
+        lower.includes("house")
+      ) {
+        return "property";
+      }
       if (
         lower.includes("business") ||
         lower.includes("startup") ||
@@ -64,7 +71,9 @@ type ComparisonSection = {
     if (type === "portfolio") {
         return "The primary value at risk is the £500k itself. A portfolio that cannot be held through a severe drawdown is more dangerous than one with slightly lower expected returns.";
       }
-    
+      if (type === "property") {
+        return "The primary value at risk is not only money, but long-term financial security, stress, time and quality of life. A property portfolio that creates income but repeatedly harms the owner's life may be failing even if it remains financially profitable.";
+      }
       if (type === "relocation") {
         return "The primary value at risk is family stability. The biggest danger is optimising for one factor while damaging schooling, relationships, support networks or long-term quality of life.";
       }
@@ -79,7 +88,9 @@ type ComparisonSection = {
         if (type === "portfolio") {
           return "The user asked for an investable portfolio now. The response should provide concrete options rather than disappearing into endless information gathering.";
         }
-      
+        if (type === "property") {
+          return "The portfolio is not automatically a failure just because it has been stressful. It produces income, contains equity, and may now be easier to manage. The practical question is whether keeping, simplifying, or partly exiting creates the best future balance.";
+        }
         if (type === "relocation") {
           return "The practical realities matter most: work, schooling, housing, visas, finances and day-to-day life. A beautiful theory that cannot be implemented has little value.";
         }
@@ -94,7 +105,9 @@ type ComparisonSection = {
         if (type === "portfolio") {
           return "Major unknowns remain: time horizon, tax wrappers, existing assets, retirement target and risk capacity. These should shape refinement, but should not block a first-pass answer.";
         }
-      
+        if (type === "property") {
+          return "The major unknowns are current property values, future mortgage rates, tax consequences, repair costs, rental reliability and whether the income is genuinely needed. These could change the implementation, but the refinancing cycle is already a major decision point.";
+        }
         if (type === "relocation") {
           return "Important unknowns include visa requirements, employment implications, financial impact, schooling options and support networks. These should be surfaced explicitly.";
         }
@@ -109,7 +122,9 @@ type ComparisonSection = {
         if (type === "portfolio") {
           return "The real decision may not be 'what is the perfect portfolio?' but 'which risk-return profile should this capital occupy?'";
         }
-      
+        if (type === "property") {
+          return "The real decision may not be 'should I keep these properties?' but 'what role should this equity, income and stress play in the next phase of life?'";
+        }
         if (type === "relocation") {
           return "The real decision may not be 'should I move?' but 'what combination of lifestyle, opportunity and stability am I trying to optimise for?'";
         }
@@ -137,8 +152,8 @@ type ComparisonSection = {
   ): DecisionResult {
     if (type === "portfolio") {
       const drawdownAnswer = answers["portfolio_drawdown_tolerance"];
-let summary =
-  "First-pass view: for £500k to invest now, the response should preserve the user's intent and produce concrete options. A sensible first output is three investable directions: controlled growth, growth core, and maximum growth. The next improvement is to show bear/base/bull outcomes so the user can see the consequences rather than being told what is 'best'.";
+      let summary =
+      "First-pass view: For £500k to invest immediately, the decision is not primarily about selecting funds. It is about choosing the role this capital should play in your future. Three plausible directions emerge: a controlled-growth portfolio that prioritises resilience, a growth-core portfolio that balances return and diversification, and a maximum-growth portfolio that accepts greater volatility in pursuit of higher long-term returns. The most important unresolved question is not which assets to buy, but how much temporary loss you can realistically tolerate without changing course. Until that is clarified, a growth-core approach appears to be the strongest default position because it preserves substantial upside while reducing the risk that the strategy fails due to behaviour rather than investment performance.";
 
 if (drawdownAnswer === "Yes") {
   summary +=
@@ -228,14 +243,16 @@ clarifiers: [
 ],
         analysis: judges,
         comparison: {
-            agreement: {
-              statement:
-                "All judges agree that a first-pass answer should be provided rather than refusing to answer until every detail is known.",
-              evidence: [
-                "Pragmatist: the user asked for something investable now.",
-                "Auditor: missing details should shape refinement, but should not block a first-pass answer.",
-              ],
-            },
+          agreement: {
+            statement:
+              "All judges agree that the portfolio should be designed around a risk level the user can realistically maintain during difficult market conditions.",
+            evidence: [
+              "Guardian: a portfolio that cannot be held through a severe drawdown is dangerous.",
+              "Pragmatist: the answer should remain investable and usable in practice.",
+              "Auditor: risk capacity remains one of the most important unknowns.",
+              "Reframer: the real decision concerns the risk-return role this capital should occupy.",
+            ],
+          },
             tension: {
               statement: tensionStatement,
               evidence: [
@@ -255,7 +272,65 @@ clarifiers: [
           },
         };
     }
-
+    if (type === "property") {
+      return {
+        summary:
+          "First-pass view: keeping everything is unlikely to be the only sensible option, while selling everything is not obviously necessary. The strongest candidate appears to be simplifying the portfolio by selling selected properties and reducing debt on the strongest remaining assets. The central question is not whether the properties have been successful in the past, but whether they represent the best balance of income, risk, complexity and quality of life going forward.",
+    
+        clarifiers: [
+          {
+            id: "property_income_required",
+            question:
+              "If a diversified investment portfolio could realistically replace the rental income, would you still want to own rental property?",
+          },
+          {
+            id: "property_high_rates",
+            question:
+              "If mortgage rates averaged 6–7% for the next decade, would you still consider the portfolio attractive?",
+          },
+          {
+            id: "property_stress_tradeoff",
+            question:
+              "If you reached retirement with less wealth but substantially less stress, would that be acceptable?",
+          },
+        ],
+    
+        analysis: judges,
+    
+        comparison: {
+          agreement: {
+            statement:
+              "All judges agree that the upcoming refinancing cycle deserves significant weight in the decision.",
+            evidence: [
+              "Guardian: future refinancing creates a major risk event.",
+              "Pragmatist: future ownership should be judged on what happens next, not what happened previously.",
+              "Auditor: future mortgage costs could materially affect outcomes.",
+              "Reframer: the role of the equity matters more than attachment to the existing properties.",
+            ],
+          },
+    
+          tension: {
+            statement:
+              "Guardian places greater weight on reducing future stress and refinancing risk, while Pragmatist is reluctant to dispose of productive assets that still generate income.",
+            evidence: [
+              "Guardian: quality of life and resilience matter.",
+              "Pragmatist: the properties still provide income and equity.",
+            ],
+            whyItMatters:
+              "The recommendation changes depending on whether maximising wealth or improving quality of life is the dominant objective.",
+          },
+    
+          uncertainty: {
+            statement:
+              "The largest uncertainty is whether the rental income is genuinely required for the long-term plan.",
+            whyItMatters:
+              "If the income is essential, retaining property becomes more compelling.",
+            potentialImpact:
+              "This could shift the recommendation from retaining selected properties to exiting property entirely.",
+          },
+        },
+      };
+    }
     return {
       summary:
         "First-pass view: this decision should be analysed by preserving the user's intent, identifying what is at risk, finding the practical constraints, and surfacing only the highest-value unknowns.",
