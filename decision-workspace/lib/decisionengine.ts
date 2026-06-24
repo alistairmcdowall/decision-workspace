@@ -137,7 +137,23 @@ type ComparisonSection = {
   ): DecisionResult {
     if (type === "portfolio") {
       const drawdownAnswer = answers["portfolio_drawdown_tolerance"];
+let summary =
+  "First-pass view: for £500k to invest now, the response should preserve the user's intent and produce concrete options. A sensible first output is three investable directions: controlled growth, growth core, and maximum growth. The next improvement is to show bear/base/bull outcomes so the user can see the consequences rather than being told what is 'best'.";
 
+if (drawdownAnswer === "Yes") {
+  summary +=
+    " The user's response suggests substantial temporary volatility may be acceptable.";
+}
+
+if (drawdownAnswer === "No") {
+  summary +=
+    " The user's response suggests capital preservation should receive greater emphasis.";
+}
+
+if (drawdownAnswer === "Unsure") {
+  summary +=
+    " The user's response suggests risk tolerance remains unclear and should be treated cautiously.";
+}
       let uncertaintyStatement =
         "The largest unknown is how much volatility the user can realistically tolerate.";
     
@@ -190,8 +206,7 @@ if (drawdownAnswer === "Unsure") {
     "The user's uncertainty about tolerating a major drawdown keeps the tension unresolved: growth may still be needed, but the portfolio should not assume high risk tolerance.";
 }
       return {
-        summary:
-          "First-pass view: for £500k to invest now, the response should preserve the user's intent and produce concrete options. A sensible first output is three investable directions: controlled growth, growth core, and maximum growth. The next improvement is to show bear/base/bull outcomes so the user can see the consequences rather than being told what is 'best'.",
+        summary,
 clarifiers: [
   {
     id: "portfolio_drawdown_tolerance",

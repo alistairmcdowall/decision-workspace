@@ -35,32 +35,7 @@ export default function Home() {
     setShowAnalysis(false);
   }
 
-  function summaryText() {
-    const answer = answers[DRAWDOWN_QUESTION];
-  
-    if (answer === "Yes") {
-      return (
-        result?.summary +
-        " The user's response suggests substantial temporary volatility may be acceptable."
-      );
-    }
-  
-    if (answer === "No") {
-      return (
-        result?.summary +
-        " The user's response suggests capital preservation should receive greater emphasis."
-      );
-    }
-  
-    if (answer === "Unsure") {
-      return (
-        result?.summary +
-        " The user's response suggests risk tolerance remains unclear and should be treated cautiously."
-      );
-    }
-  
-    return result?.summary;
-  }
+
 
 
   return (
@@ -101,7 +76,7 @@ export default function Home() {
           <div className="mt-8 space-y-6">
             <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
               <h2 className="mb-3 text-xl font-semibold">Summary</h2>
-              <p className="leading-7 text-slate-300">{summaryText()}</p>
+              <p className="leading-7 text-slate-300">{result.summary}</p>
             </section>
 
             {result.clarifiers.length > 0 && (
