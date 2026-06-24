@@ -1,10 +1,19 @@
-export type DecisionResult = {
+type ComparisonSection = {
+    statement: string;
+    evidence?: string[];
+    whyItMatters?: string;
+    potentialImpact?: string;
+  };
+  
+  export type DecisionResult = {
     summary: string;
     clarifiers: string[];
     analysis: JudgeOutput;
-    agreement: string;
-    tension: string;
-    uncertainty: string;
+    comparison: {
+      agreement: ComparisonSection;
+      tension: ComparisonSection;
+      uncertainty: ComparisonSection;
+    };
   };
   
   type JudgeOutput = {
@@ -125,15 +134,37 @@ export type DecisionResult = {
           "If this portfolio produced less wealth but made retirement more reliable, would that be acceptable?",
         ],
         analysis: judges,
-agreement:
-  "All judges agree that a first-pass answer should be provided rather than refusing to answer until every detail is known.",
-tension:
-  "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.",
-uncertainty:
-  "The largest unknown is how much volatility the user can realistically tolerate during a major drawdown.",
-      };
+        comparison: {
+            agreement: {
+              statement:
+                "All judges agree that a first-pass answer should be provided rather than refusing to answer until every detail is known.",
+              evidence: [
+                "Pragmatist: the user asked for something investable now.",
+                "Auditor: missing details should shape refinement, but should not block a first-pass answer.",
+              ],
+            },
+            tension: {
+              statement:
+                "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.",
+              evidence: [
+                "Guardian: a portfolio that cannot be held through a severe drawdown is dangerous.",
+                "Pragmatist: the user asked for concrete options now.",
+              ],
+              whyItMatters:
+                "The recommendation changes depending on whether protection or immediate action dominates.",
+            },
+            uncertainty: {
+              statement:
+                "The largest unknown is how much volatility the user can realistically tolerate.",
+              whyItMatters:
+                "This could materially change the equity/bond mix.",
+              potentialImpact:
+                "A high tolerance supports a growth-heavy portfolio; a low tolerance points toward more ballast.",
+            },
+          },
+        };
     }
-  
+
     return {
       summary:
         "First-pass view: this decision should be analysed by preserving the user's intent, identifying what is at risk, finding the practical constraints, and surfacing only the highest-value unknowns.",
@@ -143,24 +174,36 @@ uncertainty:
         "Is there a hidden constraint that would change the answer?",
       ],
       analysis: judges,
-      agreement:
-  "All judges agree that a first-pass answer should be provided rather than refusing to answer until every detail is known.",
-
-tension:
-  "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.",
-
-uncertainty:
-  "The largest unknown is how much volatility the user can realistically tolerate during a major drawdown.",
-  agreement:
-  "The judges agree that the decision should be evaluated using practical constraints and explicit assumptions.",
-
-tension:
-  "There may be tension between protecting against downside and pursuing opportunity.",
-
-uncertainty:
-  "The highest-value unknowns have not yet been fully identified.",
+      comparison: {
+        agreement: {
+          statement:
+            "All judges agree that a first-pass answer should be provided rather than refusing to answer until every detail is known.",
+          evidence: [
+            "Pragmatist: the user asked for something investable now.",
+            "Auditor: missing details should shape refinement, but should not block a first-pass answer.",
+          ],
+        },
+        tension: {
+          statement:
+            "Guardian favours protection against catastrophic loss, while Pragmatist favours providing a concrete investable solution immediately.",
+          evidence: [
+            "Guardian: a portfolio that cannot be held through a severe drawdown is dangerous.",
+            "Pragmatist: the user asked for concrete options now.",
+          ],
+          whyItMatters:
+            "The recommendation changes depending on whether protection or immediate action dominates.",
+        },
+        uncertainty: {
+          statement:
+            "The largest unknown is how much volatility the user can realistically tolerate.",
+          whyItMatters:
+            "This could materially change the equity/bond mix.",
+          potentialImpact:
+            "A high tolerance supports a growth-heavy portfolio; a low tolerance points toward more ballast.",
+        },
+      },
     };
-  }
+}
   
   export function runDecision(input: string): DecisionResult {
     const type = classifyDecision(input);
