@@ -136,6 +136,26 @@ type ComparisonSection = {
     answers: Record<string, string>
   ): DecisionResult {
     if (type === "portfolio") {
+      const drawdownAnswer = answers["portfolio_drawdown_tolerance"];
+
+      let uncertaintyStatement =
+        "The largest unknown is how much volatility the user can realistically tolerate.";
+    
+      if (drawdownAnswer === "Yes") {
+        uncertaintyStatement =
+          "Resolved: the user appears willing to tolerate a major temporary drawdown.";
+      }
+    
+      if (drawdownAnswer === "No") {
+        uncertaintyStatement =
+          "Resolved: the user may need a more defensive portfolio.";
+      }
+    
+      if (drawdownAnswer === "Unsure") {
+        uncertaintyStatement =
+          "Partly unresolved: risk tolerance remains uncertain.";
+      }
+    
       return {
         summary:
           "First-pass view: for £500k to invest now, the response should preserve the user's intent and produce concrete options. A sensible first output is three investable directions: controlled growth, growth core, and maximum growth. The next improvement is to show bear/base/bull outcomes so the user can see the consequences rather than being told what is 'best'.",
@@ -179,8 +199,7 @@ clarifiers: [
                 "The recommendation changes depending on whether protection or immediate action dominates.",
             },
             uncertainty: {
-              statement:
-                "The largest unknown is how much volatility the user can realistically tolerate.",
+              statement: uncertaintyStatement,
               whyItMatters:
                 "This could materially change the equity/bond mix.",
               potentialImpact:

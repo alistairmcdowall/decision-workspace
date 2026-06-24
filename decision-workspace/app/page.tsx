@@ -166,7 +166,7 @@ export default function Home() {
                       className="rounded-xl border border-slate-800 bg-slate-950 p-4"
                     >
                       <p className="mb-3 text-slate-300">
-                        {index + 1}. {question}
+                      {index + 1}. {clarifier.question}
                       </p>
 
                       <div className="flex gap-2">
@@ -186,7 +186,7 @@ export default function Home() {
                               }
                             }}
                             className={`rounded-lg border px-3 py-2 text-sm transition ${
-                              answers[question] === answer
+                              answers[clarifier.id] === answer
                                 ? "border-slate-200 bg-slate-200 text-slate-950"
                                 : "border-slate-700 text-slate-300 hover:border-slate-400 hover:text-white"
                             }`}
