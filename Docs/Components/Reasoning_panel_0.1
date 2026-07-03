@@ -1,0 +1,628 @@
+# Reasoning Panel
+
+## Purpose
+
+The Reasoning Panel exists to improve understanding of a Decision Landscape before any recommendation is made.
+
+It does not create decisions, generate Representative Paths or execute actions.
+
+Instead, it applies a number of independent reasoning perspectives to an existing Decision Landscape, contributing observations that improve the quality, completeness and robustness of the subsequent analysis.
+
+Each member of the panel has a clearly defined responsibility.
+
+No panel member attempts to solve the entire decision.
+
+Instead, each contributes observations within its own area of expertise. These observations are considered together during later stages of the reasoning process.
+
+The panel therefore improves the representation of the decision rather than competing to produce the correct answer.
+
+---
+
+## Position Within The Architecture
+
+The Reasoning Panel operates after the Reframer has identified the governing decision and after the initial Decision Landscape has been constructed.
+
+Its observations contribute to refinement of the Landscape before later stages of analysis take place.
+
+```
+
+```text
+User Prompt
+      │
+      ▼
+ Reframer
+      │
+      ▼
+Decision Landscape V1
+      │
+      ▼
+══════════════════════
+   Reasoning Panel
+══════════════════════
+ Guardian
+ Pragmatist
+ Empathiser
+ Auditor
+══════════════════════
+      │
+      ▼
+Decision Landscape V2
+      │
+      ▼
+Representative Paths
+      │
+      ▼
+Further Reasoning
+      │
+      ▼
+Navigator (post-decision)
+```
+
+---
+
+## Core Principles
+
+The Reasoning Panel follows several architectural principles.
+
+### Independent Responsibilities
+
+Each panel member contributes only within its own area of responsibility.
+
+Judges do not attempt to replace one another or perform general reasoning outside their remit.
+
+---
+
+### Contributions, Not Recommendations
+
+Panel members contribute observations.
+
+They do not recommend decisions.
+
+Recommendations emerge only after the complete reasoning process has been performed.
+
+---
+
+### Landscape-Centred Reasoning
+
+Panel members reason about the Decision Landscape.
+
+They do not reason directly about the user's original prompt.
+
+This ensures every participant works from the same representation of the decision.
+
+---
+
+### No Competition
+
+The panel is not a debate.
+
+Members do not attempt to persuade one another or win an argument.
+
+Different observations are expected and welcomed.
+
+These observations are later synthesised into a richer understanding of the decision.
+
+---
+
+## Panel Members
+
+The core Reasoning Panel consists of four permanent members.
+
+- Guardian
+- Pragmatist
+- Empathiser
+- Auditor
+
+These members participate in every Decision Landscape.
+
+Additional specialist reasoning modes may be activated when appropriate.
+
+
+## Guardian
+
+### Purpose
+
+Guardian identifies valuable things that may be exposed, threatened or depended upon by a decision.
+
+Its purpose is not to discourage change or favour caution.
+
+Instead, Guardian ensures that important forms of value are recognised before they are accidentally sacrificed.
+
+Many valuable things already exist before a decision is made. Some are obvious, such as financial assets or physical safety. Others are less visible, including relationships, trust, reputation, health, optionality, stability or peace of mind.
+
+Guardian asks whether these forms of value are adequately represented within the Decision Landscape.
+
+---
+
+### Primary Responsibility
+
+Guardian asks:
+
+> **What valuable things are exposed, threatened or dependent on this decision?**
+
+This question is intentionally broader than financial risk.
+
+Guardian considers any form of value that may be difficult or impossible to replace once lost.
+
+---
+
+### Contributes
+
+Guardian contributes observations relating to:
+
+- Existing value that may be placed at risk.
+- Hidden dependencies between parts of the decision.
+- Irreversible consequences.
+- Fragile assets that may be unintentionally overlooked.
+- Sources of resilience or stability that deserve recognition.
+
+Guardian does not judge whether these values should ultimately be preserved.
+
+Its responsibility is simply to ensure they are visible within the decision.
+
+---
+
+### Does Not
+
+Guardian does not:
+
+- Recommend choosing the safest option.
+- Resist change because it involves uncertainty.
+- Evaluate practical feasibility.
+- Assess emotional experience.
+- Verify evidence or assumptions.
+
+Those responsibilities belong elsewhere within the Reasoning Panel.
+
+---
+
+### Typical Observations
+
+Guardian observations are descriptive rather than persuasive.
+
+Examples include:
+
+> "This decision places an established income stream at risk."
+
+> "The current situation contains valuable flexibility that would be difficult to recover once lost."
+
+> "Several future paths depend upon maintaining trust between the affected parties."
+
+> "Although financial gain is possible, the decision also exposes an existing source of long-term stability."
+
+Guardian highlights what deserves conscious consideration.
+
+It does not argue that those things should necessarily be protected.
+
+---
+
+### Relationship With The Decision Landscape
+
+Guardian does not create Representative Paths.
+
+The Decision Landscape already represents possible futures.
+
+Guardian instead examines those futures to identify valuable things that may become exposed as the decision unfolds.
+
+Its observations enrich the Landscape by making existing value more visible without changing the structure of the decision itself.
+
+
+## Pragmatist
+
+### Purpose
+
+Pragmatist identifies the practical realities that determine whether a decision can be successfully carried out.
+
+Its purpose is not to discourage ambitious decisions or favour conservative ones.
+
+Instead, Pragmatist ensures that the Decision Landscape remains grounded in the constraints, resources and practical realities that exist outside the user's intentions.
+
+A decision may be attractive in principle yet fail because it overlooks significant practical barriers.
+
+Pragmatist makes those barriers visible before they become avoidable mistakes.
+
+---
+
+### Primary Responsibility
+
+Pragmatist asks:
+
+> **What practical realities, constraints and execution issues actually matter?**
+
+This question extends beyond cost or logistics.
+
+Pragmatist considers any real-world factor that materially affects whether a Representative Path remains achievable.
+
+---
+
+### Contributes
+
+Pragmatist contributes observations relating to:
+
+- Practical feasibility.
+- Resource requirements.
+- Time constraints.
+- Financial affordability.
+- Legal or regulatory considerations.
+- Operational complexity.
+- Dependencies that must be satisfied before progress can occur.
+- Implementation risks that may affect success.
+
+Pragmatist is concerned with whether a path can realistically be followed rather than whether it is desirable.
+
+---
+
+### Does Not
+
+Pragmatist does not:
+
+- Recommend the easiest option.
+- Prefer familiar or conventional approaches.
+- Assess emotional consequences.
+- Evaluate existing value at risk.
+- Verify evidence or assumptions.
+
+Those responsibilities belong elsewhere within the Reasoning Panel.
+
+---
+
+### Typical Observations
+
+Pragmatist observations are grounded in implementation rather than preference.
+
+Examples include:
+
+> "This path depends upon obtaining planning permission before work can begin."
+
+> "The projected timescale assumes uninterrupted progress, which may not be realistic."
+
+> "The expected financial commitment exceeds the currently available resources."
+
+> "Successful implementation depends upon several external factors that are outside the user's control."
+
+Pragmatist highlights the practical conditions that determine whether a path remains achievable.
+
+It does not argue that those conditions necessarily prevent the decision.
+
+---
+
+### Relationship With The Decision Landscape
+
+Pragmatist does not alter the structure of the Decision Landscape.
+
+Instead, it examines each Representative Path through the lens of real-world execution.
+
+Its observations enrich the Landscape by revealing practical constraints, dependencies and implementation challenges that may materially affect the success of a path without changing the path itself.
+
+
+
+## Empathiser
+
+### Purpose
+
+Empathiser identifies how a decision is likely to be experienced by the people affected by it.
+
+Its purpose is not to prioritise feelings over facts or persuade the user towards compassionate choices.
+
+Instead, Empathiser ensures that the human experience of a decision is represented alongside its practical, financial and strategic consequences.
+
+Many decisions affect multiple people simultaneously. Even when a decision appears objectively beneficial, different individuals may experience it in profoundly different ways.
+
+Empathiser makes those experiences visible before they become unintended consequences.
+
+---
+
+### Primary Responsibility
+
+Empathiser asks:
+
+> **How is this decision likely to be experienced by the people affected by it?**
+
+This question considers both the user and everyone materially influenced by the decision.
+
+---
+
+### Contributes
+
+Empathiser contributes observations relating to:
+
+- The likely experience of each affected person.
+- Conflicting needs or priorities between stakeholders.
+- Sources of stress, reassurance or uncertainty.
+- Trust and relationship dynamics.
+- Changes to identity, belonging or stability.
+- Human consequences that may not appear in practical or financial analysis.
+
+Empathiser is concerned with lived experience rather than objective outcomes.
+
+---
+
+### Does Not
+
+Empathiser does not:
+
+- Recommend the kindest option.
+- Prioritise emotional comfort over other considerations.
+- Evaluate practical feasibility.
+- Assess existing value at risk.
+- Verify evidence or assumptions.
+
+Those responsibilities belong elsewhere within the Reasoning Panel.
+
+---
+
+### Typical Observations
+
+Empathiser observations focus on how different people may experience the same decision.
+
+Examples include:
+
+> "Although financially attractive, this path may require your daughter to leave her established friendships and school."
+
+> "The practical burden of this decision appears to fall disproportionately on one member of the family."
+
+> "Although the long-term outcome may be positive, the period of uncertainty is likely to be experienced differently by each stakeholder."
+
+> "The decision may strengthen financial security while simultaneously reducing day-to-day family stability during the transition."
+
+Empathiser makes visible the human realities that accompany each Representative Path.
+
+It does not argue that those realities should necessarily determine the decision.
+
+---
+
+### Relationship With The Decision Landscape
+
+Empathiser does not create Representative Paths.
+
+The Decision Landscape already represents the possible futures.
+
+Empathiser examines those futures from the perspective of the people who will live within them.
+
+Its observations enrich the Landscape by ensuring that human experience is represented alongside practical reality, existing value and evidential quality without altering the structure of the decision itself.
+
+
+
+## Auditor
+
+### Purpose
+
+Auditor evaluates the quality, completeness and internal coherence of the information upon which the Decision Landscape is built.
+
+Its purpose is not to make decisions more cautious or demand certainty before progress can be made.
+
+Instead, Auditor determines whether the current Decision Landscape is sufficiently complete, coherent and well supported for meaningful reasoning to continue.
+
+Every decision is made under uncertainty.
+
+Auditor's responsibility is not to eliminate that uncertainty, but to ensure it is recognised, proportionate and accurately represented within the Landscape.
+
+---
+
+### Primary Responsibility
+
+Auditor asks:
+
+> **What information is missing, uncertain, assumed, unsupported or internally inconsistent?**
+
+This question applies equally to user-provided information, externally verified information and the evolving Decision Landscape itself.
+
+---
+
+### Contributes
+
+Auditor contributes observations relating to:
+
+- Evidence quality.
+- Explicit assumptions.
+- Missing information.
+- Unsupported conclusions.
+- Internal inconsistencies.
+- Contradictory evidence.
+- Areas where clarification would materially improve the Landscape.
+- Overall confidence in the current representation.
+
+Auditor is concerned with the quality of the representation rather than the desirability of any particular Representative Path.
+
+---
+
+### Does Not
+
+Auditor does not:
+
+- Recommend gathering every possible piece of information.
+- Delay decisions unnecessarily in pursuit of certainty.
+- Evaluate practical feasibility.
+- Assess existing value at risk.
+- Consider stakeholder experience.
+
+Those responsibilities belong elsewhere within the Reasoning Panel.
+
+---
+
+### Typical Observations
+
+Auditor observations improve confidence in the Decision Landscape rather than advocating a particular outcome.
+
+Examples include:
+
+> "This conclusion depends upon an assumption that has not yet been supported."
+
+> "Two elements of the Landscape appear internally inconsistent and should be reconciled."
+
+> "Clarifying this single uncertainty would substantially improve confidence across every Representative Path."
+
+> "The current Landscape appears sufficiently complete for meaningful reasoning despite remaining uncertainty."
+
+Auditor identifies where confidence is justified and where it is not.
+
+---
+
+### Auditor Report
+
+In addition to its observations, Auditor produces a structured assessment of the current Decision Landscape.
+
+A typical report contains:
+
+- Evidence
+- Assumptions
+- Missing Information
+- Supported Conclusions
+- Unsupported Conclusions
+- Internal Consistency
+- Landscape Readiness
+
+The report provides an explicit assessment of the current quality of the Landscape before further reasoning proceeds.
+
+---
+
+### Landscape Readiness
+
+Landscape Readiness is Auditor's assessment of whether the current Decision Landscape is sufficiently complete and coherent for meaningful reasoning.
+
+It does not measure the quality of the decision itself.
+
+It measures confidence in the representation upon which subsequent reasoning will depend.
+
+Readiness is expressed both numerically and categorically.
+
+Example:
+
+```text
+AUDITOR REPORT
+
+Evidence
+High
+
+Assumptions
+3 significant assumptions identified.
+
+Missing Information
+Moderate
+
+Supported Conclusions
+4
+
+Unsupported Conclusions
+1
+
+Internal Consistency
+High
+
+Landscape Readiness
+
+🟡 62%
+```
+
+The associated readiness state is used by the wider architecture.
+
+| State | Meaning |
+|--------|---------|
+| 🟢 Green | The Landscape is sufficiently complete for normal reasoning to continue. |
+| 🟡 Amber | Reasoning may continue, but important uncertainty remains. Clarification or additional evidence may materially improve the analysis. |
+| 🔴 Red | The Landscape is currently too incomplete or internally inconsistent for meaningful reasoning. Further clarification or information gathering should occur before analysis continues. |
+
+Landscape Readiness is not a recommendation.
+
+It is a measure of confidence in the current representation of reality.
+
+---
+
+### Relationship With The Decision Landscape
+
+Auditor does not create Representative Paths.
+
+The Decision Landscape already represents the current understanding of the decision.
+
+Auditor examines that representation to determine whether it is sufficiently complete, coherent and well supported for meaningful reasoning to continue.
+
+Its observations strengthen confidence in the Landscape by improving the quality of the information upon which later reasoning depends, while the Landscape Readiness assessment provides an explicit indication of whether the architecture should proceed, clarify or pause before further analysis.
+
+
+## Specialist Reasoning Modes
+
+In addition to the permanent members of the Reasoning Panel, the architecture contains a small number of specialist reasoning modes.
+
+Unlike the core panel, these modes do not participate in every decision.
+
+Instead, they are activated only when their particular form of reasoning is likely to improve the quality of the analysis.
+
+They do not replace the core panel.
+
+They operate alongside it, performing specialised reasoning tasks that are inappropriate or unnecessary for most decisions.
+
+---
+
+### Steelman
+
+#### Purpose
+
+Steelman ensures that every viable Representative Path is evaluated using its strongest legitimate interpretation.
+
+Its purpose is not to advocate for a particular path or artificially strengthen weak arguments.
+
+Instead, Steelman removes poor reasoning, superficial arguments and accidental weaknesses so that each path is judged on the best case that can legitimately be made for it.
+
+This ensures that decisions are made by comparing the strongest versions of competing futures rather than whichever path happened to be described most persuasively.
+
+---
+
+#### Typical Contribution
+
+For a premium television purchase:
+
+Representative Path
+
+> Purchase the Sony Bravia 9 for £3,500.
+
+Steelman contribution:
+
+> "The Bravia 9 genuinely offers class-leading picture quality, processing and brightness. If maximising home cinema performance is the overriding objective, paying the premium may be entirely rational."
+
+Notice that Steelman does not recommend the purchase.
+
+It simply ensures that the strongest legitimate argument has been represented before comparison takes place.
+
+---
+
+### Red Team
+
+#### Purpose
+
+Red Team attempts to falsify an emerging recommendation by challenging its assumptions, evidence and reasoning.
+
+Its purpose is not to manufacture disagreement or argue for the opposite conclusion.
+
+Instead, Red Team assumes that the current recommendation may be incorrect and actively searches for weaknesses that could materially change the outcome.
+
+This provides a final robustness check before recommendations are presented to the user.
+
+---
+
+#### Activation
+
+Red Team is not normally active.
+
+It is typically invoked when one or more of the following conditions apply:
+
+- High-consequence decisions.
+- Irreversible decisions.
+- High-confidence recommendations.
+- Significant uncertainty remains.
+- Material financial, legal or personal consequences exist.
+
+---
+
+#### Typical Contribution
+
+Suppose the emerging recommendation is:
+
+> Move to Singapore for five years before returning to the UK.
+
+Red Team might observe:
+
+> "This recommendation assumes that returning to the UK after five years will remain both desirable and financially advantageous, yet little evidence currently supports that assumption. If this proves incorrect, the recommendation may change substantially."
+
+Red Team does not attempt to replace the recommendation.
+
+It attempts to determine whether the recommendation remains robust when subjected to deliberate critical scrutiny.

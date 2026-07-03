@@ -1,0 +1,304 @@
+---
+Version: 0.1
+Status: Working Draft
+Last Updated: 2026-07-03
+Owner: Decision Workspace
+---
+
+# Decision Model
+
+## Purpose
+
+The Decision Model is the complete structured representation of the reasoning process immediately prior to presentation.
+
+It is produced by the Reasoning Engine and consumed by the Presentation Engine.
+
+The Decision Model contains meaning.
+
+It does not contain presentation.
+
+---
+
+# Design Philosophy
+
+The Reasoning Engine is responsible for determining:
+
+> **What should be communicated.**
+
+The Presentation Engine is responsible for determining:
+
+> **How it should be communicated.**
+
+The Decision Model forms the boundary between those two responsibilities.
+
+---
+
+# Core Principle
+
+The Decision Model should contain only the minimum structured information required for another reasoning system to faithfully reconstruct the decision.
+
+It should never contain unnecessary narrative prose.
+
+Whenever possible, information should be represented as structured meaning rather than finished language.
+
+---
+
+# Architectural Role
+
+Decision Workspace therefore consists of three distinct stages.
+
+Reasoning Engine
+
+↓
+
+Decision Model
+
+↓
+
+Presentation Engine
+
+↓
+
+User
+
+The Presentation Engine should be replaceable without requiring changes to the Decision Model.
+
+Likewise, improvements to the Reasoning Engine should not require changes to the Presentation Engine unless the Decision Model itself evolves.
+
+---
+
+# Design Principles
+
+The Decision Model should be:
+
+- deterministic
+- structured
+- presentation independent
+- human readable
+- machine interpretable
+- extensible
+- versionable
+
+The Decision Model should never attempt to optimise readability through literary language.
+
+That responsibility belongs exclusively to the Presentation Engine.
+
+---
+
+# Component Structure
+
+The Decision Model currently consists of the following components.
+
+---
+
+## Prompt
+
+The original user prompt.
+
+Purpose:
+
+Preserve the user's stated objective exactly as given.
+
+---
+
+## Facts
+
+Structured factual information identified during reasoning.
+
+Examples include:
+
+- user stated facts
+- assumed facts
+- inferred facts (where explicitly identified)
+
+The Presentation Engine should never invent additional facts.
+
+---
+
+## Reframer
+
+Records the routing decision made by the Reframer.
+
+Includes:
+
+- routing status
+- governing objective
+- routing rationale
+
+---
+
+## Decision Landscape
+
+Represents the current understanding of the decision.
+
+The Landscape may evolve during reasoning.
+
+Examples:
+
+Landscape V1
+
+Landscape V2
+
+Future versions may include additional Landscape revisions where appropriate.
+
+The Landscape should describe the structure of the decision rather than narrative explanations of the decision.
+
+---
+
+## Reasoning Panel
+
+Records the outputs produced by the specialist reasoning components.
+
+Examples:
+
+Guardian
+
+Pragmatist
+
+Empathiser
+
+Additional specialists may be added in future versions.
+
+Each specialist contributes structured observations rather than finished prose.
+
+---
+
+## Auditor
+
+Represents the current quality assessment of the Decision Landscape.
+
+Examples include:
+
+- readiness
+- assumptions
+- missing information
+- supported conclusions
+- unsupported conclusions
+- internal consistency
+
+The Auditor evaluates the Landscape.
+
+It does not modify it.
+
+---
+
+## Clarifier
+
+Represents clarification performed during reasoning.
+
+Includes:
+
+- uncertainty being tested
+- clarification question
+- reasoning for the clarification
+- user response
+- resolved meaning
+
+Clarifiers exist to evolve the Decision Landscape rather than simply gather information.
+
+---
+
+## Representative Paths
+
+Represents the meaningful futures available from the current Decision Landscape.
+
+Each Path describes:
+
+- identity
+- conditions
+- commitment
+- consequence
+
+The Presentation Engine determines how those Paths are communicated.
+
+---
+
+## Event Horizon
+
+Represents the point beyond which meaningful reversal is no longer possible.
+
+The Event Horizon records:
+
+- trigger
+- irreversible conditions
+- architectural meaning
+
+Presentation determines how this concept is explained.
+
+---
+
+## Establishing Shot
+
+The Decision Model records only the identity of the Path requiring visualisation.
+
+The Decision Model does not describe the scene.
+
+The Presentation Engine derives the appropriate Establishing Shot using the Establishing Shot specification.
+
+This preserves a complete separation between reasoning and presentation.
+
+---
+
+## Steelman
+
+Represents the strongest legitimate case for each Representative Path.
+
+Steelman exists to maximise fairness rather than persuasion.
+
+The Decision Model records the underlying reasoning.
+
+The Presentation Engine determines how that reasoning is expressed.
+
+---
+
+# Presentation Independence
+
+The Decision Model should be capable of producing many different presentations without modification.
+
+Examples include:
+
+- narrative report
+- executive briefing
+- spoken explanation
+- interactive conversation
+- mobile summary
+- printable report
+
+All presentations should originate from exactly the same Decision Model.
+
+---
+
+# Future Evolution
+
+Future versions of the Decision Model may introduce additional structured components including:
+
+- confidence modelling
+- evidence weighting
+- dependency graphs
+- uncertainty maps
+- decision history
+- reasoning provenance
+
+Such additions should preserve backwards compatibility wherever practical.
+
+---
+
+# Success Test
+
+A Decision Model is considered successful if:
+
+- every important element of the reasoning process has been preserved;
+- no presentation decisions have leaked into the model;
+- multiple Presentation Engines could independently generate faithful explanations from the same model.
+
+If changing the presentation requires changes to the Decision Model, then the architectural separation has failed.
+
+---
+
+# Guiding Principle
+
+The Decision Model captures the reasoning.
+
+The Presentation Engine tells the story.
+
+Neither should attempt to perform the other's role.

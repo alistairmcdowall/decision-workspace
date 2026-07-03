@@ -1,0 +1,62 @@
+import { reframer } from "./reframer";
+import { landscape } from "./landscape";
+import { guardian } from "./guardian";
+import { pragmatist } from "./pragmatist";
+import { empathiser } from "./empathiser";
+import { auditor } from "./auditor";
+import { paths } from "./paths";
+import { eventHorizons } from "./eventHorizons";
+import { establishingShots } from "./establishingShots";
+import { steelman } from "./steelman";
+import { clarifier } from "./clarifier";
+import type { DecisionContext } from "./types";
+
+export function runBraviaSlice(): DecisionContext {
+  let context: DecisionContext = {
+    prompt: "Should I buy the Sony Bravia 9 II for £2,000?",
+    facts: {
+      userStated: {
+        subject: "Sony Bravia 9 II",
+        price: {
+          amount: 2000,
+          currency: "GBP",
+        },
+      },
+      assumedForSlice: {
+        marketClass: "premium_flagship",
+        pricePosition: "materially_below_expected_market",
+      },
+    },
+    panel: {},
+  };
+
+  context = reframer(context);
+context = landscape(context);
+
+context = guardian(context);
+context = pragmatist(context);
+context = empathiser(context);
+context = auditor(context);
+
+context = clarifier(context);
+
+context = {
+  ...context,
+  clarifierResponse: {
+    answer:
+      "Yes. If the offer is genuine, fully warranted and free from hidden condition issues, I would feel comfortable buying it.",
+  
+    effect:
+      "Purchase willingness resolved",
+  },
+};
+
+context = landscape(context);
+
+context = paths(context);
+context = eventHorizons(context);
+context = establishingShots(context);
+context = steelman(context);
+
+return context;
+}

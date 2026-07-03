@@ -1,0 +1,165 @@
+---
+Version: 0.1
+Status: Working Draft
+Last Updated: 2026-06-30
+Source: Research Log
+---
+# Decision Workspace Philosophy
+
+**Status:** Working Draft v0.1
+
+---
+
+## Purpose
+
+This document defines the design philosophy that guides Decision Workspace.
+
+It intentionally avoids implementation details.
+
+It describes the principles that should remain true regardless of how the system evolves.
+
+Where implementation decisions conflict with these principles, the implementation should be questioned before the philosophy.
+
+---
+
+# Core Purpose
+
+Decision Workspace exists to help people understand difficult decisions.
+
+It is not primarily a recommendation engine.
+
+Its purpose is to construct, refine and explore a decision until the consequences become sufficiently visible that an informed decision can emerge.
+
+The user always remains the decision-maker.
+
+---
+
+# The Role of the System
+
+Decision Workspace does not exist to replace judgement.
+
+It exists to improve judgement.
+
+Its responsibility is to structure the decision, expose meaningful alternatives, reveal important trade-offs and help the user understand what each future may actually feel like to live with.
+
+---
+
+# Preserve the User's Decision
+
+The user's decision belongs to the user.
+
+The system should preserve the user's intended decision wherever possible.
+
+If the prompt appears ambiguous or framed around a proposed solution rather than the underlying objective, the system may seek clarification or offer an alternative framing.
+
+It must never silently change the user's decision.
+
+---
+
+# Decisions Before Answers
+
+A decision should be understood before it is analysed.
+
+The system should ensure it is reasoning about the correct decision before attempting to generate recommendations or implementation advice.
+
+Understanding the problem is considered more valuable than producing an immediate answer.
+
+---
+
+# Show Rather Than Tell
+
+Decision Workspace should prefer showing consequences over asserting conclusions.
+
+Where possible it should reveal:
+
+- representative futures
+- trade-offs
+- opportunity costs
+- uncertainty
+- consequences
+
+rather than persuading the user toward a particular choice.
+
+Recognition is preferred over explanation.
+
+---
+
+# Recommendations Should Emerge
+
+Recommendations should not appear arbitrary or imposed.
+
+They should emerge naturally from the interaction between:
+
+- the decision,
+- the user's revealed preferences,
+- and the consequences represented throughout the process.
+
+The strongest recommendation is one the user recognises rather than one the system asserts.
+
+---
+
+# Representative Thinking
+
+Decision Workspace does not attempt to model every possible future.
+
+Instead it represents a small number of representative futures that capture the essential structure of the decision.
+
+The goal is understanding rather than exhaustive prediction.
+
+---
+
+# The User Remains the Evaluator
+
+Representative futures provide evidence.
+
+They do not evaluate themselves.
+
+The system presents possible futures.
+
+The user evaluates them.
+
+Decision Workspace informs.
+
+The user decides.
+
+---
+
+# Execution Follows Decision
+
+Decision formation and decision execution are separate activities.
+
+Understanding what should be done is a different problem from understanding how to do it.
+
+The system should avoid mixing these responsibilities.
+
+---
+
+# Preserve Simplicity
+
+The architecture should remain as simple as possible while faithfully representing the decision.
+
+Additional complexity should only be introduced when simpler approaches no longer explain observed behaviour.
+
+The burden of proof always rests with the more complicated design.
+
+---
+
+# Continuous Refinement
+
+Decision Workspace is expected to evolve through observation and testing.
+
+Architectural changes should be driven by repeated evidence rather than isolated examples.
+
+Research history should be preserved separately from the current architecture.
+
+---
+
+# Summary
+
+Decision Workspace is a system for improving human decision-making.
+
+It seeks first to understand the decision, then to illuminate it.
+
+Its goal is not to persuade.
+
+Its goal is to help the user recognise which future they wish to create.

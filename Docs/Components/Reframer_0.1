@@ -1,0 +1,285 @@
+---
+Version: 0.1
+Status: Working Draft
+Last Updated: 2026-06-30
+Owner: Decision Workspace
+Source: Research Log
+---
+
+# Reframer
+
+## Purpose
+
+The Reframer is the entry point into the Decision Workspace reasoning pipeline.
+
+Its purpose is to ensure that the system understands the user's intended decision before any analysis begins.
+
+The Reframer does not attempt to solve the user's problem.
+
+Its sole responsibility is to prepare the decision for analysis.
+
+---
+
+# Mission
+
+> Stress-test the user's prompt until the Decision Landscape can safely analyse a single, well-defined decision variable.
+
+The Reframer should be internally adversarial and externally minimal.
+
+Internally, it attempts to break the prompt.
+
+Externally, it should interrupt the user only when doing so materially improves the analysis.
+
+---
+
+# Guiding Principle
+
+> Preserve the user's intended decision with the minimum necessary intervention.
+
+The Reframer should never become an obstacle between the user and the reasoning system.
+
+Intervention should occur only when failing to intervene would cause the wrong decision to be analysed.
+
+---
+
+# Responsibilities
+
+The Reframer is responsible for:
+
+- identifying the governing decision variable
+- detecting genuine ambiguity
+- distinguishing decisions from supporting context
+- offering alternative framings where appropriate
+- routing execution-only prompts directly to Navigator
+
+---
+
+# Non-Responsibilities
+
+The Reframer must not:
+
+- answer the user's question
+- generate representative paths
+- recommend an option
+- evaluate feasibility
+- judge morality
+- challenge evidence
+- audit reasoning
+- create execution plans
+- silently rewrite the user's decision
+- invent additional decisions
+
+These responsibilities belong elsewhere within the architecture.
+
+---
+
+# Core Behaviour
+
+The Reframer should assume that every prompt is correct until it discovers evidence that meaningful clarification or reframing is required.
+
+Its goal is to minimise intervention while maximising decision integrity.
+
+---
+
+# Internal Rules
+
+## Rule 1 — Identify One Governing Decision
+
+Every prompt should be reduced to a single governing decision variable.
+
+If one clear decision exists, preserve it.
+
+If multiple legitimate interpretations exist that would produce materially different Decision Landscapes, request clarification.
+
+---
+
+## Rule 2 — Context Is Not A Decision
+
+Background information, emotional state, narrative, quoted messages, constraints and supporting evidence should be treated as context.
+
+They should not become separate prompts unless they introduce an independent decision requiring separate analysis.
+
+---
+
+## Rule 3 — Split Only When Necessary
+
+Complex prompts should not be decomposed simply because they contain multiple facts.
+
+Splitting is justified only when different interpretations would materially alter the resulting Decision Landscape.
+
+---
+
+## Rule 4 — Preserve User Intent
+
+The Reframer must never silently broaden, narrow or otherwise alter the user's intended decision.
+
+Clarification and reframing must always remain explicit.
+
+---
+
+## Rule 5 — Suggest Rather Than Replace
+
+When the Reframer believes another framing may better satisfy the user's underlying objective, it may offer a suggested reframe.
+
+The original prompt always remains available.
+
+If the user accepts the suggested prompt, analysis restarts using the new prompt.
+
+---
+
+## Rule 6 — Recognise Execution Requests
+
+If the user has already made the decision and is asking how to implement it, the prompt should bypass the Decision Landscape and be routed directly to Navigator.
+
+---
+
+## Rule 7 — Safety Is External
+
+The Reframer assumes that prompts reaching Decision Workspace have already passed the safety and policy mechanisms of the underlying language model.
+
+Safety assessment is not part of the Reframer's responsibilities.
+
+---
+
+# Output States
+
+The Reframer produces exactly one of four outcomes.
+
+---
+
+## PASS
+
+The prompt contains one sufficiently clear governing decision.
+
+No user interaction is required.
+
+Analysis proceeds directly to the Decision Landscape.
+
+---
+
+## CLARIFY
+
+Multiple legitimate interpretations exist.
+
+The Reframer presents a small number of discrete alternatives and asks the user which decision should be analysed.
+
+The Reframer does not attempt to infer the user's intent.
+
+---
+
+## SUGGEST REFRAME
+
+The original prompt is valid.
+
+However, an alternative framing appears likely to better represent the user's underlying objective.
+
+The suggested prompt is offered alongside the original.
+
+The user chooses whether to continue with the original prompt or restart using the suggested prompt.
+
+---
+
+## ROUTE TO NAVIGATOR
+
+The user is requesting execution guidance rather than decision analysis.
+
+Decision Landscape generation is bypassed.
+
+Navigator becomes responsible for the remainder of the interaction.
+
+---
+
+# User Experience Principles
+
+The Reframer should feel:
+
+- calm
+- brief
+- precise
+- non-judgemental
+- helpful
+
+Whenever possible, the Reframer should remain invisible.
+
+The user should experience interruption only when it materially improves the quality of the subsequent analysis.
+
+---
+
+# Design Philosophy
+
+The Reframer exists to protect decision integrity.
+
+It should be sceptical of prompts but respectful of users.
+
+Its objective is not to improve the user's wording.
+
+Its objective is to ensure that the remainder of Decision Workspace reasons about the correct decision.
+
+---
+
+# Examples
+
+## PASS
+
+**User**
+
+> My wife has been offered a job in Singapore. We'd need to relocate and our daughter would leave school. Should we move?
+
+Result:
+
+PASS
+
+---
+
+## CLARIFY
+
+**User**
+
+> Should I tell my brother whether to marry his girlfriend?
+
+Result:
+
+CLARIFY
+
+The prompt contains multiple legitimate interpretations requiring user clarification.
+
+---
+
+## SUGGEST REFRAME
+
+**User**
+
+> Should I buy the Sony Bravia 9 for £3,500?
+
+Result:
+
+SUGGEST REFRAME
+
+Suggested prompt:
+
+> How should I spend my £3,500 television budget?
+
+The original prompt remains available.
+
+---
+
+## ROUTE TO NAVIGATOR
+
+**User**
+
+> I've decided to become an airline pilot. What qualifications do I need?
+
+Result:
+
+ROUTE TO NAVIGATOR
+
+The user is requesting execution guidance rather than decision analysis.
+
+---
+
+# Related Documents
+
+- Philosophy.md
+- Architecture.md
+- Landscape.md
+- Navigator.md

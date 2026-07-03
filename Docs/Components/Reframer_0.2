@@ -1,0 +1,195 @@
+---
+Version: 0.2
+Status: Working Draft
+Last Updated: 2026-07-01
+Owner: Decision Workspace
+Supersedes: Reframer v0.1 (partial)
+---
+
+# Reframer v0.2
+
+## Architectural Changes
+
+Since Reframer v0.1 was written, the role of the Reframer has expanded.
+
+Originally, the Reframer's responsibility was primarily to identify the governing decision and prepare it for analysis.
+
+Subsequent architectural work has shown that this responsibility begins earlier and extends further than originally anticipated.
+
+The Reframer is now responsible for determining the appropriate next stage of the reasoning pipeline.
+
+This document records those changes.
+
+---
+
+# The Reframer Is An Orchestrator
+
+The Reframer no longer simply prepares a Decision Landscape.
+
+Instead it asks a more fundamental question:
+
+> **What should happen next?**
+
+For some prompts this will be Decision Landscape generation.
+
+For others it may be clarification, prerequisite work, execution guidance or another non-decision activity.
+
+The Decision Landscape is therefore no longer the inevitable destination of every prompt.
+
+It is one possible destination selected by the Reframer.
+
+---
+
+# Governing Objective
+
+Reframer v0.1 introduced the concept of a governing decision.
+
+Experience has shown that this concept should be broadened.
+
+The Reframer now identifies the user's **governing objective**.
+
+Often this objective is a decision.
+
+Sometimes it is not.
+
+Examples include:
+
+- understanding information before making a decision
+- summarising documents
+- gathering evidence
+- executing an already-made decision
+
+The governing objective determines routing throughout the remainder of the architecture.
+
+---
+
+# Prerequisite Activities
+
+Some prompts contain a future decision but are not yet ready for Decision Landscape analysis.
+
+Example:
+
+> Help me decide whether to resign by first summarising my employment contract.
+
+The eventual objective is a resignation decision.
+
+The immediate objective is to understand the employment contract.
+
+The Reframer should recognise this dependency.
+
+Rather than instantiating a premature Decision Landscape, it should route the conversation to the prerequisite activity.
+
+Once complete, the user may be offered the opportunity to continue to Decision Landscape analysis.
+
+---
+
+# Pending Decisions
+
+When prerequisite activities are detected, the underlying decision should not be discarded.
+
+Instead, it becomes a **Pending Decision**.
+
+The Pending Decision remains associated with the conversation while prerequisite work is completed.
+
+This allows the architecture to offer a natural continuation without requiring the user to restate their original intention.
+
+Example:
+
+Current activity:
+
+> Explain Singapore's tax system.
+
+Pending Decision:
+
+> Should we relocate to Singapore?
+
+After the prerequisite has completed:
+
+> I've explained Singapore's tax system.
+
+> Would you like to continue by analysing your relocation decision?
+
+---
+
+# Decision Readiness
+
+The Reframer now evaluates whether a Decision Landscape can be constructed faithfully.
+
+This is distinct from Auditor's later assessment of Landscape Readiness.
+
+Decision Readiness concerns whether sufficient understanding exists to instantiate a meaningful Decision Landscape.
+
+Landscape Readiness concerns the quality of an already-existing Landscape.
+
+These are separate architectural responsibilities.
+
+---
+
+# Expanded Routing
+
+The original routing states remain valid.
+
+However, routing is no longer limited to Decision Landscape analysis or Navigator.
+
+The Reframer may determine that another activity should occur first.
+
+Examples include:
+
+- prerequisite information gathering
+- document understanding
+- factual explanation
+- evidence collection
+
+These activities exist to prepare the conditions for later reasoning rather than replace it.
+
+---
+
+# Principle Of Minimum Intervention
+
+The central design philosophy remains unchanged.
+
+> Preserve the user's intended objective with the minimum necessary intervention.
+
+The Reframer should never introduce unnecessary friction.
+
+It should interrupt only when doing so materially improves the quality or integrity of the subsequent reasoning process.
+
+Whenever possible, routing decisions should preserve conversational flow while remaining faithful to the user's explicitly stated intent.
+
+---
+
+# Relationship To Auditor
+
+The Reframer and Auditor now each own a different concept of readiness.
+
+**Reframer**
+
+> Is the user's objective ready to become a Decision Landscape?
+
+**Auditor**
+
+> Is the current Decision Landscape sufficiently complete and coherent for meaningful reasoning to continue?
+
+This separation preserves a clear distinction between routing decisions and quality assurance.
+
+---
+
+# Faithful Routing
+
+The Reframer should always prefer routing that preserves the user's explicit objective.
+
+It should not silently substitute a broader, narrower or more convenient objective simply because it appears easier to analyse.
+
+The architecture exists to understand the user's objective, not improve it by changing it.
+
+---
+
+# Relationship To Navigator
+
+Navigator assumes that a governing direction has already been established.
+
+The Reframer determines whether the user's prompt requires decision analysis or execution.
+
+Navigator never makes this determination itself.
+
+This preserves a clear separation between reasoning and implementation throughout the architecture.

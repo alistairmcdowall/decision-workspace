@@ -1,0 +1,1451 @@
+---
+Version: 0.1
+Status: Working Draft
+Last Updated: 2026-06-30
+Owner: Decision Workspace
+Source: Research Log
+---
+
+# Decision Landscape
+
+## Purpose
+
+The Decision Landscape is the central reasoning model within Decision Workspace.
+
+Its purpose is to represent a user's decision as a small set of representative, inhabitable futures that preserve the user's intended decision while remaining simple enough to reason about.
+
+The Decision Landscape is not a prediction engine.
+
+It does not attempt to enumerate every possible future or calculate every possible outcome.
+
+Instead, it constructs a structured representation of the decision that allows subsequent components to reason consistently about the same problem.
+
+Every major reasoning component within Decision Workspace operates on the Decision Landscape rather than directly on the user's original prompt.
+
+This separation allows the prompt to remain unchanged while the understanding of the decision becomes progressively richer as additional information is revealed.
+
+The Decision Landscape therefore acts as the shared model of the decision throughout the reasoning process.
+
+---
+
+# Definition
+
+A Decision Landscape is a structured representation of a single decision.
+
+It contains the minimum information required for Decision Workspace to understand, analyse and communicate that decision without altering the user's original intent.
+
+A Decision Landscape does not attempt to describe reality in its entirety.
+
+It represents only those aspects of reality that are necessary to understand the decision currently being considered.
+
+As reasoning progresses, the Decision Landscape may evolve.
+
+New information may refine the representation, reveal previously unknown priorities or expose new consequences.
+
+These refinements update the existing landscape rather than replacing it.
+
+Throughout this process the governing decision variable remains unchanged unless the user explicitly chooses to analyse a different decision.
+
+The purpose of the Decision Landscape is therefore not to produce an answer.
+
+Its purpose is to provide a stable world in which reasoning can occur.
+
+---
+
+# Core Principles
+
+The Decision Landscape is governed by four principles.
+
+## 1. Preserve the Decision
+
+Every element of the landscape must preserve the user's intended decision.
+
+The landscape exists to understand the user's question, not to improve or replace it.
+
+---
+
+## 2. Represent Rather Than Enumerate
+
+The landscape should contain the smallest representative set of stable futures necessary to understand the decision.
+
+It should never attempt to model every possible outcome.
+
+Understanding is prioritised over completeness.
+
+---
+
+## 3. Evolve Rather Than Restart
+
+As additional information becomes available, the landscape should evolve.
+
+Refinement is preferred over reconstruction.
+
+The decision becomes better understood while remaining the same decision.
+
+---
+
+## 4. Remain Inhabitable
+
+Every representative future must describe a coherent reality that a user could genuinely live within.
+
+Representative futures should describe ways of living rather than isolated decisions or temporary states.
+
+
+
+# Internal Model
+
+The Decision Landscape is not created in a single step.
+
+It develops through successive refinements as understanding of the decision improves.
+
+The current architecture defines two primary landscape states during the initial decision cycle.
+
+- **Landscape V1** – the initial representation of the decision immediately after the Reframer has identified the governing decision variable.
+- **Landscape V2** – the refined landscape produced after interaction with the reasoning components and incorporation of any additional information revealed during the clarification process.
+
+These versions represent increasing understanding of the same decision.
+
+They do not represent different decisions.
+
+---
+
+## Decision Variable
+
+Every Decision Landscape is anchored to a single governing decision variable.
+
+The decision variable defines the question that the landscape exists to represent.
+
+All subsequent reasoning must preserve this decision variable unless the user explicitly chooses to analyse a different decision.
+
+The decision variable acts as the structural constraint for the entire landscape.
+
+Representative futures, evidence and later refinements must all remain consistent with it.
+
+---
+
+## Landscape V1
+
+Landscape V1 is the initial representation of the decision.
+
+It contains only the information required to establish the structure of the landscape.
+
+At this stage the landscape has been derived directly from the user's prompt and supporting context.
+
+No additional reasoning has yet altered the representation.
+
+Landscape V1 therefore captures what is currently understood rather than what may later become important.
+
+It establishes the initial world that subsequent reasoning components will explore.
+
+---
+
+## Transition Between V1 and V2
+
+Once Landscape V1 has been established, other components within Decision Workspace examine the landscape.
+
+These components may:
+
+- identify missing information,
+- reveal previously unknown user priorities,
+- expose important uncertainties,
+- or request clarification where the current landscape is insufficient.
+
+The detailed behaviour of these components is specified elsewhere within the architecture.
+
+Within this document they are treated as external contributors to the evolution of the landscape.
+
+---
+
+## Landscape V2
+
+Landscape V2 is the refined representation of the same decision.
+
+It incorporates any additional understanding gained after Landscape V1 has been examined.
+
+Typical refinements include:
+
+- clarified user priorities,
+- resolved ambiguities,
+- newly understood constraints,
+- and improved understanding of the user's intended outcomes.
+
+Landscape V2 does not replace Landscape V1.
+
+It is the natural evolution of the same landscape.
+
+The governing decision variable remains unchanged.
+
+Landscape V2 provides the stable foundation from which Representative Paths, Event Horizons and Establishing Shots are constructed.
+
+
+
+# Representative Paths
+
+Representative Paths are the structural foundation of the Decision Landscape.
+
+Each Representative Path describes a distinct, stable future that completely satisfies the governing decision variable in a philosophically coherent way.
+
+The purpose of a Representative Path is not to predict exactly what will happen.
+
+Its purpose is to represent one of the smallest set of futures required to faithfully understand the decision.
+
+Every subsequent stage of Decision Workspace reasons about Representative Paths rather than directly about the original prompt.
+
+---
+
+## Properties of a Representative Path
+
+Every Representative Path must satisfy the following properties.
+
+### Preserve the Decision Variable
+
+A Representative Path must preserve the governing decision variable established by the Reframer.
+
+It must never broaden, narrow or replace the user's intended decision.
+
+If a possible future requires changing the decision being analysed, it does not belong within the current Decision Landscape.
+
+---
+
+### Represent A Stable Reality
+
+A Representative Path must describe a future that could be inhabited indefinitely.
+
+Temporary actions, intermediate steps or undecided states are not Representative Paths.
+
+Representative Paths describe enduring realities rather than moments within a process.
+
+---
+
+### Be Philosophically Distinct
+
+Each Representative Path must represent a genuinely different way of satisfying the governing decision.
+
+Differences in implementation, timing or execution do not create new Representative Paths.
+
+Only differences that produce a distinct, stable philosophy of living belong within the landscape.
+
+---
+
+### Remain Representative
+
+Representative Paths are chosen because they collectively explain the structure of the decision.
+
+They are not intended to enumerate every possible variation.
+
+Individual implementations, tactical choices and execution details remain outside the Decision Landscape unless they fundamentally alter the structure of the decision itself.
+
+---
+
+## What Is Not A Representative Path
+
+The following do not create additional Representative Paths.
+
+- execution strategies
+- implementation details
+- temporary pauses
+- intermediate milestones
+- tactical variations
+- different methods of achieving the same stable future
+
+These belong to later stages of reasoning, typically Navigator.
+
+Representative Paths exist to represent fundamentally different realities, not different routes towards the same reality.
+
+---
+
+## Number of Representative Paths
+
+The Decision Landscape does not attempt to create a predetermined number of Representative Paths.
+
+Instead, it constructs the smallest representative set required to faithfully represent the governing decision variable.
+
+Some decisions require only two Representative Paths.
+
+Others require three.
+
+The number of paths is determined by the structure of the decision being represented rather than by any predefined architectural rule.
+
+
+
+# Establishing Shots
+
+An Establishing Shot is the user's first experience of inhabiting a Representative Path.
+
+Its purpose is to briefly place the user inside a representative future, allowing immediate intuitive recognition of what that reality feels like before any detailed reasoning or analysis begins.
+
+An Establishing Shot does not persuade, justify or recommend.
+
+It simply establishes the world that the user is about to explore.
+
+---
+
+## Purpose
+
+Every Representative Path describes a distinct, stable future.
+
+An Establishing Shot allows the user to momentarily step into that future.
+
+Rather than describing the future abstractly, it presents a brief scene from within it.
+
+The objective is not explanation.
+
+The objective is recognition through experience.
+
+After reading an Establishing Shot, the user should already have an intuitive sense of:
+
+- where they are,
+- what kind of life they are living,
+- and how this future differs from the other Representative Paths.
+
+---
+
+## Principles
+
+### Allow Brief Inhabitation
+
+An Establishing Shot should briefly place the user inside the Representative Path.
+
+The user should feel as though they have arrived within that future rather than being told about it.
+
+Recognition should arise naturally from the scene itself.
+
+---
+
+### Represent The Whole
+
+An Establishing Shot should communicate the overall character of the Representative Path.
+
+It should avoid focusing on isolated facts, statistics or individual consequences.
+
+The purpose is to establish the lived reality of the future rather than describe its individual components.
+
+---
+
+### Remain Neutral
+
+An Establishing Shot must not advocate for or against the Representative Path.
+
+It should not attempt to persuade the user that one future is preferable to another.
+
+Positive and negative consequences are explored later within the reasoning process.
+
+The Establishing Shot exists only to establish the reality of the future.
+
+---
+
+### Be Representative
+
+An Establishing Shot should portray a scene that could naturally occur within the Representative Path.
+
+It should avoid exceptional moments or unusual circumstances.
+
+The scene should represent everyday life within that future rather than a specific event.
+
+---
+
+### Encourage Recognition
+
+The user should recognise the future rather than analyse it.
+
+An effective Establishing Shot often allows the user to think:
+
+> "I can imagine myself here."
+
+without yet deciding whether they wish to remain there.
+
+---
+
+## What An Establishing Shot Is Not
+
+An Establishing Shot is not:
+
+- a recommendation,
+- an argument,
+- a prediction,
+- an execution plan,
+- a list of advantages and disadvantages,
+- or a detailed explanation of the Representative Path.
+
+It is a brief experiential introduction to a representative future.
+
+Its purpose is to orient the user before deeper exploration begins.
+
+
+# Event Horizons
+
+A Decision Landscape represents the user's current understanding of a decision.
+
+As new information becomes available, that understanding may change.
+
+An Event Horizon marks the point at which the Decision Landscape must be updated to remain an accurate representation of the decision.
+
+An Event Horizon does not represent the event itself.
+
+It represents the transition between two valid states of the landscape.
+
+---
+
+## Purpose
+
+The purpose of an Event Horizon is to identify when the current Decision Landscape is no longer sufficient.
+
+When an Event Horizon is crossed, the landscape evolves to incorporate the newly available understanding while preserving the governing decision variable.
+
+The landscape therefore remains a living representation of the decision rather than a static snapshot.
+
+---
+
+## Principles
+
+### Preserve Continuity
+
+Crossing an Event Horizon should evolve the existing Decision Landscape rather than construct an entirely new one.
+
+The governing decision remains the same.
+
+Only the understanding of that decision changes.
+
+---
+
+### Be Triggered By Meaningful Change
+
+Not every new piece of information creates an Event Horizon.
+
+An Event Horizon exists only when the new information materially changes how the decision should be represented.
+
+Minor details and implementation choices should not alter the landscape.
+
+---
+
+### Preserve The Decision Variable
+
+Crossing an Event Horizon must not silently change the decision being analysed.
+
+If the governing decision itself changes, a new Decision Landscape should be constructed rather than modifying the existing one.
+
+---
+
+### Support Progressive Understanding
+
+Event Horizons allow the landscape to mature as understanding improves.
+
+Rather than attempting to know everything at the beginning of the reasoning process, the landscape grows naturally as important information is revealed.
+
+---
+
+## What An Event Horizon Is Not
+
+An Event Horizon is not:
+
+- a significant life event,
+- a recommendation,
+- a Representative Path,
+- a Clarifier,
+- or a Judge observation.
+
+It is the architectural boundary between one valid representation of the Decision Landscape and the next.
+
+Its purpose is to describe when the landscape should evolve, not why the external event occurred.
+
+
+# Landscape Boundaries
+
+The Decision Landscape intentionally represents only the information required to understand the user's decision.
+
+Its purpose is not to model reality in its entirety, but to construct a faithful representation of the decision being analysed.
+
+Maintaining these boundaries ensures that the landscape remains stable, understandable and focused on the user's intended decision.
+
+---
+
+## What Belongs Within A Decision Landscape
+
+A Decision Landscape may contain:
+
+- the governing decision variable,
+- supporting context relevant to the decision,
+- representative paths,
+- representative futures,
+- establishing shots,
+- event horizons,
+- user priorities revealed during clarification,
+- constraints that materially affect the decision,
+- uncertainties that influence how the decision should be reasoned about.
+
+Every element should contribute directly to understanding the current decision.
+
+---
+
+## What Does Not Belong Within A Decision Landscape
+
+The Decision Landscape does not contain:
+
+- recommendations,
+- execution plans,
+- implementation details,
+- tactical variations,
+- judge reasoning,
+- auditor reasoning,
+- navigation strategies,
+- user interface behaviour,
+- every possible future,
+- information unrelated to the governing decision.
+
+These belong to other architectural components.
+
+---
+
+## Component Boundaries
+
+The Decision Landscape acts as the shared reasoning model for the remainder of Decision Workspace.
+
+It receives information from earlier components.
+
+It provides a structured representation for later components.
+
+The landscape itself does not decide.
+
+It represents.
+
+Other components interpret, evaluate and act upon that representation.
+
+---
+
+## Simplicity
+
+The Decision Landscape should remain no more complex than required to faithfully represent the user's decision.
+
+Additional information should be included only when it materially improves understanding of the decision.
+
+Complexity should emerge from the decision itself rather than from the architecture.
+
+Whenever possible, the simpler landscape should be preferred.
+
+
+NOTE:
+The outputs shown in this inspection are representative examples created to illustrate the architecture. They are not intended to be canonical wording or production-quality responses.
+
+Their purpose is to demonstrate the structure and evolution of a Decision Landscape.
+
+# Worked Inspection 1
+
+## Constructing a Two-Path Decision Landscape
+
+### Objective
+
+This inspection demonstrates how a simple purchasing decision becomes a two-path Decision Landscape.
+
+The purpose is not to recommend an answer.
+
+The purpose is to show how the Landscape represents the decision, how that representation is refined, and why only two Representative Paths are produced.
+
+---
+
+# Initial State
+
+## User Prompt
+
+> Should I buy the Sony Bravia 9 II for £2,000?
+
+The Reframer has completed its work.
+
+The prompt is treated as a valid decision prompt rather than an execution request.
+
+The Landscape receives the governing decision and any relevant verified context available to the system.
+
+For this inspection, assume the system has established that the Sony Bravia 9 II is a premium flagship television and that £2,000 appears materially below its expected market position.
+
+---
+
+# Stage 1 — Decision Landscape V1
+
+## Current Output
+
+## Decision Landscape V1
+
+This decision concerns whether to commit £2,000 to a specific premium television that appears to sit significantly above its quoted purchase price in the current market.
+
+The landscape is not shaped primarily by whether the television is technically desirable. On available information, it appears to be a high-end product. The more important question is whether this specific purchase opportunity is both genuine and valuable enough to justify acting now.
+
+At this stage, the landscape is shaped by three visible forces:
+
+* The attraction of acquiring a flagship product at what may be an unusually favourable price.
+* The value of preserving £2,000 for other present or future uses.
+* The uncertainty created by the apparent gap between the product's market position and the quoted price.
+
+The key uncertainty is therefore not simply whether the television is good.
+
+The key uncertainty is whether the opportunity is as strong as it appears, or whether the unusually attractive price indicates missing context such as model size, condition, warranty, stock status, retailer reliability or listing accuracy.
+
+The landscape remains open.
+
+Before the decision can be represented confidently, the apparent opportunity must be understood as either genuine, qualified or misleading.
+
+---
+
+## Exploded Inspection
+
+### Opening Sentence
+
+> This decision concerns whether to commit £2,000 to a specific premium television that appears to sit significantly above its quoted purchase price in the current market.
+
+**Why is this here?**
+
+The opening sentence establishes the governing structure of the decision.
+
+It preserves the user's actual decision: whether to buy this specific television at this specific price.
+
+It also incorporates relevant verified context. The price is not treated as an isolated number. It is interpreted against the product's apparent market position.
+
+This allows the Landscape to represent the decision more faithfully than the prompt alone would allow.
+
+---
+
+### Why doesn't this say "Should I buy a premium television?"
+
+Because that would broaden the decision variable.
+
+The user did not ask whether to buy any premium television.
+
+The user asked whether to buy the Sony Bravia 9 II for £2,000.
+
+The Landscape must preserve that decision unless the user explicitly accepts a reframe.
+
+---
+
+### Second Paragraph
+
+> The landscape is not shaped primarily by whether the television is technically desirable. On available information, it appears to be a high-end product. The more important question is whether this specific purchase opportunity is both genuine and valuable enough to justify acting now.
+
+**Why is this here?**
+
+This paragraph prevents the Landscape from becoming a generic product review.
+
+The central issue is not whether the television is good in the abstract.
+
+The decision is shaped by the relationship between:
+
+* the product,
+* the quoted price,
+* the reliability of the opportunity,
+* and the user's willingness to commit the money now.
+
+This keeps the Landscape focused on the decision rather than drifting into general buying advice.
+
+---
+
+### Competing Forces
+
+> The attraction of acquiring a flagship product at what may be an unusually favourable price.
+> The value of preserving £2,000 for other present or future uses.
+> The uncertainty created by the apparent gap between the product's market position and the quoted price.
+
+**Why are these here?**
+
+These are the major forces visible in Landscape V1.
+
+They are not pros and cons.
+
+They are structural pressures within the decision.
+
+The first force captures the pull of the apparent opportunity.
+
+The second captures the value of retaining financial optionality.
+
+The third captures the anomaly created by the price itself.
+
+Together, they describe the current shape of the decision without yet producing a recommendation.
+
+---
+
+### Why does the Landscape mention uncertainty about the price?
+
+Because an apparently exceptional opportunity can itself become a source of risk.
+
+If the price is far below what the product's market position would suggest, the Landscape should not simply treat that as a bargain.
+
+It should recognise that the mismatch may indicate missing information.
+
+The Landscape therefore represents the anomaly before reasoning from it.
+
+---
+
+### Key Uncertainty
+
+> The key uncertainty is therefore not simply whether the television is good.
+
+**Why is this here?**
+
+This sentence narrows the uncertainty.
+
+A generic assistant might continue evaluating picture quality, competing models or general value.
+
+The Landscape instead identifies the uncertainty that matters most to this specific decision.
+
+The question is not:
+
+> Is this a good television?
+
+The question is closer to:
+
+> Is this specific opportunity sufficiently real, reliable and valuable to justify committing £2,000 now?
+
+---
+
+### Missing Context
+
+> ...model size, condition, warranty, stock status, retailer reliability or listing accuracy.
+
+**Why is this here?**
+
+These details are included because they are plausible explanations for the apparent price anomaly.
+
+They are not treated as separate decisions.
+
+They are examples of factual context that would materially affect the Landscape.
+
+The Landscape is identifying what must be resolved before the decision can be represented confidently.
+
+---
+
+### Closing Paragraph
+
+> The landscape remains open. Before the decision can be represented confidently, the apparent opportunity must be understood as either genuine, qualified or misleading.
+
+**Why is this here?**
+
+Landscape V1 should not collapse the decision into an answer.
+
+It should expose the current state of understanding.
+
+At this point, the system does not know whether the £2,000 price represents a genuine opportunity, a qualified opportunity or a misleading signal.
+
+The Landscape therefore remains open.
+
+---
+
+## Notable Absences
+
+### Why are there no Representative Paths yet?
+
+Because Landscape V1 is still identifying the structure of the decision.
+
+Representative Paths require stable post-decision futures.
+
+At this stage, the system has not yet resolved enough context to construct those futures confidently.
+
+---
+
+### Why is there no recommendation?
+
+Because the Decision Landscape does not recommend.
+
+It represents.
+
+Recommendation belongs later in the architecture, after the Landscape has been refined and tested.
+
+---
+
+### Why doesn't the Landscape compare the television with OLED alternatives?
+
+Because that would begin to answer a different question.
+
+The user has asked whether to buy this specific television at this specific price.
+
+Alternative products may become relevant later, but they do not define the governing decision variable.
+
+---
+
+# Stage Transition — External Component Interaction
+
+Landscape V1 is now examined by other components.
+
+These components are not explained in this document. They are shown only as interfaces because their detailed behaviour belongs elsewhere in the architecture.
+
+## Component Interaction
+
+Judge input identifies that the price anomaly is central to the decision.
+
+Clarifier questions are generated to resolve the most important uncertainty.
+
+Decision State is updated from the user's response.
+
+Landscape V2 is then produced.
+
+---
+
+# Stage 2 — Clarifier
+
+## Current Output
+
+## Clarifier Question
+
+> If the £2,000 price turned out to be genuine, with full warranty and no condition issue, would you feel comfortable committing the money now?
+
+The user responds:
+
+> Yes. If it is genuine and fully warranted, I would feel comfortable buying it at that price.
+
+---
+
+## Exploded Inspection
+
+### Clarifier Question
+
+> If the £2,000 price turned out to be genuine, with full warranty and no condition issue...
+
+**Why is this here?**
+
+The clarifier targets the uncertainty that currently prevents the Landscape from stabilising.
+
+It does not ask whether the user likes the television.
+
+It asks whether the apparent opportunity would be sufficient if the factual anomaly were resolved.
+
+---
+
+### User Response
+
+> Yes. If it is genuine and fully warranted, I would feel comfortable buying it at that price.
+
+**Why does this matter?**
+
+The user's response reveals that the main barrier is not unwillingness to spend £2,000.
+
+The barrier is confidence in the opportunity.
+
+This changes the Landscape.
+
+The decision is no longer primarily about whether the television is worth considering.
+
+It is about whether the opportunity can be verified.
+
+---
+
+# Stage 3 — Decision Landscape V2
+
+## Current Output
+
+## Decision Landscape V2
+
+The refined landscape now centres on verification of the opportunity rather than general evaluation of the television.
+
+The user has indicated that, if the £2,000 price is genuine, fully warranted and not explained by condition or listing issues, purchasing the television would be acceptable.
+
+The decision therefore turns on whether the apparent opportunity survives basic verification.
+
+The landscape now contains two stable directions:
+
+* Act on the opportunity if verification confirms that the offer is genuine.
+* Decline or pause if verification reveals uncertainty, qualification or unacceptable risk.
+
+The central tension has narrowed.
+
+Landscape V1 asked whether an apparently exceptional offer should be treated as meaningful.
+
+Landscape V2 asks whether the offer is real enough to act upon.
+
+---
+
+## Exploded Inspection
+
+### Opening Sentence
+
+> The refined landscape now centres on verification of the opportunity rather than general evaluation of the television.
+
+**Why is this here?**
+
+This sentence shows how V2 differs from V1.
+
+The Landscape has not changed the decision variable.
+
+It has refined the central uncertainty.
+
+V1 identified the apparent price anomaly.
+
+V2 incorporates the user's response and recognises that verification is now the key issue.
+
+---
+
+### User Preference
+
+> The user has indicated that, if the £2,000 price is genuine, fully warranted and not explained by condition or listing issues, purchasing the television would be acceptable.
+
+**Why is this here?**
+
+Landscape V2 includes revealed user preference.
+
+The system now knows that the user is not generally resisting the purchase.
+
+The user's willingness is conditional on the offer being genuine.
+
+This gives the Landscape a more precise shape.
+
+---
+
+### Stable Directions
+
+> Act on the opportunity if verification confirms that the offer is genuine.
+> Decline or pause if verification reveals uncertainty, qualification or unacceptable risk.
+
+**Why are these here?**
+
+These are not yet the full Representative Paths.
+
+They are the refined directions that the Landscape now makes visible.
+
+They show how the decision has narrowed after clarification.
+
+---
+
+### V1 to V2 Contrast
+
+> Landscape V1 asked whether an apparently exceptional offer should be treated as meaningful. Landscape V2 asks whether the offer is real enough to act upon.
+
+**Why is this here?**
+
+This sentence makes the landscape evolution explicit.
+
+The decision has not been replaced.
+
+The Landscape has matured.
+
+The system now better understands what the user needs to know before acting.
+
+---
+
+## Notable Absences
+
+### Why hasn't the Landscape become "Buy it"?
+
+Because the Landscape still does not recommend.
+
+Even after the user's preference is clarified, the Landscape only represents the decision state.
+
+It does not collapse that state into a conclusion.
+
+---
+
+### Why hasn't the Landscape introduced alternative televisions?
+
+Because the user's clarified response did not reframe the decision into a broader television search.
+
+The decision remains anchored to this specific television at this specific price.
+
+---
+
+# Stage 4 — Representative Paths
+
+## Current Output
+
+## Representative Paths
+
+## Representative Path A — Buy The Television
+
+The user verifies that the £2,000 offer is genuine, fully warranted and not materially qualified.
+
+They purchase the Sony Bravia 9 II.
+
+This path represents acting on the opportunity.
+
+---
+
+## Representative Path B — Do Not Buy The Television
+
+The user does not purchase the Sony Bravia 9 II.
+
+This may be because the offer cannot be verified, because the conditions are unacceptable, or because preserving the £2,000 remains preferable.
+
+This path represents declining the opportunity.
+
+---
+
+## Exploded Inspection
+
+### Why are there two Representative Paths?
+
+Because the governing decision variable is binary.
+
+The user either purchases the Sony Bravia 9 II for £2,000 or does not.
+
+There are many possible reasons for not purchasing.
+
+There are also many possible ways the purchase could be verified and completed.
+
+Those variations do not create additional Representative Paths.
+
+---
+
+### Why isn't "Buy a different television" a Representative Path?
+
+Because it does not preserve the governing decision variable.
+
+The current Landscape is not analysing:
+
+> Which television should I buy?
+
+It is analysing:
+
+> Should I buy the Sony Bravia 9 II for £2,000?
+
+Buying another television belongs to a different decision Landscape unless the user accepts a structural reframe.
+
+---
+
+### Why isn't "Wait and see" a Representative Path?
+
+Because waiting is not a stable post-decision future in this Landscape.
+
+It is an intermediate tactic.
+
+If waiting leads to purchase, it belongs under Path A.
+
+If waiting leads to non-purchase, it belongs under Path B.
+
+It does not form a separate stable reality.
+
+---
+
+### Why does Path B include multiple reasons?
+
+Because the Representative Path is defined by the stable future, not by the reason for reaching it.
+
+Whether the user declines because of uncertainty, cost, retailer concern or changed preference, the post-decision state remains:
+
+> The television was not purchased.
+
+Those reasons may matter to later reasoning, but they do not create new Representative Paths.
+
+---
+
+# Stage 5 — Event Horizon
+
+## Current Output
+
+## Event Horizon
+
+The decisive Event Horizon in this Landscape is verification of the offer.
+
+Before verification, the Landscape contains an unresolved anomaly.
+
+After verification, the Landscape changes.
+
+If the offer is confirmed as genuine, the decision becomes whether to act on a verified opportunity.
+
+If the offer is found to be qualified, misleading or uncertain, the decision becomes whether the remaining opportunity is still acceptable.
+
+Verification therefore marks the point at which the current Landscape must update.
+
+---
+
+## Exploded Inspection
+
+### Why is verification the Event Horizon?
+
+Because verification changes the state of the Landscape.
+
+Before verification, the system cannot know whether the apparent bargain is real.
+
+After verification, that uncertainty is materially reduced or transformed.
+
+The decision is not necessarily over, but the Landscape is no longer the same.
+
+---
+
+### Why isn't purchase itself the Event Horizon?
+
+Purchase may be an Event Horizon in the user's real life, because it creates a new state.
+
+However, within this Landscape, verification occurs earlier and materially changes the decision before purchase.
+
+The architecture identifies the point where the Landscape must update, not simply the most dramatic external event.
+
+---
+
+### Why isn't the price the Event Horizon?
+
+The price is not a transition.
+
+It is part of the current decision state.
+
+The Event Horizon is crossed only when the meaning of that price becomes clearer.
+
+---
+
+# Stage 6 — Establishing Shots
+
+## Current Output
+
+## Establishing Shot — Representative Path A
+
+You are sitting in your living room on a Friday evening. The Sony Bravia 9 II has been in place for several months. You no longer think about the listing, the retailer or the verification checks. The television is simply part of the room now. Every so often, a scene looks good enough that you remember why you acted quickly.
+
+---
+
+## Establishing Shot — Representative Path B
+
+You are sitting in the same living room on a Friday evening. The old television is still there, or perhaps a different one has taken its place. The £2,000 was never committed to the Sony offer. The listing has long since disappeared, and the decision now exists only as something you chose not to pursue.
+
+---
+
+## Exploded Inspection
+
+### Why does Path A begin several months later?
+
+Because the Establishing Shot should place the user inside the stable future created by the decision.
+
+Immediately after purchase, the user may still be thinking about delivery, setup, warranty, excitement or doubt.
+
+Several months later, the purchase has become normal.
+
+That is the representative future the Establishing Shot needs to show.
+
+---
+
+### Why does Path A avoid saying "you got a bargain"?
+
+Because that would evaluate the path.
+
+The Establishing Shot should let the user inhabit the future, not tell them how to feel about it.
+
+The user may experience the scene as satisfying, excessive, ordinary or irrelevant.
+
+The evaluation belongs to the user.
+
+---
+
+### Why does Path B not specify exactly what happened instead?
+
+Because Path B represents not purchasing the Sony Bravia 9 II.
+
+It does not need to resolve every alternative future.
+
+The stable fact is that the opportunity was declined or missed.
+
+A different purchase may or may not have occurred, but that is not the governing decision being represented.
+
+---
+
+### Why are both shots ordinary moments?
+
+Because Establishing Shots should show what the future feels like after it has become normal.
+
+They should avoid dramatic moments.
+
+The goal is recognition, not emotional manipulation.
+
+---
+
+# Inspection Summary
+
+This inspection demonstrates a two-path Decision Landscape.
+
+The governing decision variable remained stable throughout:
+
+> Should I buy the Sony Bravia 9 II for £2,000?
+
+Landscape V1 identified the structure of the decision and the apparent price anomaly.
+
+External component interaction clarified that the user's willingness to buy depended primarily on whether the offer was genuine and fully warranted.
+
+Landscape V2 refined the decision around verification of the opportunity.
+
+The Representative Paths remained two because the user either purchases the specific television or does not.
+
+The Event Horizon was the verification of the offer because that is the point at which the Landscape materially changes.
+
+The Establishing Shots allowed the user to briefly inhabit each representative future without being told which future to prefer.
+
+The Landscape did not recommend.
+
+It represented.
+
+
+
+# Worked Inspection 2
+
+## Constructing a Three-Path Decision Landscape
+
+### Objective
+
+The previous inspection demonstrated how a Decision Landscape is constructed.
+
+This inspection focuses on a different architectural question.
+
+Its purpose is to demonstrate why some decisions cannot be faithfully represented by two Representative Paths.
+
+Rather than introducing an additional option, the Landscape identifies a third stable future that represents a fundamentally different way of resolving the governing decision.
+
+Only the differences from the previous inspection are explored in detail.
+
+---
+
+# Initial State
+
+## User Prompt
+
+> My wife has been offered a job in Singapore. It would roughly double her salary. We'd need to move, I'd probably leave my own job, and our daughter would have to leave her friends and school. We could potentially return to the UK in five years with significantly more savings. Should we do it?
+
+The Reframer has completed.
+
+The Landscape receives the governing decision together with all relevant verified context available to the system.
+
+---
+
+# Stage 1 — Decision Landscape V1
+
+## Current Output
+
+### Decision Landscape V1
+
+This decision concerns whether the family should relocate to Singapore in response to a significant career opportunity.
+
+The decision is not solely financial.
+
+It requires balancing financial opportunity against disruption to family life, career continuity, relationships and long-term lifestyle.
+
+At this stage the landscape is shaped by four visible forces.
+
+- The opportunity to substantially improve long-term financial security.
+- The desire to preserve existing family stability and social connections.
+- The uncertainty surrounding life in a different country.
+- The possibility that relocation may not represent a permanent life change.
+
+The landscape remains open.
+
+Although the move itself appears binary, the long-term intention behind the move is not yet understood.
+
+---
+
+## Exploded Inspection
+
+Unlike Inspection 1, Landscape V1 behaves exactly as expected.
+
+The important feature here is the final sentence.
+
+> **"...the long-term intention behind the move is not yet understood."**
+
+This becomes the architectural trigger for the remainder of the inspection.
+
+Unlike the television example, the primary uncertainty is not factual.
+
+It concerns the intended shape of the future itself.
+
+---
+
+# Stage Transition
+
+Judge input identifies that the user's long-term intention is central to the decision.
+
+A Clarifier is generated.
+
+---
+
+# Stage 2 — Clarifier
+
+## Current Output
+
+### Clarifier Question
+
+> If you accepted the Singapore opportunity, would your intention be to build a permanent life there, or would you see the move as a temporary strategy before returning to the UK?
+
+The user responds:
+
+> We'd almost certainly want to come back after around five years.
+
+---
+
+## Exploded Inspection
+
+This clarification does not gather additional facts.
+
+It reveals the philosophy underlying the decision.
+
+That philosophy materially changes the Landscape.
+
+---
+
+# Stage 3 — Decision Landscape V2
+
+## Current Output
+
+### Decision Landscape V2
+
+The refined landscape now distinguishes between relocation as a permanent destination and relocation as a temporary strategy.
+
+The user has indicated that Singapore is viewed primarily as a means of achieving long-term financial goals rather than becoming a permanent home.
+
+The decision is therefore no longer represented simply as:
+
+- Move
+- Do not move
+
+The Landscape now recognises three distinct stable futures.
+
+---
+
+## Exploded Inspection
+
+This is the critical transition within the inspection.
+
+Landscape V1 could legitimately be interpreted as a binary decision.
+
+Landscape V2 cannot.
+
+The clarification has revealed that two fundamentally different philosophies exist within what initially appeared to be a single "move" decision.
+
+This refinement does not create complexity.
+
+It reveals complexity that already existed within the user's intended decision.
+
+---
+
+# Stage 4 — Representative Paths
+
+## Current Output
+
+### Representative Path A
+
+Relocate to Singapore and establish a long-term life there.
+
+---
+
+### Representative Path B
+
+Remain in the UK and continue building life within the current community.
+
+---
+
+### Representative Path C
+
+Relocate to Singapore as a temporary strategy to achieve defined financial objectives before intentionally returning to the UK.
+
+---
+
+## Exploded Inspection
+
+### Why are there three Representative Paths?
+
+Because the Landscape has identified three distinct stable futures.
+
+Each satisfies the governing decision variable in a fundamentally different way.
+
+---
+
+### Why isn't Path C simply a variation of Path A?
+
+Although both paths begin with relocation to Singapore, they represent different long-term realities.
+
+Path A treats Singapore as the destination.
+
+Path C treats Singapore as a temporary phase within a larger life plan.
+
+The philosophy governing each future is different.
+
+They are therefore different Representative Paths.
+
+---
+
+### Why isn't Path C simply a variation of Path B?
+
+Although Path C ultimately returns to the UK, it does not preserve the current life.
+
+The family's careers, finances, experiences and relationships are fundamentally altered by the years spent abroad.
+
+Returning home does not make the journey equivalent to never having left.
+
+The stable future is therefore different.
+
+---
+
+### Why are there not four or five Representative Paths?
+
+Alternative durations abroad, different employers, different locations within Singapore or different financial targets alter the implementation of a Representative Path.
+
+They do not alter the stable future being represented.
+
+The Landscape therefore remains complete without becoming unnecessarily complex.
+
+---
+
+# Stage 5 — Event Horizon
+
+## Current Output
+
+### Event Horizon
+
+The decisive Event Horizon occurs when the user's long-term intention becomes known.
+
+Before clarification, relocation appears to represent a single future.
+
+After clarification, two distinct relocation futures become visible.
+
+The Landscape must therefore evolve.
+
+---
+
+## Exploded Inspection
+
+Inspection 1 demonstrated an Event Horizon created by resolving a factual uncertainty.
+
+Inspection 2 demonstrates that Event Horizons may also arise through clarification of user intention.
+
+The architecture remains identical.
+
+Only the source of refinement changes.
+
+---
+
+# Stage 6 — Establishing Shots
+
+## Current Output
+
+### Representative Path A
+
+You are sitting on the balcony of your apartment in Singapore several years from now. Daily life has become familiar. Your daughter speaks comfortably about home, and that home is Singapore. The move is no longer something your family talks about. It simply became your life.
+
+---
+
+### Representative Path B
+
+You are sitting in your garden in the UK on a warm summer evening. Life continued much as you expected. Singapore occasionally comes up in conversation as an opportunity you once considered but ultimately chose not to pursue.
+
+---
+
+### Representative Path C
+
+You are unpacking the last few boxes in your new home back in the UK. The years in Singapore are behind you. They shaped your finances, your careers and your family, but they were always part of a larger plan. Returning home feels like completing a journey rather than undoing one.
+
+---
+
+## Exploded Inspection
+
+Inspection 1 established the purpose of Establishing Shots.
+
+The important observation here is that the third Establishing Shot represents a lived reality that cannot be confused with either of the others.
+
+It is neither permanent relocation nor remaining at home.
+
+It is its own coherent future.
+
+That is why the Landscape requires three Representative Paths.
+
+---
+
+# Inspection Summary
+
+This inspection demonstrates that the number of Representative Paths is determined by the structure of the decision rather than by the number of obvious options available.
+
+The original prompt appeared to present a binary choice.
+
+Clarification revealed that two fundamentally different long-term philosophies existed within the apparent "move" decision.
+
+The Landscape therefore evolved naturally from two apparent futures into three representative futures.
+
+The third Representative Path was not created by the architecture.
+
+It was discovered through a more faithful understanding of the user's intended decision.
+
+
+The Landscape must distinguish between observed facts, verified facts, user beliefs and architectural interpretation. It must never silently promote one into another.

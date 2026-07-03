@@ -1,0 +1,15 @@
+It should literally be a checklist.
+
+ Reframer identifies the governing objective correctly.
+ Landscape contains a clear decision representation.
+ Guardian contributes a distinct observation.
+ Pragmatist contributes a distinct observation.
+ Empathiser contributes a distinct observation.
+ Auditor produces a readiness assessment.
+ Two Representative Paths are generated.
+ Two Event Horizons are generated.
+ Two Establishing Shots are generated.
+ Steelman strengthens both paths without recommending either.
+ The final output reads like a coherent Decision Workspace experience.
+
+That's the document I'd keep beside me while coding. It turns "build the architecture" into a series of observable, testable milestones, and it gives us an objective definition of "v0.1 works." I think that's an excellent place to cross from design into implementation.

@@ -1,0 +1,184 @@
+C:\Users\alist\decision-workspace>npx.cmd tsx app/engine/run.ts
+{
+  "prompt": "Should I buy the Sony Bravia 9 II for £2,000?",
+  facts: {
+    subject: "Sony Bravia 9 II",
+    price: {
+      amount: 2000,
+      currency: "GBP",
+    },
+    assumptions: {
+      marketClass: "premium_flagship",
+      pricePosition: "materially_below_expected_market",
+    },
+  },
+  "panel": {
+    "guardian": [
+      {
+        "protectedValue": "Financial optionality",
+        "concern": "Capital commitment"
+      },
+      {
+        "protectedValue": "Decision quality",
+        "concern": "Scarcity pressure"
+      }
+    ],
+    "pragmatist": [
+      {
+        "requirement": "Seller verification"
+      },
+      {
+        "requirement": "Warranty verification"
+      },
+      {
+        "requirement": "Condition verification"
+      }
+    ],
+    "empathiser": [
+      {
+        "humanFactor": "Scarcity pressure"
+      },
+      {
+        "humanFactor": "Novelty decay"
+      }
+    ]
+  },
+  "reframer": {
+    "status": "PASS",
+    "governingObjective": "Determine whether to purchase the Sony Bravia 9 II for £2,000",
+    "route": "DECISION_LANDSCAPE",
+    "reason": "The prompt contains one clear purchasing decision involving a specific product and price."
+  },
+  "landscape": {
+    "v1": {
+      "subject": "Sony Bravia 9 II purchase",
+      "commitment": "£2,000",
+      "decisionAxes": [
+        "Value of the television",
+        "Integrity of the transaction"
+      ],
+      "resolvedUncertainties": [],
+      "remainingUncertainties": [
+        "Purchase willingness",
+        "Seller legitimacy",
+        "Condition",
+        "Warranty"
+      ],
+      "state": "BROAD"
+    },
+    "v2": {
+      "subject": "Sony Bravia 9 II purchase",
+      "commitment": "£2,000",
+      "decisionAxes": [
+        "Integrity of the transaction"
+      ],
+      "resolvedUncertainties": [
+        "Purchase willingness"
+      ],
+      "remainingUncertainties": [
+        "Seller legitimacy",
+        "Condition",
+        "Warranty"
+      ],
+      "state": "NARROWED"
+    }
+  },
+  "auditor": {
+    "evidenceStrength": "MEDIUM",
+    "assumptions": [
+      "£2,000 is materially below expected market position",
+      "The Sony Bravia 9 II is a premium television"
+    ],
+    "missingInformation": [
+      "Seller identity",
+      "Product condition",
+      "Warranty status"
+    ],
+    "blockingUncertainties": [
+      "Seller legitimacy",
+      "Condition",
+      "Warranty"
+    ],
+    "supportedConclusions": [
+      "The offer appears materially attractive if verified",
+      "Purchase willingness remains unresolved before clarification"
+    ],
+    "unsupportedConclusions": [
+      "The offer is safe",
+      "The television should be purchased"
+    ],
+    "internalConsistency": "CONSISTENT",
+    "readinessScore": 82,
+    "readinessState": "GREEN"
+  },
+  "clarifier": {
+    "target": "Purchase willingness",
+    "method": "ISOLATION",
+    "question": "If the £2,000 offer is genuine, fully warranted and free from hidden condition issues, would you feel comfortable committing the money?",
+    "rationale": "Determine whether willingness to purchase remains a blocking uncertainty once verification is removed."
+  },
+  "clarifierResponse": {
+    "answer": "Yes. If the offer is genuine, fully warranted and free from hidden condition issues, I would feel comfortable buying it.",
+    "effect": "Purchase willingness resolved"
+  },
+  "representativePaths": [
+    {
+      "id": "A",
+      "title": "Purchase",
+      "requiredConditions": [
+        "Offer verified",
+        "Warranty satisfactory",
+        "Condition satisfactory"
+      ],
+      "commitment": "£2,000 exchanged",
+      "consequence": "Television acquired"
+    },
+    {
+      "id": "B",
+      "title": "Do not purchase",
+      "requiredConditions": [
+        "Verification fails"
+      ],
+      "commitment": "Capital retained",
+      "consequence": "No television acquired"
+    }
+  ],
+  "eventHorizon": {
+    "trigger": "Purchase becomes irreversible",
+    "irreversibleAfter": [
+      "Return rights expire",
+      "Non-returnable purchase"
+    ],
+    "architecturalMeaning": "Decision transitions from evaluation to ownership."
+  },
+  "establishingShots": [
+    {
+      "pathId": "A"
+    },
+    {
+      "pathId": "B"
+    }
+  ],
+  "steelman": [
+    {
+      "pathId": "A",
+      "objective": "Capture exceptional value",
+      "supportingConditions": [
+        "Offer genuine",
+        "Warranty satisfactory",
+        "Condition satisfactory",
+        "Price materially below normal market value"
+      ]
+    },
+    {
+      "pathId": "B",
+      "objective": "Preserve financial flexibility",
+      "supportingConditions": [
+        "Capital retained",
+        "Verification risk avoided",
+        "Scarcity pressure removed",
+        "Money remains available for broader priorities"
+      ]
+    }
+  ]
+}

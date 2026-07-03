@@ -1,0 +1,247 @@
+---
+Version: 0.1
+Status: Working Draft
+Last Updated: 2026-06-30
+Owner: Decision Workspace
+Source: Research Log
+---
+
+# Decision Workspace Architecture
+
+## Purpose
+
+This document describes the high-level architecture of Decision Workspace.
+
+It defines the major system components, their responsibilities and how information flows between them.
+
+Detailed behaviour is specified separately within each component specification.
+
+---
+
+# System Overview
+
+Decision Workspace is a reasoning system that helps users understand complex decisions before acting on them.
+
+It is organised as a sequence of specialised components.
+
+Each component performs a single responsibility before passing the decision to the next stage.
+
+This separation exists to minimise overlap between components and to make the reasoning process understandable, testable and extensible.
+
+---
+
+# Core Processing Pipeline
+
+```
+User Prompt
+      │
+      ▼
+Reframer
+      │
+      ▼
+Decision Landscape
+      │
+      ▼
+Judge Panel
+      │
+      ▼
+Clarifiers (if required)
+      │
+      ▼
+Decision State
+      │
+      ▼
+Decision Landscape (Updated)
+      │
+      ▼
+Representative Futures
+      │
+      ▼
+User Recognition
+      │
+      ▼
+Recommendation
+      │
+      ▼
+Navigator
+```
+
+The recommendation emerges from the interaction between the user and the evolving decision landscape.
+
+The user remains the final decision-maker throughout.
+
+---
+
+# Core Components
+
+Decision Workspace currently consists of seven primary architectural components.
+
+## 1. Reframer
+
+Purpose:
+
+Ensure the correct decision is being analysed before reasoning begins.
+
+Responsibilities include:
+
+- validating the decision variable
+- identifying ambiguity
+- offering structural reframes where appropriate
+- routing execution-only prompts directly to Navigator
+
+The Reframer never analyses the decision itself.
+
+---
+
+## 2. Decision Landscape
+
+Purpose:
+
+Construct a representative model of the decision.
+
+The Decision Landscape identifies the smallest representative set of stable post-decision futures required to faithfully represent the user's decision.
+
+The landscape evolves as additional information becomes available.
+
+---
+
+## 3. Judge Panel
+
+Purpose:
+
+Interpret the decision landscape from independent reasoning perspectives.
+
+Each judge examines the same landscape through a different reasoning lens.
+
+The judges do not make the decision.
+
+Their outputs are synthesised into a single decision assessment.
+
+---
+
+## 4. Clarifiers
+
+Purpose:
+
+Reveal the user's priorities where additional understanding would materially improve the decision landscape.
+
+Clarifiers exist to expose preference rather than collect facts.
+
+They should be used sparingly.
+
+---
+
+## 5. Decision State
+
+Purpose:
+
+Represent the user's revealed priorities within the current decision.
+
+Decision State is internal only.
+
+It is not a personality model.
+
+It exists solely to personalise reasoning for the current decision.
+
+---
+
+## 6. Representative Futures
+
+Purpose:
+
+Allow the user to briefly inhabit each representative future.
+
+Representative Futures present evidence rather than advice.
+
+They exist to encourage recognition rather than persuasion.
+
+---
+
+## 7. Navigator
+
+Purpose:
+
+Support execution once a preferred direction has emerged.
+
+Navigator converts a chosen direction into an executable plan.
+
+It is intentionally separated from decision formation.
+
+---
+
+# Information Flow
+
+Information always moves forwards through the system.
+
+Earlier components establish the structure required by later components.
+
+Later components should not alter the responsibilities of earlier components.
+
+For example:
+
+- the Reframer determines the decision variable
+- the Landscape represents the decision
+- the Judges interpret the landscape
+- the Clarifiers refine understanding
+- the Navigator plans execution
+
+Each component builds upon, rather than replaces, the work of previous components.
+
+---
+
+# Separation of Responsibilities
+
+Decision Workspace intentionally separates major reasoning activities.
+
+| Activity | Component |
+|----------|-----------|
+| Understand the prompt | Reframer |
+| Represent the decision | Decision Landscape |
+| Interpret the decision | Judge Panel |
+| Reveal user priorities | Clarifiers |
+| Model current user priorities | Decision State |
+| Present representative futures | Representative Futures |
+| Support execution | Navigator |
+
+Each responsibility belongs to exactly one primary component.
+
+---
+
+# Architectural Principles
+
+The architecture is guided by the following principles:
+
+- preserve the user's intended decision
+- understand before analysing
+- separate decision formation from execution
+- prefer representative reasoning over exhaustive enumeration
+- recommendations should emerge rather than be imposed
+- components should have clearly separated responsibilities
+
+---
+
+# Scope
+
+This document intentionally avoids specifying component behaviour.
+
+Detailed rules are defined within the corresponding component specifications.
+
+This document defines only:
+
+- system structure
+- information flow
+- component responsibilities
+- architectural boundaries
+
+---
+
+# Related Documents
+
+- Philosophy.md
+- Reframer.md
+- Landscape.md
+- Judges.md
+- DecisionState.md
+- Navigator.md
+
+

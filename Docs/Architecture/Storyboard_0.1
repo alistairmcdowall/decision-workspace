@@ -1,0 +1,238 @@
+---
+Version: 0.1
+Status: Working Draft
+Last Updated: 2026-07-01
+Owner: Decision Workspace
+Source: Research Log
+---
+
+# Decision Lifecycle
+
+## Purpose
+
+The Decision Lifecycle describes how the major architectural components cooperate to analyse a user's decision.
+
+Unlike the component documents, which describe individual responsibilities, this document describes the overall flow of reasoning from the user's initial prompt to completion.
+
+It is intentionally high-level.
+
+Its purpose is to explain how the architecture behaves rather than how individual components perform their work.
+
+---
+
+# Lifecycle
+
+```text
+User Prompt
+      │
+      ▼
+ Reframer
+      │
+      ▼
+Decision Ready?
+      │
+ ┌────┴────┐
+ │         │
+ ▼         ▼
+No        Yes
+ │          │
+ ▼          ▼
+Clarify   Decision Landscape V1
+Route     │
+Prerequisite
+           ▼
+    Reasoning Panel
+           │
+           ▼
+   Auditor Assessment
+           │
+           ▼
+ Landscape Ready?
+      │
+ ┌────┴────┐
+ │         │
+ ▼         ▼
+No        Yes
+ │          │
+ ▼          ▼
+Clarify   Landscape Refinement
+Evidence        │
+                ▼
+     Representative Paths
+                │
+                ▼
+      Establishing Shots
+                │
+                ▼
+     Specialist Modes
+ (Steelman / Red Team)
+                │
+                ▼
+        User Exploration
+                │
+                ▼
+      User Selects Path
+                │
+                ▼
+          Navigator
+                │
+                ▼
+       Decision Archive
+```
+
+---
+
+# Stage 1 — Reframer
+
+The Reframer determines the user's governing objective.
+
+Depending upon the prompt, it may:
+
+- pass directly to the Decision Landscape
+- request clarification
+- identify prerequisite work
+- route to Navigator
+- route to another non-decision activity
+
+The Reframer determines what should happen next.
+
+---
+
+# Stage 2 — Decision Landscape
+
+Once the governing decision has been established, the initial Decision Landscape is constructed.
+
+This represents the current understanding of the decision before detailed reasoning begins.
+
+---
+
+# Stage 3 — Reasoning Panel
+
+The core Reasoning Panel independently examines the Landscape.
+
+Guardian, Pragmatist, Empathiser and Auditor each contribute observations within their own area of responsibility.
+
+These observations enrich the Landscape without recommending a decision.
+
+---
+
+# Stage 4 — Auditor
+
+Auditor evaluates whether the Landscape is sufficiently complete and coherent for meaningful reasoning.
+
+Landscape Readiness determines whether reasoning should continue or whether clarification would materially improve the analysis.
+
+---
+
+# Stage 5 — Landscape Refinement
+
+The Decision Landscape incorporates the panel's observations.
+
+Representative Paths mature into coherent possible futures.
+
+Establishing Shots are generated to help the user inhabit each path.
+
+---
+
+# Stage 6 — Specialist Modes
+
+Where appropriate, additional reasoning modes may be invoked.
+
+Steelman ensures that each Representative Path is represented by its strongest legitimate case.
+
+Red Team attempts to falsify the emerging recommendation by challenging assumptions, evidence and reasoning.
+
+These modes operate only when their specialised forms of reasoning are expected to improve the analysis.
+
+---
+
+# Stage 7 — User Exploration
+
+The user explores the completed Decision Landscape.
+
+They may inspect:
+
+- Representative Paths
+- Establishing Shots
+- Judge observations
+- Auditor Report
+- Supporting rationale
+
+The user determines how deeply they wish to explore the reasoning.
+
+---
+
+# Stage 8 — Navigator
+
+Once the user has selected a direction, Navigator assists with practical implementation.
+
+Navigator does not revisit the decision itself.
+
+Its responsibility is to help the user successfully execute the chosen path.
+
+---
+
+# Stage 9 — Decision Archive
+
+The completed decision is stored as a Decision Record.
+
+This may include:
+
+- governing decision
+- Decision Landscape
+- Representative Paths
+- selected path
+- implementation artefacts
+
+If the user later wishes to revisit or build upon the decision, these artefacts may be used as context.
+
+---
+
+# Design Principles
+
+The lifecycle follows several architectural principles.
+
+### Separation of Responsibilities
+
+Each component performs one clearly defined role.
+
+Reasoning, implementation and orchestration remain distinct.
+
+---
+
+### Progressive Refinement
+
+The architecture begins with an initial representation of the decision.
+
+Each subsequent stage improves that representation before recommendations emerge.
+
+---
+
+### User Control
+
+The user remains in control throughout.
+
+Decision Workspace improves understanding.
+
+It does not make decisions on the user's behalf.
+
+---
+
+### Explicit Transitions
+
+Movement between architectural components is always explicit.
+
+Each transition occurs because the previous stage has completed its own responsibility.
+
+No component silently assumes the responsibilities of another.
+
+---
+
+# Related Documents
+
+- Philosophy.md
+- Architecture.md
+- Reframer.md
+- Landscape.md
+- Reasoning Panel.md
+- Navigator.md
