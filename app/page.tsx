@@ -1,254 +1,117 @@
 "use client";
 
-import { useState } from "react";
-import { runDecision, type DecisionResult } from "@/lib/decisionengine";
+import { useMemo, useState } from "react";
+import { runBraviaSlice } from "./engine/runBraviaSlice";
+import { runBraviaNavigatorSlice } from "./engine/runBraviaNavigatorSlice";
+import { runSingaporeSlice } from "./engine/runSingaporeSlice";
+import { runPortfolioSlice } from "./engine/runPortfolioSlice";
+import { renderGuidedReport } from "./engine/presentation/guidedRenderer";
 
-const DRAWDOWN_QUESTION =
-  "If £500k temporarily fell to £350k, would you stay invested?";
+type SliceName = "bravia" | "bravia-navigator" | "singapore" | "portfolio";
+
+const slices: {
+  id: SliceName;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: "bravia",
+    label: "Bravia purchase",
+    description: "A purchase decision with verification still unresolved.",
+  },
+  {
+    id: "bravia-navigator",
+    label: "Bravia + Navigator",
+    description: "A selected purchase path with pre-payment execution checks.",
+  },
+  {
+    id: "singapore",
+    label: "Singapore relocation",
+    description: "A major family relocation decision.",
+  },
+  {
+    id: "portfolio",
+    label: "Retirement portfolio",
+    description: "An 8–10 year growth portfolio decision.",
+  },
+];
+
+function runSlice(sliceName: SliceName): string {
+  const context =
+    sliceName === "bravia"
+      ? runBraviaSlice()
+      : sliceName === "bravia-navigator"
+        ? runBraviaNavigatorSlice()
+        : sliceName === "singapore"
+          ? runSingaporeSlice()
+          : runPortfolioSlice();
+
+  return renderGuidedReport(context);
+}
 
 export default function Home() {
-  const [decision, setDecision] = useState("");
-  const [result, setResult] = useState<DecisionResult | null>(null);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [selectedSlice, setSelectedSlice] = useState<SliceName>("portfolio");
 
-  function runPrototype() {
-    const trimmed = decision.trim();
-
-    if (!trimmed) {
-      setResult({
-        summary:
-          "Enter a decision first. The workspace will produce a first-pass summary, clarifiers, and a show-working section.",
-        clarifiers: [],
-        analysis: {} as any,
-        comparison: {
-          agreement: { statement: "" },
-          tension: { statement: "" },
-          uncertainty: { statement: "" },
-        },
-      });
-      return;
-    }
-
-    setAnswers({});
-    setResult(runDecision(trimmed, answers));
-    setShowAnalysis(false);
-  }
-
-
-
+  const report = useMemo(() => runSlice(selectedSlice), [selectedSlice]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <section className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-6 py-12">
+      <section className="mx-auto max-w-5xl px-6 py-12">
         <div className="mb-8">
           <p className="mb-3 text-sm font-medium uppercase tracking-[0.25em] text-slate-400">
             Decision Workspace
           </p>
+
           <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
-            Think through important decisions.
+            Guided decision exploration.
           </h1>
+
           <p className="mt-4 max-w-2xl text-slate-300">
-            Enter a decision. The workspace will produce a summary, the highest
-            value clarifiers, and an optional analysis layer.
+            Select a prototype decision slice and view the structured report.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-2xl">
-          <textarea
-            value={decision}
-            onChange={(event) => setDecision(event.target.value)}
-            placeholder="Example: Build me a portfolio for £500k so I can invest it right now."
-            className="min-h-36 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 p-4 text-slate-100 outline-none placeholder:text-slate-500 focus:border-slate-400"
-          />
-
-          <div className="mt-4 flex justify-end">
+        <section className="mb-8 grid gap-3 md:grid-cols-2">
+          {slices.map((slice) => (
             <button
-              onClick={runPrototype}
-              className="rounded-xl bg-slate-100 px-5 py-3 font-medium text-slate-950 transition hover:bg-white"
+              key={slice.id}
+              onClick={() => setSelectedSlice(slice.id)}
+              className={`rounded-2xl border p-5 text-left transition ${
+                selectedSlice === slice.id
+                  ? "border-slate-200 bg-slate-100 text-slate-950"
+                  : "border-slate-800 bg-slate-900/70 text-slate-100 hover:border-slate-500"
+              }`}
             >
-              Run decision
+              <h2 className="text-lg font-semibold">{slice.label}</h2>
+              <p
+                className={`mt-2 text-sm leading-6 ${
+                  selectedSlice === slice.id
+                    ? "text-slate-700"
+                    : "text-slate-400"
+                }`}
+              >
+                {slice.description}
+              </p>
             </button>
+          ))}
+        </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl">
+          <div className="mb-4 flex items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
+                Report Preview
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold">
+                {slices.find((slice) => slice.id === selectedSlice)?.label}
+              </h2>
+            </div>
           </div>
-        </div>
 
-        {result && (
-          <div className="mt-8 space-y-6">
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-              <h2 className="mb-3 text-xl font-semibold">Summary</h2>
-              <p className="leading-7 text-slate-300">{result.summary}</p>
-            </section>
-
-            {result.clarifiers.length > 0 && (
-              <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-                <h2 className="mb-3 text-xl font-semibold">
-                  Decision Clarifiers
-                </h2>
-
-                <div className="space-y-3">
-                  {result.clarifiers.map((clarifier, index) => (
-                    <div
-                    key={clarifier.id}
-                      className="rounded-xl border border-slate-800 bg-slate-950 p-4"
-                    >
-                      <p className="mb-3 text-slate-300">
-                      {index + 1}. {clarifier.question}
-                      </p>
-
-                      <div className="flex gap-2">
-                        {["Yes", "No", "Unsure"].map((answer) => (
-                          <button
-                            key={answer}
-                            onClick={() => {
-                              const updatedAnswers = {
-                                ...answers,
-                                [clarifier.id]: answer,
-                              };
-                            
-                              setAnswers(updatedAnswers);
-                            
-                              if (result) {
-                                setResult(runDecision(decision, updatedAnswers));
-                              }
-                            }}
-                            className={`rounded-lg border px-3 py-2 text-sm transition ${
-                              answers[clarifier.id] === answer
-                                ? "border-slate-200 bg-slate-200 text-slate-950"
-                                : "border-slate-700 text-slate-300 hover:border-slate-400 hover:text-white"
-                            }`}
-                          >
-                            {answer}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-            {Object.keys(answers).length > 0 && (
-              <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-                <h2 className="mb-3 text-xl font-semibold">Current Answers</h2>
-
-                <div className="space-y-3">
-                  {Object.entries(answers).map(([question, answer]) => (
-                    <div
-                      key={question}
-                      className="rounded-xl border border-slate-800 bg-slate-950 p-4"
-                    >
-                      <p className="text-sm text-slate-400">{question}</p>
-                      <p className="mt-2 font-semibold text-slate-100">
-                        {answer}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-              <h2 className="mb-3 text-xl font-semibold">Judge Comparison</h2>
-
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-semibold text-slate-100">
-                    Areas of Agreement
-                  </h3>
-                  <p className="leading-7 text-slate-300">
-                    {result.comparison.agreement.statement}
-                  </p>
-
-                  {result.comparison.agreement.evidence && (
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
-                      {result.comparison.agreement.evidence.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-slate-100">
-                    Areas of Tension
-                  </h3>
-                  <p className="leading-7 text-slate-300">
-                    {result.comparison.tension.statement}
-                  </p>
-
-                  {result.comparison.tension.evidence && (
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-400">
-                      {result.comparison.tension.evidence.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {result.comparison.tension.whyItMatters && (
-                    <p className="mt-2 text-slate-400">
-                      <span className="font-semibold text-slate-300">
-                        Why it matters:{" "}
-                      </span>
-                      {result.comparison.tension.whyItMatters}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-slate-100">
-                    Highest Uncertainty
-                  </h3>
-                  <p className="leading-7 text-slate-300">
-                    {result.comparison.uncertainty.statement}
-                  </p>
-
-                  {result.comparison.uncertainty.whyItMatters && (
-                    <p className="mt-2 text-slate-400">
-                      <span className="font-semibold text-slate-300">
-                        Why it matters:{" "}
-                      </span>
-                      {result.comparison.uncertainty.whyItMatters}
-                    </p>
-                  )}
-
-                  {result.comparison.uncertainty.potentialImpact && (
-                    <p className="mt-2 text-slate-400">
-                      <span className="font-semibold text-slate-300">
-                        Potential impact:{" "}
-                      </span>
-                      {result.comparison.uncertainty.potentialImpact}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            {result.analysis && (
-              <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-                <button
-                  onClick={() => setShowAnalysis(!showAnalysis)}
-                  className="font-medium text-slate-200 hover:text-white"
-                >
-                  {showAnalysis ? "Hide Analysis" : "Show Analysis"}
-                </button>
-
-                {showAnalysis && (
-                  <div className="mt-4 space-y-4">
-                    {Object.entries(result.analysis).map(([judge, output]) => (
-                      <div
-                        key={judge}
-                        className="rounded-xl border border-slate-800 bg-slate-950 p-4"
-                      >
-                        <h3 className="mb-2 font-semibold capitalize text-slate-100">
-                          {judge}
-                        </h3>
-                        <p className="leading-7 text-slate-300">{output}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
-          </div>
-        )}
+          <pre className="whitespace-pre-wrap rounded-xl bg-slate-950 p-5 text-sm leading-7 text-slate-200">
+            {report}
+          </pre>
+        </section>
       </section>
     </main>
   );
