@@ -14,7 +14,7 @@ export type ReframerRoute =
 
 export type ReadinessState = "GREEN" | "AMBER" | "RED";
 export type EvidenceStrength = "LOW" | "MEDIUM" | "HIGH";
-export type PathId = "A" | "B";
+export type PathId = "A" | "B" | "C";
 export type ClarifierMethod = "ISOLATION" | "THRESHOLD" | "COUNTERFACTUAL";
 
 export type MoneyAmount = {
@@ -134,12 +134,30 @@ export type DecisionContext = {
     title?: string;
     shot: string;
   }[];
-  
+
   steelman?: {
     pathId: PathId;
     objective: string;
     supportingConditions: string[];
   }[];
 
+  presentation?: {
+    decisionStateSummary?: string;
+    decisionTurn?: string;
+  };
+
+  navigator?: {
+    pathSelected: string;
+    status: string;
+    scale: "CHECKLIST" | "IMPLEMENTATION_PLAN" | "PROGRAMME_MAP";
+    summary: string;
+    sections: {
+      title: string;
+      items: string[];
+    }[];
+    pauseBeforeProceedingIf?: string[];
+    nextAction?: string;
+  };
+  
   finalOutput?: string;
 };

@@ -18,6 +18,19 @@ function eventTriggerText(trigger: string | undefined): string {
 }
 
 function decisionSummary(c: any): string {
+  const price = c.facts?.userStated?.price ?? c.facts?.price;
+
+  if (price && price.amount > 0) {
+    const purchaseSubject =
+      c.facts?.userStated?.subject ??
+      c.facts?.subject ??
+      c.landscape?.v2?.subject ??
+      c.landscape?.v1?.subject ??
+      "this item";
+
+    return `The decision is whether to buy ${purchaseSubject} for £${price.amount.toLocaleString("en-GB")}.`;
+  }
+
   const subject =
     c.landscape?.v2?.subject ??
     c.landscape?.v1?.subject ??
@@ -25,15 +38,49 @@ function decisionSummary(c: any): string {
     c.facts?.subject ??
     "this decision";
 
-  const price = c.facts?.userStated?.price ?? c.facts?.price;
+  return `The decision concerns ${subject}.`;}
 
-  if (price && price.amount > 0) {
-    return `The decision is whether to buy ${subject} for £${price.amount.toLocaleString("en-GB")}.`;
+
+function renderNavigator(c: any): string[] {
+  if (!c.navigator) {
+    return [];
   }
 
-  return `The decision concerns ${subject}.`;
-}
+  const navigator = c.navigator;
 
+  return [
+    `# Navigator`,
+    ``,
+    `**Path selected:** ${navigator.pathSelected}`,
+    ``,
+    `**Status:** ${navigator.status}`,
+    ``,
+    navigator.summary,
+    ``,
+    ...navigator.sections.flatMap((section: any) => [
+      `## ${section.title}`,
+      ``,
+      ...section.items.map((item: string) => `- ${item}`),
+      ``,
+    ]),
+    ...(navigator.pauseBeforeProceedingIf?.length
+      ? [
+          `## Pause before proceeding if`,
+          ``,
+          ...navigator.pauseBeforeProceedingIf.map((item: string) => `- ${item}`),
+          ``,
+        ]
+      : []),
+    ...(navigator.nextAction
+      ? [
+          `## Next action`,
+          ``,
+          navigator.nextAction,
+          ``,
+        ]
+      : []),
+  ];
+}
 export function renderGuidedReport(context: DecisionContext): string {
   const c = context as any;
 
@@ -94,6 +141,9 @@ export function renderGuidedReport(context: DecisionContext): string {
     ``,
     `Until that boundary is crossed, the decision remains in evaluation. After it, the decision becomes harder to reverse.`,
     ``,
-    `This report does not choose for you. It shows what needs to be true for each path to make sense.`,
+    ...renderNavigator(c),
+    c.navigator
+    ? `Navigator does not reopen the decision. It shows the next practical steps for the selected path.`
+    : `This report does not choose for you. It shows what needs to be true for each path to make sense.`,
   ].join("\n");
 }
