@@ -23,6 +23,13 @@ export function runSingaporeSlice(): DecisionContext {
 
     panel: {},
 
+    presentation: {
+      decisionStateSummary:
+        "The opportunity is significant, but the move depends on whether the employment, school and household route can support a five-year relocation.",
+      decisionTurn:
+        "So the decision now turns on whether the family route is workable before binding commitments are made.",
+    },
+
     landscape: {
       v2: {
         subject: "Singapore relocation",

@@ -10,6 +10,8 @@ function eventTriggerText(trigger: string | undefined): string {
     case "acceptance_of_binding_relocation_commitments":
       return "accepting binding relocation commitments, such as resignation, school withdrawal, housing commitments, or major relocation spending";
 
+    case "portfolio_allocation_commitment":
+      return "placing the major allocation trades, especially once existing holdings are sold and the portfolio is materially repositioned";
     default:
       return trigger ?? "not specified";
   }
@@ -48,7 +50,8 @@ export function renderGuidedReport(context: DecisionContext): string {
     ``,
     decisionSummary(c),
     ``,
-    `The first question is no longer whether the offer is interesting. The model treats it as attractive if verified.`,
+    c.presentation?.decisionStateSummary ??
+  `The model has narrowed the decision to the issues that now matter most.`,
     ``,
     `## What has already been resolved?`,
     resolved.length ? resolved.map((x: string) => `- ${x}`).join("\n") : `- Nothing yet`,
@@ -56,7 +59,8 @@ export function renderGuidedReport(context: DecisionContext): string {
     `## What still blocks the decision?`,
     remaining.length ? remaining.map((x: string) => `- ${x}`).join("\n") : `- Nothing currently listed`,
     ``,
-    `So the decision now turns on verification.`,
+    c.presentation?.decisionTurn ??
+    `So the decision now turns on the remaining unresolved issues.`,
     ``,
     `# Representative Paths`,
     ``,

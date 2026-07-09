@@ -28,6 +28,13 @@ export function runBraviaSlice(): DecisionContext {
       },
     },
     panel: {},
+
+    presentation: {
+      decisionStateSummary:
+        "The first question is no longer whether the offer is interesting. The model treats it as attractive if verified.",
+      decisionTurn:
+        "So the decision now turns on verification.",
+    },
   };
 
   context = reframer(context);

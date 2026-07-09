@@ -1,9 +1,9 @@
-import { runSingaporeSlice } from "./runSingaporeSlice";
+import { runPortfolioSlice } from "./runPortfolioSlice";
 import { renderReport } from "./renderReport";
 import { renderCleanReport } from "./presentation/cleanRenderer";
 import { renderGuidedReport } from "./Presentation/guidedRenderer";
 
-const context = runSingaporeSlice();
+const context = runPortfolioSlice();
 
 const OUTPUT_MODE: "json" | "clean" | "guided" = "guided";
 
