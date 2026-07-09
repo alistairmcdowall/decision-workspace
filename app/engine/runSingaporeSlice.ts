@@ -6,7 +6,12 @@ export function runSingaporeSlice(): DecisionContext {
   const context = {
     prompt:
       "My wife has been offered a job in Singapore for twice the salary. It would be a minimum five-year commitment for the family. I would have to leave my job and our daughter would need to find a school. We have to decide soon.",
-
+      decision: {
+        subject: "Singapore relocation",
+        kind: "RELOCATION",
+        commitment:
+          "Move the family to Singapore for a five-year period if employment, schooling, housing and household viability can be confirmed.",
+      },
     facts: {
       userStated: {
         subject: "Singapore relocation",
@@ -147,7 +152,7 @@ export function runSingaporeSlice(): DecisionContext {
       transition:
         "evaluation_to_family_relocation_commitment",
     },
-  } as any;
+  };
 
   return context;
 }

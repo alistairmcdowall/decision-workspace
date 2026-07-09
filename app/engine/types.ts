@@ -15,6 +15,23 @@ export type ReframerRoute =
 export type ReadinessState = "GREEN" | "AMBER" | "RED";
 export type EvidenceStrength = "LOW" | "MEDIUM" | "HIGH";
 export type PathId = "A" | "B" | "C";
+export type DecisionKind =
+  | "PURCHASE"
+  | "RELOCATION"
+  | "PORTFOLIO"
+  | "GENERAL";
+
+export type MoneyAmount = {
+  amount: number;
+  currency: "GBP" | "USD" | "EUR" | "SGD";
+};
+
+export type DecisionCore = {
+  subject: string;
+  kind: DecisionKind;
+  commitment?: string;
+  price?: MoneyAmount;
+};
 export type ClarifierMethod = "ISOLATION" | "THRESHOLD" | "COUNTERFACTUAL";
 
 export type MoneyAmount = {
@@ -24,7 +41,7 @@ export type MoneyAmount = {
 
 export type DecisionContext = {
   prompt: string;
-
+  decision: DecisionCore;
   facts: {
     userStated: {
       subject: string;

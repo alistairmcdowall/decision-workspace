@@ -14,6 +14,15 @@ import type { DecisionContext } from "./types";
 export function runBraviaSlice(): DecisionContext {
   let context: DecisionContext = {
     prompt: "Should I buy the Sony Bravia 9 II for £2,000?",
+    decision: {
+      subject: "Sony Bravia 9 II",
+      kind: "PURCHASE",
+      commitment: "Buy the television if seller, condition, warranty and payment route verify cleanly.",
+      price: {
+        amount: 2000,
+        currency: "GBP",
+      },
+    },
     facts: {
       userStated: {
         subject: "Sony Bravia 9 II",

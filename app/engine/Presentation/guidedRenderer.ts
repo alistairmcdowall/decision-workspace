@@ -18,6 +18,16 @@ function eventTriggerText(trigger: string | undefined): string {
 }
 
 function decisionSummary(c: any): string {
+  const decision = c.decision;
+
+  if (decision?.kind === "PURCHASE" && decision.price?.amount > 0) {
+    return `The decision is whether to buy ${decision.subject} for £${decision.price.amount.toLocaleString("en-GB")}.`;
+  }
+
+  if (decision?.subject) {
+    return `The decision concerns ${decision.subject}.`;
+  }
+
   const price = c.facts?.userStated?.price ?? c.facts?.price;
 
   if (price && price.amount > 0) {
@@ -38,7 +48,8 @@ function decisionSummary(c: any): string {
     c.facts?.subject ??
     "this decision";
 
-  return `The decision concerns ${subject}.`;}
+  return `The decision concerns ${subject}.`;
+}
 
 
 function renderNavigator(c: any): string[] {

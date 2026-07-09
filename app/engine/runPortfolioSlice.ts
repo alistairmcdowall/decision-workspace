@@ -6,7 +6,12 @@ export function runPortfolioSlice(): DecisionContext {
   const context = {
     prompt:
       "I want to reinvest a substantial portfolio for 8–10 years of growth before switching toward income. I am considering a conviction growth portfolio, a simpler balanced global portfolio, or a lower-risk capital preservation approach.",
-
+      decision: {
+        subject: "8–10 year retirement growth portfolio",
+        kind: "PORTFOLIO",
+        commitment:
+          "Allocate long-term retirement capital into a growth portfolio for 8–10 years before later transitioning toward income generation.",
+      },
     facts: {
       userStated: {
         subject: "8–10 year retirement growth portfolio",
@@ -179,7 +184,7 @@ export function runPortfolioSlice(): DecisionContext {
       ],
       transition: "evaluation_to_invested_strategy",
     },
-  } as any;
+  };
 
   return context;
 }
