@@ -1,8 +1,16 @@
-import { runBraviaSlice } from "./runBraviaSlice";
+import { runSingaporeSlice } from "./runSingaporeSlice";
 import { renderReport } from "./renderReport";
+import { renderCleanReport } from "./presentation/cleanRenderer";
+import { renderGuidedReport } from "./Presentation/guidedRenderer";
 
-const context = runBraviaSlice();
+const context = runSingaporeSlice();
 
-const report = renderReport(context);
+const OUTPUT_MODE: "json" | "clean" | "guided" = "guided";
 
-console.log(report);
+console.log(
+    OUTPUT_MODE === "json"
+      ? renderReport(context)
+      : OUTPUT_MODE === "clean"
+        ? renderCleanReport(context)
+        : renderGuidedReport(context)
+  );

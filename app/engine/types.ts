@@ -131,8 +131,10 @@ export type DecisionContext = {
 
   establishingShots?: {
     pathId: PathId;
+    title?: string;
+    shot: string;
   }[];
-
+  
   steelman?: {
     pathId: PathId;
     objective: string;

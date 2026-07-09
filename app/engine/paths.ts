@@ -7,7 +7,7 @@ export function paths(context: DecisionContext): DecisionContext {
     representativePaths: [
       {
         id: "A",
-        title: "Purchase",
+        title: "Buy the Bravia",
         requiredConditions: [
           "offer_verified",
           "warranty_satisfactory",
@@ -22,7 +22,7 @@ export function paths(context: DecisionContext): DecisionContext {
       },
       {
         id: "B",
-        title: "Do not purchase",
+        title: "Do not buy the Bravia",
         requiredConditions: [
           "verification_fails",
         ],
