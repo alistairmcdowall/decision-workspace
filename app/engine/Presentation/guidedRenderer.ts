@@ -148,9 +148,12 @@ export function renderGuidedReport(context: DecisionContext): string {
     }),
     `# Event Horizon`,
     ``,
-    `The important boundary is ${eventTriggerText(c.eventHorizon?.trigger)}.`,
+    `The important boundary is ${
+      c.eventHorizon?.label ?? eventTriggerText(c.eventHorizon?.trigger)
+    }.`,
     ``,
-    `Until that boundary is crossed, the decision remains in evaluation. After it, the decision becomes harder to reverse.`,
+    c.eventHorizon?.explanation ??
+      `Until that boundary is crossed, the decision remains in evaluation. After it, the decision becomes harder to reverse.`,
     ``,
     ...renderNavigator(c),
     c.navigator

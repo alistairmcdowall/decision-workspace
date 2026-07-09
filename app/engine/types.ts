@@ -142,8 +142,8 @@ export type DecisionContext = {
 
   eventHorizon?: {
     trigger: string;
-    irreversibleAfter: string[];
-    transition: string;
+    label?: string;
+    explanation?: string;
   };
 
   establishingShots?: {
