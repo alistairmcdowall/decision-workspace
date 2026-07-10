@@ -48,7 +48,130 @@ function runSlice(sliceName: SliceName): string {
 
   return renderGuidedReport(context);
 }
+function ReportView({ report }: { report: string }) {
+  const lines = report.split("\n");
 
+  const blocks: {
+    type: "section" | "subsection" | "paragraph" | "list";
+    title?: string;
+    content?: string[];
+  }[] = [];
+
+  let currentList: string[] = [];
+
+  function flushList() {
+    if (currentList.length > 0) {
+      blocks.push({
+        type: "list",
+        content: currentList,
+      });
+      currentList = [];
+    }
+  }
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      flushList();
+      continue;
+    }
+
+    if (trimmed.startsWith("# ")) {
+      flushList();
+      blocks.push({
+        type: "section",
+        title: trimmed.replace(/^# /, ""),
+      });
+      continue;
+    }
+
+    if (trimmed.startsWith("## ")) {
+      flushList();
+      blocks.push({
+        type: "subsection",
+        title: trimmed.replace(/^## /, ""),
+      });
+      continue;
+    }
+
+    if (trimmed.startsWith("### ")) {
+      flushList();
+      blocks.push({
+        type: "subsection",
+        title: trimmed.replace(/^### /, ""),
+      });
+      continue;
+    }
+
+    if (trimmed.startsWith("- ")) {
+      currentList.push(trimmed.replace(/^- /, ""));
+      continue;
+    }
+
+    flushList();
+    blocks.push({
+      type: "paragraph",
+      content: [trimmed],
+    });
+  }
+
+  flushList();
+
+  return (
+    <div className="space-y-4">
+      {blocks.map((block, index) => {
+        if (block.type === "section") {
+          return (
+            <div
+              key={index}
+              className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5 first:mt-0"
+            >
+              <h2 className="text-2xl font-semibold text-slate-100">
+                {block.title}
+              </h2>
+            </div>
+          );
+        }
+
+        if (block.type === "subsection") {
+          return (
+            <div
+              key={index}
+              className="rounded-xl border border-slate-800 bg-slate-950 p-4"
+            >
+              <h3 className="text-lg font-semibold text-slate-100">
+                {block.title}
+              </h3>
+            </div>
+          );
+        }
+
+        if (block.type === "list") {
+          return (
+            <ul
+              key={index}
+              className="list-disc space-y-2 rounded-xl border border-slate-800 bg-slate-950 p-5 pl-8 text-slate-300"
+            >
+              {block.content?.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          );
+        }
+
+        return (
+          <p
+            key={index}
+            className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300"
+          >
+            {block.content?.join(" ")}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 export default function Home() {
   const [selectedSlice, setSelectedSlice] = useState<SliceName>("portfolio");
 
@@ -108,9 +231,7 @@ export default function Home() {
             </div>
           </div>
 
-          <pre className="whitespace-pre-wrap rounded-xl bg-slate-950 p-5 text-sm leading-7 text-slate-200">
-            {report}
-          </pre>
+          <ReportView report={report} />
         </section>
       </section>
     </main>
