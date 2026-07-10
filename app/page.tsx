@@ -51,21 +51,59 @@ function runSlice(sliceName: SliceName): string {
 function ReportView({ report }: { report: string }) {
   const lines = report.split("\n");
 
-  const blocks: {
-    type: "section" | "subsection" | "paragraph" | "list";
-    title?: string;
-    content?: string[];
-  }[] = [];
+  type Block =
+    | {
+        type: "section";
+        title: string;
+      }
+    | {
+        type: "subsection";
+        title: string;
+      }
+    | {
+        type: "paragraph";
+        content: string[];
+      }
+    | {
+        type: "list";
+        content: string[];
+      }
+    | {
+        type: "path";
+        title: string;
+        content: string[];
+      };
 
+  const blocks: Block[] = [];
   let currentList: string[] = [];
+  let currentPath: { title: string; content: string[] } | null = null;
 
   function flushList() {
     if (currentList.length > 0) {
-      blocks.push({
-        type: "list",
-        content: currentList,
-      });
+      if (currentPath) {
+        currentPath.content.push(...currentList.map((item) => `- ${item}`));
+      } else {
+        blocks.push({
+          type: "list",
+          content: currentList,
+        });
+      }
+
       currentList = [];
+    }
+  }
+
+  function flushPath() {
+    flushList();
+
+    if (currentPath) {
+      blocks.push({
+        type: "path",
+        title: currentPath.title,
+        content: currentPath.content,
+      });
+
+      currentPath = null;
     }
   }
 
@@ -77,8 +115,17 @@ function ReportView({ report }: { report: string }) {
       continue;
     }
 
+    if (trimmed.startsWith("## Path ")) {
+      flushPath();
+      currentPath = {
+        title: trimmed.replace(/^## /, ""),
+        content: [],
+      };
+      continue;
+    }
+
     if (trimmed.startsWith("# ")) {
-      flushList();
+      flushPath();
       blocks.push({
         type: "section",
         title: trimmed.replace(/^# /, ""),
@@ -88,19 +135,31 @@ function ReportView({ report }: { report: string }) {
 
     if (trimmed.startsWith("## ")) {
       flushList();
-      blocks.push({
-        type: "subsection",
-        title: trimmed.replace(/^## /, ""),
-      });
+
+      if (currentPath) {
+        currentPath.content.push(trimmed);
+      } else {
+        blocks.push({
+          type: "subsection",
+          title: trimmed.replace(/^## /, ""),
+        });
+      }
+
       continue;
     }
 
     if (trimmed.startsWith("### ")) {
       flushList();
-      blocks.push({
-        type: "subsection",
-        title: trimmed.replace(/^### /, ""),
-      });
+
+      if (currentPath) {
+        currentPath.content.push(trimmed);
+      } else {
+        blocks.push({
+          type: "subsection",
+          title: trimmed.replace(/^### /, ""),
+        });
+      }
+
       continue;
     }
 
@@ -110,17 +169,27 @@ function ReportView({ report }: { report: string }) {
     }
 
     flushList();
-    blocks.push({
-      type: "paragraph",
-      content: [trimmed],
-    });
+
+    if (currentPath) {
+      currentPath.content.push(trimmed);
+    } else {
+      blocks.push({
+        type: "paragraph",
+        content: [trimmed],
+      });
+    }
   }
 
+  flushPath();
   flushList();
 
   return (
     <div className="space-y-4">
       {blocks.map((block, index) => {
+        if (block.type === "path") {
+          return <PathCard key={index} title={block.title} content={block.content} />;
+        }
+
         if (block.type === "section") {
           return (
             <div
@@ -153,7 +222,7 @@ function ReportView({ report }: { report: string }) {
               key={index}
               className="list-disc space-y-2 rounded-xl border border-slate-800 bg-slate-950 p-5 pl-8 text-slate-300"
             >
-              {block.content?.map((item) => (
+              {block.content.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -165,11 +234,109 @@ function ReportView({ report }: { report: string }) {
             key={index}
             className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300"
           >
-            {block.content?.join(" ")}
+            {block.content.join(" ")}
           </p>
         );
       })}
     </div>
+  );
+}
+function PathCard({
+  title,
+  content,
+}: {
+  title: string;
+  content: string[];
+}) {
+  const establishingShotIndex = content.findIndex((line) =>
+    line.startsWith("### Establishing Shot")
+  );
+
+  const strongestCaseIndex = content.findIndex((line) =>
+    line.startsWith("### Strongest Case")
+  );
+
+  const supportingConditionsIndex = content.findIndex((line) =>
+    line.startsWith("Supporting conditions:")
+  );
+
+  const establishingShot =
+    establishingShotIndex >= 0 && strongestCaseIndex > establishingShotIndex
+      ? content.slice(establishingShotIndex + 1, strongestCaseIndex).join(" ")
+      : "";
+
+  const establishingShotTitle =
+    establishingShotIndex >= 0
+      ? content[establishingShotIndex].replace("### Establishing Shot", "").replace(/^ — /, "")
+      : "";
+
+  const strongestCase =
+    strongestCaseIndex >= 0
+      ? content
+          .slice(
+            strongestCaseIndex + 1,
+            supportingConditionsIndex >= 0
+              ? supportingConditionsIndex
+              : content.length
+          )
+          .join(" ")
+      : "";
+
+  const supportingConditions =
+    supportingConditionsIndex >= 0
+      ? content
+          .slice(supportingConditionsIndex + 1)
+          .filter((line) => line.startsWith("- "))
+          .map((line) => line.replace(/^- /, ""))
+      : [];
+
+  return (
+    <article className="rounded-3xl border border-slate-700 bg-slate-950 p-6 shadow-2xl">
+      <div className="mb-6 border-b border-slate-800 pb-4">
+        <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
+          Representative Path
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-100">{title}</h2>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Establishing Shot
+          </p>
+
+          {establishingShotTitle && (
+            <h3 className="mt-2 text-lg font-semibold text-slate-100">
+              {establishingShotTitle}
+            </h3>
+          )}
+
+          <p className="mt-3 leading-7 text-slate-300">{establishingShot}</p>
+        </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Strongest Case
+          </p>
+
+          <p className="mt-3 leading-7 text-slate-300">{strongestCase}</p>
+        </section>
+      </div>
+
+      {supportingConditions.length > 0 && (
+        <section className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Supporting Conditions
+          </p>
+
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
+            {supportingConditions.map((condition) => (
+              <li key={condition}>{condition}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </article>
   );
 }
 export default function Home() {
