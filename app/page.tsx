@@ -56,47 +56,19 @@ function runSlice(sliceName: SliceName): StructuredReport {
 function ReportView({ report }: { report: StructuredReport }) {
   return (
     <div className="space-y-4">
-      <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5 first:mt-0">
-        <h2 className="text-2xl font-semibold text-slate-100">
-          {report.title}
-        </h2>
-      </div>
+      <DecisionFrame report={report} />
 
-      <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
-        {report.summary}
-      </p>
+      <ResolutionPanel
+        title="What has already been resolved?"
+        items={report.resolved}
+        emptyText="Nothing yet"
+      />
 
-      <section className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-        <h3 className="text-lg font-semibold text-slate-100">
-          What has already been resolved?
-        </h3>
-
-        {report.resolved.length > 0 ? (
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
-            {report.resolved.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-slate-300">Nothing yet</p>
-        )}
-      </section>
-
-      <section className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-        <h3 className="text-lg font-semibold text-slate-100">
-          What still blocks the decision?
-        </h3>
-
-        {report.remaining.length > 0 ? (
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
-            {report.remaining.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-slate-300">Nothing currently listed</p>
-        )}
-      </section>
+      <ResolutionPanel
+        title="What still blocks the decision?"
+        items={report.remaining}
+        emptyText="Nothing currently listed"
+      />
 
       <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
         {report.decisionTurn}
@@ -113,21 +85,7 @@ function ReportView({ report }: { report: StructuredReport }) {
       ))}
 
       {report.eventHorizon && (
-        <>
-          <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5">
-            <h2 className="text-2xl font-semibold text-slate-100">
-              Event Horizon
-            </h2>
-          </div>
-
-          <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
-            The important boundary is {report.eventHorizon.label}.
-          </p>
-
-          <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
-            {report.eventHorizon.explanation}
-          </p>
-        </>
+        <EventHorizonCard eventHorizon={report.eventHorizon} />
       )}
 
       {report.navigator && <NavigatorCard navigator={report.navigator} />}
@@ -136,6 +94,73 @@ function ReportView({ report }: { report: StructuredReport }) {
         {report.closingNote}
       </p>
     </div>
+  );
+}
+function DecisionFrame({ report }: { report: StructuredReport }) {
+  return (
+    <>
+      <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5 first:mt-0">
+        <h2 className="text-2xl font-semibold text-slate-100">
+          {report.title}
+        </h2>
+      </div>
+
+      <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+        {report.summary}
+      </p>
+    </>
+  );
+}
+function ResolutionPanel({
+  title,
+  items,
+  emptyText,
+}: {
+  title: string;
+  items: string[];
+  emptyText: string;
+}) {
+  return (
+    <section className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+      <h3 className="text-lg font-semibold text-slate-100">{title}</h3>
+
+      {items.length > 0 ? (
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-slate-300">{emptyText}</p>
+      )}
+    </section>
+  );
+}
+function EventHorizonCard({
+  eventHorizon,
+}: {
+  eventHorizon: StructuredReport["eventHorizon"];
+}) {
+  if (!eventHorizon) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5">
+        <h2 className="text-2xl font-semibold text-slate-100">
+          Event Horizon
+        </h2>
+      </div>
+
+      <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+        The important boundary is {eventHorizon.label}.
+      </p>
+
+      <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+        {eventHorizon.explanation}
+      </p>
+    </>
   );
 }
 function PathCard({ path }: { path: StructuredPath }) {
