@@ -5,7 +5,12 @@ import { runBraviaSlice } from "./engine/runBraviaSlice";
 import { runBraviaNavigatorSlice } from "./engine/runBraviaNavigatorSlice";
 import { runSingaporeSlice } from "./engine/runSingaporeSlice";
 import { runPortfolioSlice } from "./engine/runPortfolioSlice";
-import { renderGuidedReport } from "./engine/presentation/guidedRenderer";
+import {
+  buildStructuredReport,
+  type StructuredReport,
+  type StructuredPath,
+  type StructuredNavigator,
+} from "./engine/Presentation/StructuredReports";
 
 type SliceName = "bravia" | "bravia-navigator" | "singapore" | "portfolio";
 
@@ -36,7 +41,7 @@ const slices: {
   },
 ];
 
-function runSlice(sliceName: SliceName): string {
+function runSlice(sliceName: SliceName): StructuredReport {
   const context =
     sliceName === "bravia"
       ? runBraviaSlice()
@@ -46,305 +51,103 @@ function runSlice(sliceName: SliceName): string {
           ? runSingaporeSlice()
           : runPortfolioSlice();
 
-  return renderGuidedReport(context);
+  return buildStructuredReport(context);
 }
-function ReportView({ report }: { report: string }) {
-  const lines = report.split("\n");
-
-  type Block =
-    | {
-        type: "section";
-        title: string;
-      }
-    | {
-        type: "subsection";
-        title: string;
-      }
-    | {
-        type: "paragraph";
-        content: string[];
-      }
-    | {
-        type: "list";
-        content: string[];
-      }
-    | {
-        type: "path";
-        title: string;
-        content: string[];
-      }
-    | {
-        type: "navigator";
-        content: string[];
-      };
-
-  const blocks: Block[] = [];
-  let currentList: string[] = [];
-  let currentPath: { title: string; content: string[] } | null = null;
-  let currentNavigator: string[] | null = null;
-
-  function flushList() {
-    if (currentList.length > 0) {
-      if (currentPath) {
-        currentPath.content.push(...currentList.map((item) => `- ${item}`));
-      } else if (currentNavigator) {
-        currentNavigator.push(...currentList.map((item) => `- ${item}`));
-      } else {
-        blocks.push({
-          type: "list",
-          content: currentList,
-        });
-      }
-
-      currentList = [];
-    }
-  }
-
-  function flushPath() {
-    flushList();
-
-    if (currentPath) {
-      blocks.push({
-        type: "path",
-        title: currentPath.title,
-        content: currentPath.content,
-      });
-
-      currentPath = null;
-    }
-  }
-
-  function flushNavigator() {
-    flushList();
-
-    if (currentNavigator) {
-      blocks.push({
-        type: "navigator",
-        content: currentNavigator,
-      });
-
-      currentNavigator = null;
-    }
-  }
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      flushList();
-      continue;
-    }
-
-    if (trimmed.startsWith("## Path ")) {
-      flushNavigator();
-      flushPath();
-
-      currentPath = {
-        title: trimmed.replace(/^## /, ""),
-        content: [],
-      };
-      continue;
-    }
-
-    if (trimmed === "# Navigator") {
-      flushPath();
-      flushNavigator();
-      currentNavigator = [];
-      continue;
-    }
-
-    if (trimmed.startsWith("# ")) {
-      flushPath();
-      flushNavigator();
-
-      blocks.push({
-        type: "section",
-        title: trimmed.replace(/^# /, ""),
-      });
-      continue;
-    }
-
-    if (trimmed.startsWith("## ")) {
-      flushList();
-
-      if (currentPath) {
-        currentPath.content.push(trimmed);
-      } else if (currentNavigator) {
-        currentNavigator.push(trimmed);
-      } else {
-        blocks.push({
-          type: "subsection",
-          title: trimmed.replace(/^## /, ""),
-        });
-      }
-
-      continue;
-    }
-
-    if (trimmed.startsWith("### ")) {
-      flushList();
-
-      if (currentPath) {
-        currentPath.content.push(trimmed);
-      } else if (currentNavigator) {
-        currentNavigator.push(trimmed);
-      } else {
-        blocks.push({
-          type: "subsection",
-          title: trimmed.replace(/^### /, ""),
-        });
-      }
-
-      continue;
-    }
-
-    if (trimmed.startsWith("- ")) {
-      currentList.push(trimmed.replace(/^- /, ""));
-      continue;
-    }
-
-    flushList();
-
-    if (currentPath) {
-      currentPath.content.push(trimmed);
-    } else if (currentNavigator) {
-      currentNavigator.push(trimmed);
-    } else {
-      blocks.push({
-        type: "paragraph",
-        content: [trimmed],
-      });
-    }
-  }
-
-  flushPath();
-  flushNavigator();
-  flushList();
-
+function ReportView({ report }: { report: StructuredReport }) {
   return (
     <div className="space-y-4">
-      {blocks.map((block, index) => {
-        if (block.type === "path") {
-          return (
-            <PathCard
-              key={index}
-              title={block.title}
-              content={block.content}
-            />
-          );
-        }
+      <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5 first:mt-0">
+        <h2 className="text-2xl font-semibold text-slate-100">
+          {report.title}
+        </h2>
+      </div>
 
-        if (block.type === "navigator") {
-          return <NavigatorCard key={index} content={block.content} />;
-        }
+      <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+        {report.summary}
+      </p>
 
-        if (block.type === "section") {
-          return (
-            <div
-              key={index}
-              className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5 first:mt-0"
-            >
-              <h2 className="text-2xl font-semibold text-slate-100">
-                {block.title}
-              </h2>
-            </div>
-          );
-        }
+      <section className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+        <h3 className="text-lg font-semibold text-slate-100">
+          What has already been resolved?
+        </h3>
 
-        if (block.type === "subsection") {
-          return (
-            <div
-              key={index}
-              className="rounded-xl border border-slate-800 bg-slate-950 p-4"
-            >
-              <h3 className="text-lg font-semibold text-slate-100">
-                {block.title}
-              </h3>
-            </div>
-          );
-        }
+        {report.resolved.length > 0 ? (
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
+            {report.resolved.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-slate-300">Nothing yet</p>
+        )}
+      </section>
 
-        if (block.type === "list") {
-          return (
-            <ul
-              key={index}
-              className="list-disc space-y-2 rounded-xl border border-slate-800 bg-slate-950 p-5 pl-8 text-slate-300"
-            >
-              {block.content.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          );
-        }
+      <section className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+        <h3 className="text-lg font-semibold text-slate-100">
+          What still blocks the decision?
+        </h3>
 
-        return (
-          <p
-            key={index}
-            className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300"
-          >
-            {block.content.join(" ")}
+        {report.remaining.length > 0 ? (
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
+            {report.remaining.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-slate-300">Nothing currently listed</p>
+        )}
+      </section>
+
+      <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+        {report.decisionTurn}
+      </p>
+
+      <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5">
+        <h2 className="text-2xl font-semibold text-slate-100">
+          Representative Paths
+        </h2>
+      </div>
+
+      {report.paths.map((path) => (
+        <PathCard key={path.id} path={path} />
+      ))}
+
+      {report.eventHorizon && (
+        <>
+          <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <h2 className="text-2xl font-semibold text-slate-100">
+              Event Horizon
+            </h2>
+          </div>
+
+          <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+            The important boundary is {report.eventHorizon.label}.
           </p>
-        );
-      })}
+
+          <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+            {report.eventHorizon.explanation}
+          </p>
+        </>
+      )}
+
+      {report.navigator && <NavigatorCard navigator={report.navigator} />}
+
+      <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 leading-7 text-slate-300">
+        {report.closingNote}
+      </p>
     </div>
   );
 }
-function PathCard({
-  title,
-  content,
-}: {
-  title: string;
-  content: string[];
-}) {
-  const establishingShotIndex = content.findIndex((line) =>
-    line.startsWith("### Establishing Shot")
-  );
-
-  const strongestCaseIndex = content.findIndex((line) =>
-    line.startsWith("### Strongest Case")
-  );
-
-  const supportingConditionsIndex = content.findIndex((line) =>
-    line.startsWith("Supporting conditions:")
-  );
-
-  const establishingShot =
-    establishingShotIndex >= 0 && strongestCaseIndex > establishingShotIndex
-      ? content.slice(establishingShotIndex + 1, strongestCaseIndex).join(" ")
-      : "";
-
-  const establishingShotTitle =
-    establishingShotIndex >= 0
-      ? content[establishingShotIndex].replace("### Establishing Shot", "").replace(/^ — /, "")
-      : "";
-
-  const strongestCase =
-    strongestCaseIndex >= 0
-      ? content
-          .slice(
-            strongestCaseIndex + 1,
-            supportingConditionsIndex >= 0
-              ? supportingConditionsIndex
-              : content.length
-          )
-          .join(" ")
-      : "";
-
-  const supportingConditions =
-    supportingConditionsIndex >= 0
-      ? content
-          .slice(supportingConditionsIndex + 1)
-          .filter((line) => line.startsWith("- "))
-          .map((line) => line.replace(/^- /, ""))
-      : [];
-
+function PathCard({ path }: { path: StructuredPath }) {
   return (
     <article className="rounded-3xl border border-slate-700 bg-slate-950 p-6 shadow-2xl">
       <div className="mb-6 border-b border-slate-800 pb-4">
         <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
           Representative Path
         </p>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-100">{title}</h2>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-100">
+          Path {path.id} — {path.title}
+        </h2>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -353,13 +156,15 @@ function PathCard({
             Establishing Shot
           </p>
 
-          {establishingShotTitle && (
+          {path.establishingShotTitle && (
             <h3 className="mt-2 text-lg font-semibold text-slate-100">
-              {establishingShotTitle}
+              {path.establishingShotTitle}
             </h3>
           )}
 
-          <p className="mt-3 leading-7 text-slate-300">{establishingShot}</p>
+          <p className="mt-3 leading-7 text-slate-300">
+            {path.establishingShot}
+          </p>
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
@@ -367,18 +172,20 @@ function PathCard({
             Strongest Case
           </p>
 
-          <p className="mt-3 leading-7 text-slate-300">{strongestCase}</p>
+          <p className="mt-3 leading-7 text-slate-300">
+            {path.strongestCase}
+          </p>
         </section>
       </div>
 
-      {supportingConditions.length > 0 && (
+      {path.supportingConditions.length > 0 && (
         <section className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
             Supporting Conditions
           </p>
 
           <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
-            {supportingConditions.map((condition) => (
+            {path.supportingConditions.map((condition) => (
               <li key={condition}>{condition}</li>
             ))}
           </ul>
@@ -387,84 +194,12 @@ function PathCard({
     </article>
   );
 }
-function NavigatorCard({ content }: { content: string[] }) {
-  const pathSelected =
-    content
-      .find((line) => line.startsWith("**Path selected:**"))
-      ?.replace("**Path selected:**", "")
-      .trim() ?? "";
-
-  const status =
-    content
-      .find((line) => line.startsWith("**Status:**"))
-      ?.replace("**Status:**", "")
-      .trim() ?? "";
-
-  const keyChecksIndex = content.findIndex((line) =>
-    line.startsWith("## Key checks")
-  );
-
-  const pauseIndex = content.findIndex((line) =>
-    line.startsWith("## Pause before proceeding if")
-  );
-
-  const nextActionIndex = content.findIndex((line) =>
-    line.startsWith("## Next action")
-  );
-
-  const summaryStartIndex = content.findIndex(
-    (line) =>
-      !line.startsWith("**Path selected:**") &&
-      !line.startsWith("**Status:**")
-  );
-
-  const summaryEndIndex =
-    keyChecksIndex >= 0
-      ? keyChecksIndex
-      : pauseIndex >= 0
-        ? pauseIndex
-        : nextActionIndex >= 0
-          ? nextActionIndex
-          : content.length;
-
-  const summary =
-    summaryStartIndex >= 0
-      ? content.slice(summaryStartIndex, summaryEndIndex).join(" ")
-      : "";
-
-  const keyChecks =
-    keyChecksIndex >= 0
-      ? content
-          .slice(
-            keyChecksIndex + 1,
-            pauseIndex >= 0
-              ? pauseIndex
-              : nextActionIndex >= 0
-                ? nextActionIndex
-                : content.length
-          )
-          .filter((line) => line.startsWith("- "))
-          .map((line) => line.replace(/^- /, ""))
-      : [];
-
-  const pauseItems =
-    pauseIndex >= 0
-      ? content
-          .slice(
-            pauseIndex + 1,
-            nextActionIndex >= 0 ? nextActionIndex : content.length
-          )
-          .filter((line) => line.startsWith("- "))
-          .map((line) => line.replace(/^- /, ""))
-      : [];
-
-  const nextAction =
-    nextActionIndex >= 0
-      ? content
-          .slice(nextActionIndex + 1)
-          .filter((line) => !line.startsWith("## "))
-          .join(" ")
-      : "";
+function NavigatorCard({
+  navigator,
+}: {
+  navigator: StructuredNavigator;
+}) {
+  const keyChecks = navigator.sections[0]?.items ?? [];
 
   return (
     <article className="rounded-3xl border border-emerald-800/70 bg-emerald-950/20 p-6 shadow-2xl">
@@ -478,38 +213,34 @@ function NavigatorCard({ content }: { content: string[] }) {
         </h2>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {pathSelected && (
-            <div className="rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Path selected
-              </p>
-              <p className="mt-2 font-semibold text-slate-100">
-                {pathSelected}
-              </p>
-            </div>
-          )}
+          <div className="rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+              Path selected
+            </p>
+            <p className="mt-2 font-semibold text-slate-100">
+              {navigator.pathSelected}
+            </p>
+          </div>
 
-          {status && (
-            <div className="rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                Status
-              </p>
-              <p className="mt-2 font-semibold text-slate-100">{status}</p>
-            </div>
-          )}
+          <div className="rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+              Status
+            </p>
+            <p className="mt-2 font-semibold text-slate-100">
+              {navigator.status}
+            </p>
+          </div>
         </div>
       </div>
 
-      {summary && (
-        <p className="rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-5 leading-7 text-slate-300">
-          {summary}
-        </p>
-      )}
+      <p className="rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-5 leading-7 text-slate-300">
+        {navigator.summary}
+      </p>
 
       {keyChecks.length > 0 && (
         <section className="mt-4 rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-400/80">
-            Key checks before action
+            {navigator.sections[0].title}
           </p>
 
           <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
@@ -520,27 +251,29 @@ function NavigatorCard({ content }: { content: string[] }) {
         </section>
       )}
 
-      {pauseItems.length > 0 && (
+      {navigator.pauseBeforeProceedingIf.length > 0 && (
         <section className="mt-4 rounded-2xl border border-amber-900/70 bg-amber-950/20 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-300/90">
             Pause before proceeding if
           </p>
 
           <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-300">
-            {pauseItems.map((item) => (
+            {navigator.pauseBeforeProceedingIf.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
         </section>
       )}
 
-      {nextAction && (
+      {navigator.nextAction && (
         <section className="mt-4 rounded-2xl border border-emerald-900/70 bg-slate-950/70 p-5">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-400/80">
             Next action
           </p>
 
-          <p className="mt-3 leading-7 text-slate-300">{nextAction}</p>
+          <p className="mt-3 leading-7 text-slate-300">
+            {navigator.nextAction}
+          </p>
         </section>
       )}
     </article>
