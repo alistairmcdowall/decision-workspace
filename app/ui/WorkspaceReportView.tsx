@@ -9,7 +9,10 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
     <div className="space-y-4">
       <DecisionFrame report={report} />
 
+      <WorkspaceSummaryStrip report={report} />
+
       <ResolutionPanel
+
         title="What has already been resolved?"
         items={report.resolved}
         emptyText="Nothing yet"
@@ -63,7 +66,44 @@ function DecisionFrame({ report }: { report: StructuredReport }) {
     </>
   );
 }
+function WorkspaceSummaryStrip({ report }: { report: StructuredReport }) {
+  const items = [
+    {
+      label: "Resolved",
+      value: report.resolved.length.toString(),
+    },
+    {
+      label: "Open blockers",
+      value: report.remaining.length.toString(),
+    },
+    {
+      label: "Paths",
+      value: report.paths.length.toString(),
+    },
+    {
+      label: "Navigator",
+      value: report.navigator ? "Yes" : "No",
+    },
+  ];
 
+  return (
+    <section className="grid gap-3 md:grid-cols-4">
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className="rounded-2xl border border-slate-800 bg-slate-950 p-4"
+        >
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            {item.label}
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-slate-100">
+            {item.value}
+          </p>
+        </div>
+      ))}
+    </section>
+  );
+}
 function ResolutionPanel({
   title,
   items,
