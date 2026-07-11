@@ -10,7 +10,7 @@ import {
   type StructuredReport,
   type StructuredPath,
   type StructuredNavigator,
-} from "./engine/Presentation/StructuredReports";
+} from "./engine/presentation/structuredReport";
 
 type SliceName = "bravia" | "bravia-navigator" | "singapore" | "portfolio";
 
