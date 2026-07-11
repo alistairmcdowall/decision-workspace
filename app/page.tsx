@@ -5,6 +5,7 @@ import { runBraviaSlice } from "./engine/runBraviaSlice";
 import { runBraviaNavigatorSlice } from "./engine/runBraviaNavigatorSlice";
 import { runSingaporeSlice } from "./engine/runSingaporeSlice";
 import { runPortfolioSlice } from "./engine/runPortfolioSlice";
+import { WorkspaceReportView } from "./ui/WorkspaceReportView";
 import {
   buildStructuredReport,
   type StructuredReport,
@@ -363,7 +364,7 @@ export default function Home() {
             </div>
           </div>
 
-          <ReportView report={report} />
+          <WorkspaceReportView report={report} />
         </section>
       </section>
     </main>
