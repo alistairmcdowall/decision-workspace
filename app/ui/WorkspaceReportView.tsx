@@ -11,8 +11,11 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
 
       <WorkspaceSummaryStrip report={report} />
 
-      <ResolutionPanel
+      {report.mode === "execution" && (
+        <ExecutionStateStrip report={report} />
+      )}
 
+      <ResolutionPanel
         title="What has already been resolved?"
         items={report.resolved}
         emptyText="Nothing yet"
@@ -50,6 +53,33 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
     </div>
   );
 }
+function ExecutionStateStrip({ report }: { report: StructuredReport }) {
+  return (
+    <section className="grid gap-3 md:grid-cols-2">
+      {report.selectedPath && (
+        <div className="rounded-2xl border border-emerald-900/70 bg-emerald-950/20 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-emerald-400/80">
+            Selected path
+          </p>
+          <p className="mt-2 font-semibold text-slate-100">
+            {report.selectedPath}
+          </p>
+        </div>
+      )}
+
+      {report.executionStatus && (
+        <div className="rounded-2xl border border-emerald-900/70 bg-emerald-950/20 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-emerald-400/80">
+            Execution status
+          </p>
+          <p className="mt-2 font-semibold text-slate-100">
+            {report.executionStatus}
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function DecisionFrame({ report }: { report: StructuredReport }) {
   return (
@@ -69,6 +99,10 @@ function DecisionFrame({ report }: { report: StructuredReport }) {
 function WorkspaceSummaryStrip({ report }: { report: StructuredReport }) {
   const items = [
     {
+      label: "Mode",
+      value: report.mode === "execution" ? "Execution" : "Exploration",
+    },
+    {
       label: "Resolved",
       value: report.resolved.length.toString(),
     },
@@ -79,10 +113,6 @@ function WorkspaceSummaryStrip({ report }: { report: StructuredReport }) {
     {
       label: "Paths",
       value: report.paths.length.toString(),
-    },
-    {
-      label: "Navigator",
-      value: report.navigator ? "Yes" : "No",
     },
   ];
 
@@ -104,6 +134,7 @@ function WorkspaceSummaryStrip({ report }: { report: StructuredReport }) {
     </section>
   );
 }
+
 function ResolutionPanel({
   title,
   items,
