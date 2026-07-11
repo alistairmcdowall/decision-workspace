@@ -19,26 +19,31 @@ const slices: {
   id: SliceName;
   label: string;
   description: string;
+  mode: "Decision Exploration" | "Execution / Navigator";
 }[] = [
   {
     id: "bravia",
     label: "Bravia purchase",
     description: "A purchase decision with verification still unresolved.",
+    mode: "Decision Exploration",
   },
   {
     id: "bravia-navigator",
     label: "Bravia + Navigator",
     description: "A selected purchase path with pre-payment execution checks.",
+    mode: "Execution / Navigator",
   },
   {
     id: "singapore",
     label: "Singapore relocation",
     description: "A major family relocation decision.",
+    mode: "Decision Exploration",
   },
   {
     id: "portfolio",
     label: "Retirement portfolio",
     description: "An 8–10 year growth portfolio decision.",
+    mode: "Decision Exploration",
   },
 ];
 
@@ -305,10 +310,14 @@ function NavigatorCard({
     </article>
   );
 }
+function selectedSliceMeta(sliceName: SliceName) {
+  return slices.find((slice) => slice.id === sliceName) ?? slices[0];
+}
 export default function Home() {
   const [selectedSlice, setSelectedSlice] = useState<SliceName>("portfolio");
 
   const report = useMemo(() => runSlice(selectedSlice), [selectedSlice]);
+  const currentSlice = selectedSliceMeta(selectedSlice);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -353,16 +362,30 @@ export default function Home() {
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl">
-          <div className="mb-4 flex items-center justify-between gap-4 border-b border-slate-800 pb-4">
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
-                Report Preview
-              </p>
-              <h2 className="mt-1 text-2xl font-semibold">
-                {slices.find((slice) => slice.id === selectedSlice)?.label}
-              </h2>
-            </div>
-          </div>
+        <div className="mb-4 flex flex-col gap-4 border-b border-slate-800 pb-4 md:flex-row md:items-center md:justify-between">
+  <div>
+    <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
+      Workspace Preview
+    </p>
+
+    <h2 className="mt-1 text-2xl font-semibold">
+      {currentSlice.label}
+    </h2>
+
+    <p className="mt-2 text-sm leading-6 text-slate-400">
+      {currentSlice.description}
+    </p>
+  </div>
+
+  <div className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3">
+    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+      Mode
+    </p>
+    <p className="mt-1 font-semibold text-slate-100">
+      {currentSlice.mode}
+    </p>
+  </div>
+</div>
 
           <WorkspaceReportView report={report} />
         </section>
