@@ -314,6 +314,31 @@ function NavigatorCard({
 function selectedSliceMeta(sliceName: SliceName) {
   return slices.find((slice) => slice.id === sliceName) ?? slices[0];
 }
+function reportModeLabel(report: StructuredReport): string {
+  if (report.mode === "execution") {
+    return "Execution / Navigator";
+  }
+
+  return "Decision Exploration";
+}
+
+function customDecisionLabel(report: StructuredReport): string {
+  const kind = report.decisionKind;
+
+  if (kind === "PURCHASE") {
+    return "Custom purchase decision";
+  }
+
+  if (kind === "RELOCATION") {
+    return "Custom relocation decision";
+  }
+
+  if (kind === "PORTFOLIO") {
+    return "Custom portfolio decision";
+  }
+
+  return "Custom decision";
+}
 export default function Home() {
   const [selectedSlice, setSelectedSlice] = useState<SliceName>("portfolio");
   const [customInput, setCustomInput] = useState("");
@@ -413,9 +438,9 @@ export default function Home() {
     </p>
 
     <h2 className="mt-1 text-2xl font-semibold">
-  {useCustomInput && customInput.trim()
-    ? "Custom purchase decision"
-    : currentSlice.label}
+    {useCustomInput && customInput.trim()
+  ? customDecisionLabel(report)
+  : currentSlice.label}
 </h2>
 
 <p className="mt-2 text-sm leading-6 text-slate-400">
@@ -431,7 +456,7 @@ export default function Home() {
     </p>
     <p className="mt-1 font-semibold text-slate-100">
     {useCustomInput && customInput.trim()
-  ? "Decision Exploration"
+  ? reportModeLabel(report)
   : currentSlice.mode}
     </p>
   </div>
