@@ -61,20 +61,50 @@ function cleanSubject(input: string, kind: DecisionKind): string {
   }
 
   if (kind === "RELOCATION") {
-    return (
-      withoutQuestion
-        .replace(/^should i\s+/i, "")
-        .replace(/^should we\s+/i, "")
-        .replace(/^move\s+/i, "move ")
-        .trim() || "this relocation"
+    const moveToMatch = withoutQuestion.match(
+      /(?:move|relocate|relocation)\s+(?:to\s+)?([^,?.]+?)(?:\s+for\s+.+|\s+because\s+.+|\s+if\s+.+|$)/i
     );
+
+    if (moveToMatch?.[1]) {
+      const place = moveToMatch[1]
+        .replace(/^to\s+/i, "")
+        .replace(/^the\s+/i, "")
+        .trim();
+
+      if (place) {
+        return `${place} relocation`;
+      }
+    }
+
+    return "relocation decision";
   }
 
   if (kind === "PORTFOLIO") {
-    return "investment portfolio decision";
+    const lower = withoutQuestion.toLowerCase();
+
+    if (lower.includes("retirement")) {
+      return "retirement portfolio";
+    }
+
+    if (lower.includes("pension")) {
+      return "pension investment strategy";
+    }
+
+    if (lower.includes("portfolio")) {
+      return "investment portfolio";
+    }
+
+    return "investment strategy";
   }
 
-  return withoutQuestion || "this decision";
+  return (
+    withoutQuestion
+      .replace(/^should i\s+/i, "")
+      .replace(/^should we\s+/i, "")
+      .replace(/^how should i\s+/i, "")
+      .replace(/^how should we\s+/i, "")
+      .trim() || "this decision"
+  );
 }
 
 function kindLabel(kind: DecisionKind): string {
