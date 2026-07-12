@@ -4,6 +4,10 @@ import type { DecisionContext } from "../types";
 
 export type StructuredReport = {
   title: string;
+  mode: "exploration" | "execution";
+  decisionKind: string;
+  selectedPath?: string;
+  executionStatus?: string;
   summary: string;
   resolved: string[];
   remaining: string[];
@@ -84,8 +88,15 @@ export function buildStructuredReport(
   return {
     title: "Guided Decision Exploration",
 
-    summary: decisionSummary(c),
+    mode: c.navigator ? "execution" : "exploration",
 
+    decisionKind: c.decision?.kind ?? "GENERAL",
+
+    selectedPath: c.navigator?.pathSelected,
+
+    executionStatus: c.navigator?.status,
+
+    summary: decisionSummary(c),
     resolved,
 
     remaining,
