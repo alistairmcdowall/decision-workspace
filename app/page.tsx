@@ -6,6 +6,7 @@ import { runBraviaNavigatorSlice } from "./engine/runBraviaNavigatorSlice";
 import { runSingaporeSlice } from "./engine/runSingaporeSlice";
 import { runPortfolioSlice } from "./engine/runPortfolioSlice";
 import { WorkspaceReportView } from "./ui/WorkspaceReportView";
+import { runCustomPurchaseSlice } from "./engine/runCustomPurchaseSlice";
 import {
   buildStructuredReport,
   type StructuredReport,
@@ -315,9 +316,18 @@ function selectedSliceMeta(sliceName: SliceName) {
 }
 export default function Home() {
   const [selectedSlice, setSelectedSlice] = useState<SliceName>("portfolio");
+  const [customInput, setCustomInput] = useState("");
+  const [useCustomInput, setUseCustomInput] = useState(false);
   const [showStructuredData, setShowStructuredData] = useState(false);
   
-  const report = useMemo(() => runSlice(selectedSlice), [selectedSlice]);
+  const report = useMemo(() => {
+    if (useCustomInput && customInput.trim()) {
+      return buildStructuredReport(runCustomPurchaseSlice(customInput.trim()));
+    }
+  
+    return runSlice(selectedSlice);
+  }, [customInput, selectedSlice, useCustomInput]);
+  
   const currentSlice = selectedSliceMeta(selectedSlice);
 
   return (
@@ -336,6 +346,40 @@ export default function Home() {
             Select a prototype decision slice and view the structured report.
           </p>
         </div>
+
+        <section className="mb-8 rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+  <h2 className="text-xl font-semibold text-slate-100">
+    Try a custom purchase decision
+  </h2>
+
+  <p className="mt-2 text-sm leading-6 text-slate-400">
+    This is a simple deterministic prototype. It currently works best for inputs like:
+    “Should I buy a used Lexus GS for £6,500?”
+  </p>
+
+  <textarea
+    value={customInput}
+    onChange={(event) => setCustomInput(event.target.value)}
+    placeholder="Should I buy a used Lexus GS for £6,500?"
+    className="mt-4 min-h-28 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 p-4 text-slate-100 outline-none placeholder:text-slate-500 focus:border-slate-400"
+  />
+
+  <div className="mt-4 flex flex-wrap gap-3">
+    <button
+      onClick={() => setUseCustomInput(true)}
+      className="rounded-xl bg-slate-100 px-5 py-3 font-medium text-slate-950 transition hover:bg-white"
+    >
+      Build custom report
+    </button>
+
+    <button
+      onClick={() => setUseCustomInput(false)}
+      className="rounded-xl border border-slate-700 px-5 py-3 font-medium text-slate-200 transition hover:border-slate-400 hover:text-white"
+    >
+      Use example slices
+    </button>
+  </div>
+</section>
 
         <section className="mb-8 grid gap-3 md:grid-cols-2">
           {slices.map((slice) => (
@@ -370,12 +414,16 @@ export default function Home() {
     </p>
 
     <h2 className="mt-1 text-2xl font-semibold">
-      {currentSlice.label}
-    </h2>
+  {useCustomInput && customInput.trim()
+    ? "Custom purchase decision"
+    : currentSlice.label}
+</h2>
 
-    <p className="mt-2 text-sm leading-6 text-slate-400">
-      {currentSlice.description}
-    </p>
+<p className="mt-2 text-sm leading-6 text-slate-400">
+  {useCustomInput && customInput.trim()
+    ? customInput.trim()
+    : currentSlice.description}
+</p>
   </div>
 
   <div className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3">
@@ -383,7 +431,9 @@ export default function Home() {
       Mode
     </p>
     <p className="mt-1 font-semibold text-slate-100">
-      {currentSlice.mode}
+    {useCustomInput && customInput.trim()
+  ? "Decision Exploration"
+  : currentSlice.mode}
     </p>
   </div>
 </div>
