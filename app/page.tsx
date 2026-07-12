@@ -315,7 +315,8 @@ function selectedSliceMeta(sliceName: SliceName) {
 }
 export default function Home() {
   const [selectedSlice, setSelectedSlice] = useState<SliceName>("portfolio");
-
+  const [showStructuredData, setShowStructuredData] = useState(false);
+  
   const report = useMemo(() => runSlice(selectedSlice), [selectedSlice]);
   const currentSlice = selectedSliceMeta(selectedSlice);
 
@@ -387,7 +388,22 @@ export default function Home() {
   </div>
 </div>
 
-          <WorkspaceReportView report={report} />
+<WorkspaceReportView report={report} />
+
+<section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+  <button
+    onClick={() => setShowStructuredData(!showStructuredData)}
+    className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-400 hover:text-white"
+  >
+    {showStructuredData ? "Hide structured data" : "Show structured data"}
+  </button>
+
+  {showStructuredData && (
+    <pre className="mt-4 max-h-[32rem] overflow-auto rounded-xl bg-slate-950 p-5 text-xs leading-6 text-slate-300">
+      {JSON.stringify(report, null, 2)}
+    </pre>
+  )}
+</section>
         </section>
       </section>
     </main>
