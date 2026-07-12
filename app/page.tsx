@@ -6,7 +6,7 @@ import { runBraviaNavigatorSlice } from "./engine/runBraviaNavigatorSlice";
 import { runSingaporeSlice } from "./engine/runSingaporeSlice";
 import { runPortfolioSlice } from "./engine/runPortfolioSlice";
 import { WorkspaceReportView } from "./ui/WorkspaceReportView";
-import { runCustomPurchaseSlice } from "./engine/runCustomPurchaseSlice";
+import { runCustomDecisionSlice } from "./engine/runCustomDecisionSlice";
 import {
   buildStructuredReport,
   type StructuredReport,
@@ -322,7 +322,7 @@ export default function Home() {
   
   const report = useMemo(() => {
     if (useCustomInput && customInput.trim()) {
-      return buildStructuredReport(runCustomPurchaseSlice(customInput.trim()));
+      return buildStructuredReport(runCustomDecisionSlice(customInput.trim()));
     }
   
     return runSlice(selectedSlice);
@@ -349,12 +349,11 @@ export default function Home() {
 
         <section className="mb-8 rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
   <h2 className="text-xl font-semibold text-slate-100">
-    Try a custom purchase decision
+    Try a custom decision
   </h2>
 
   <p className="mt-2 text-sm leading-6 text-slate-400">
-    This is a simple deterministic prototype. It currently works best for inputs like:
-    “Should I buy a used Lexus GS for £6,500?”
+  This is a simple deterministic prototype. It can recognise basic purchase, relocation, and portfolio decisions.
   </p>
 
   <textarea
