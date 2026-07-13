@@ -1,6 +1,11 @@
 // app/engine/runCustomDecisionSlice.ts
 
-import type { DecisionContext, DecisionKind } from "./types";
+import type {
+  DecisionContext,
+  DecisionKind,
+  DiagnosticRecommendation,
+} from "./types";
+
 import { eventHorizons } from "./eventHorizons";
 
 function extractPrice(input: string): number | undefined {
@@ -436,6 +441,223 @@ function remainingUncertainties({
     "How reversible the first serious commitment would be",
   ];
 }
+function diagnosticRecommendations(
+  kind: DecisionKind
+): DiagnosticRecommendation[] {
+  if (kind === "PURCHASE") {
+    return [
+      {
+        id: "market_price_comparison",
+        name: "Market price comparison",
+        uncertaintyClass: "price_value",
+        reason:
+          "Tests whether the apparent deal is genuinely attractive compared with realistic alternatives.",
+        inputsNeeded: [
+          "Exact model or item specification",
+          "Comparable listings",
+          "Condition",
+          "Age or mileage if relevant",
+        ],
+        status: "manual",
+      },
+      {
+        id: "seller_counterparty_check",
+        name: "Seller / counterparty check",
+        uncertaintyClass: "counterparty_risk",
+        reason:
+          "Tests whether the person or business on the other side of the transaction is trustworthy enough to proceed.",
+        inputsNeeded: [
+          "Seller identity",
+          "Reviews or reputation",
+          "Payment route",
+          "Collection or delivery terms",
+        ],
+        status: "manual",
+      },
+      {
+        id: "condition_history_check",
+        name: "Condition and history check",
+        uncertaintyClass: "condition_quality",
+        reason:
+          "Tests whether hidden defects, missing history, or poor condition could turn a good-looking purchase into a bad one.",
+        inputsNeeded: [
+          "Inspection evidence",
+          "Photos or video",
+          "Service or ownership history",
+          "Known faults",
+        ],
+        status: "manual",
+      },
+      {
+        id: "reversibility_warranty_check",
+        name: "Reversibility / warranty check",
+        uncertaintyClass: "reversibility",
+        reason:
+          "Tests what protection exists if the purchase turns out to be wrong after money changes hands.",
+        inputsNeeded: [
+          "Return policy",
+          "Warranty terms",
+          "Buyer protection",
+          "Payment method",
+        ],
+        status: "manual",
+      },
+    ];
+  }
+
+  if (kind === "RELOCATION") {
+    return [
+      {
+        id: "household_feasibility_check",
+        name: "Household feasibility check",
+        uncertaintyClass: "household_adaptation",
+        reason:
+          "Tests whether the move can work as a lived household arrangement, not just as an attractive opportunity.",
+        inputsNeeded: [
+          "Family constraints",
+          "Schooling needs",
+          "Work patterns",
+          "Housing assumptions",
+        ],
+        status: "manual",
+      },
+      {
+        id: "exit_route_test",
+        name: "Exit-route test",
+        uncertaintyClass: "reversibility",
+        reason:
+          "Tests how hard it would be to unwind the move if the path becomes unworkable.",
+        inputsNeeded: [
+          "Notice periods",
+          "Housing commitments",
+          "School commitments",
+          "Return options",
+        ],
+        status: "manual",
+      },
+      {
+        id: "cost_of_living_comparison",
+        name: "Cost-of-living comparison",
+        uncertaintyClass: "cashflow_sustainability",
+        reason:
+          "Tests whether the financial upside survives realistic housing, schooling, tax, travel, and living costs.",
+        inputsNeeded: [
+          "Net income",
+          "Housing costs",
+          "Schooling costs",
+          "Tax position",
+          "Living costs",
+        ],
+        status: "manual",
+      },
+      {
+        id: "school_work_route_check",
+        name: "School/work route check",
+        uncertaintyClass: "logistical_feasibility",
+        reason:
+          "Tests whether the daily route through work, school, commute, and household life is practically viable.",
+        inputsNeeded: [
+          "Work location",
+          "School options",
+          "Commute routes",
+          "Term dates or start dates",
+        ],
+        status: "manual",
+      },
+    ];
+  }
+
+  if (kind === "PORTFOLIO") {
+    return [
+      {
+        id: "rolling_window_outcome_test",
+        name: "Rolling-window outcome test",
+        uncertaintyClass: "sequence_risk",
+        reason:
+          "Tests how the portfolio would have behaved across many possible holding-period start dates rather than one cherry-picked backtest.",
+        inputsNeeded: [
+          "Asset allocation",
+          "Historical return data",
+          "Holding period",
+          "Starting capital",
+        ],
+        status: "future",
+      },
+      {
+        id: "drawdown_tolerance_test",
+        name: "Drawdown tolerance test",
+        uncertaintyClass: "volatility_tolerance",
+        reason:
+          "Tests whether the user could realistically stay with the portfolio through severe temporary losses.",
+        inputsNeeded: [
+          "Portfolio allocation",
+          "Historical or modelled drawdowns",
+          "User loss-tolerance threshold",
+        ],
+        status: "future",
+      },
+      {
+        id: "liquidity_cashflow_check",
+        name: "Liquidity and cashflow check",
+        uncertaintyClass: "liquidity_need",
+        reason:
+          "Tests whether enough cash or low-volatility assets exist outside the growth portfolio to avoid forced selling.",
+        inputsNeeded: [
+          "Emergency fund",
+          "Known spending needs",
+          "Income sources",
+          "Withdrawal timing",
+        ],
+        status: "manual",
+      },
+      {
+        id: "tax_wrapper_sequencing_check",
+        name: "Tax wrapper sequencing check",
+        uncertaintyClass: "tax_efficiency",
+        reason:
+          "Tests whether ISA, pension, and taxable account sequencing materially changes the best implementation route.",
+        inputsNeeded: [
+          "Account types",
+          "Tax allowances",
+          "Contribution limits",
+          "Current holdings",
+        ],
+        status: "manual",
+      },
+    ];
+  }
+
+  return [
+    {
+      id: "reversibility_check",
+      name: "Reversibility check",
+      uncertaintyClass: "reversibility",
+      reason:
+        "Tests how hard it would be to reverse the decision after the first serious commitment.",
+      inputsNeeded: [
+        "First commitment point",
+        "Exit options",
+        "Costs of reversal",
+        "People affected",
+      ],
+      status: "manual",
+    },
+    {
+      id: "opportunity_cost_check",
+      name: "Opportunity cost check",
+      uncertaintyClass: "opportunity_cost",
+      reason:
+        "Tests what the chosen path would displace in money, attention, time, or emotional capacity.",
+      inputsNeeded: [
+        "Resources required",
+        "Alternative uses",
+        "Time cost",
+        "Financial cost",
+      ],
+      status: "manual",
+    },
+  ];
+}
 function resolvedUncertainties({
   kind,
   subject,
@@ -514,7 +736,6 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
       decisionTurn:
         "So the decision now turns on the unresolved issues that would most change the quality of the choice.",
     },
-
     landscape: {
       v2: {
         subject,
@@ -538,6 +759,8 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
     establishingShots: buildEstablishingShots(kind),
 
     steelman: buildSteelman(kind),
+
+    diagnostics: diagnosticRecommendations(kind),
   };
 
   context = eventHorizons(context);

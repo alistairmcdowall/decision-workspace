@@ -2,6 +2,7 @@ import type {
   StructuredReport,
   StructuredPath,
   StructuredNavigator,
+  StructuredDiagnostic,
 } from "../engine/presentation/structuredReport";
 
 export function WorkspaceReportView({ report }: { report: StructuredReport }) {
@@ -41,8 +42,12 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
         <PathCard key={path.id} path={path} />
       ))}
 
-      {report.eventHorizon && (
+{report.eventHorizon && (
         <EventHorizonCard eventHorizon={report.eventHorizon} />
+      )}
+
+      {report.diagnostics.length > 0 && (
+        <DiagnosticsPanel diagnostics={report.diagnostics} />
       )}
 
       {report.navigator && <NavigatorCard navigator={report.navigator} />}
@@ -243,6 +248,69 @@ function PathCard({ path }: { path: StructuredPath }) {
         </section>
       )}
     </article>
+  );
+}
+
+function DiagnosticsPanel({
+  diagnostics,
+}: {
+  diagnostics: StructuredDiagnostic[];
+}) {
+  return (
+    <section className="rounded-3xl border border-slate-700 bg-slate-950 p-6 shadow-2xl">
+      <div className="mb-6 border-b border-slate-800 pb-4">
+        <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
+          Evidence Layer
+        </p>
+
+        <h2 className="mt-2 text-2xl font-semibold text-slate-100">
+          Recommended Diagnostics
+        </h2>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {diagnostics.map((diagnostic) => (
+          <article
+            key={diagnostic.id}
+            className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                  {diagnostic.uncertaintyClass}
+                </p>
+
+                <h3 className="mt-2 text-lg font-semibold text-slate-100">
+                  {diagnostic.name}
+                </h3>
+              </div>
+
+              <span className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase tracking-[0.14em] text-slate-400">
+                {diagnostic.status}
+              </span>
+            </div>
+
+            <p className="mt-3 leading-7 text-slate-300">
+              {diagnostic.reason}
+            </p>
+
+            {diagnostic.inputsNeeded.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-semibold text-slate-200">
+                  Inputs needed
+                </p>
+
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-400">
+                  {diagnostic.inputsNeeded.map((input) => (
+                    <li key={input}>{input}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 

@@ -39,6 +39,17 @@ export type MoneyAmount = {
   currency: "GBP";
 };
 
+export type DiagnosticStatus = "available" | "manual" | "future";
+
+export type DiagnosticRecommendation = {
+  id: string;
+  name: string;
+  uncertaintyClass: string;
+  reason: string;
+  inputsNeeded: string[];
+  status: DiagnosticStatus;
+};
+
 export type DecisionContext = {
   prompt: string;
   decision: DecisionCore;
@@ -175,6 +186,8 @@ export type DecisionContext = {
     pauseBeforeProceedingIf?: string[];
     nextAction?: string;
   };
+  
+  diagnostics?: DiagnosticRecommendation[];
   
   finalOutput?: string;
 };
