@@ -8,6 +8,7 @@ export type StructuredReport = {
   decisionKind: string;
   selectedPath?: string;
   executionStatus?: string;
+  diagnostics: StructuredDiagnostic[];
   summary: string;
   resolved: string[];
   remaining: string[];
@@ -19,6 +20,15 @@ export type StructuredReport = {
   };
   navigator?: StructuredNavigator;
   closingNote: string;
+};
+
+export type StructuredDiagnostic = {
+  id: string;
+  name: string;
+  uncertaintyClass: string;
+  reason: string;
+  inputsNeeded: string[];
+  status: string;
 };
 
 export type StructuredPath = {
@@ -131,6 +141,8 @@ export function buildStructuredReport(
             "Until that boundary is crossed, the decision remains in evaluation. After it, the decision becomes harder to reverse.",
         }
       : undefined,
+
+      diagnostics: c.diagnostics ?? [],
 
     navigator: c.navigator
       ? {
