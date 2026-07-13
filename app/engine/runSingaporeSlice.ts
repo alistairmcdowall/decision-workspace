@@ -3,7 +3,7 @@
 import type { DecisionContext } from "./types";
 
 export function runSingaporeSlice(): DecisionContext {
-  const context = {
+  const context: DecisionContext = {
     prompt:
       "My wife has been offered a job in Singapore for twice the salary. It would be a minimum five-year commitment for the family. I would have to leave my job and our daughter would need to find a school. We have to decide soon.",
       decision: {

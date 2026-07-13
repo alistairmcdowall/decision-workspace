@@ -2,7 +2,7 @@ import { runBraviaSlice } from "./runBraviaSlice";
 import { runSingaporeSlice } from "./runSingaporeSlice";
 import { runPortfolioSlice } from "./runPortfolioSlice";
 import { renderReport } from "./renderReport";
-import { renderCleanReport } from "./presentation/cleanRenderer";
+import { renderCleanReport } from "./presentation/CleanRenderer";
 import { renderGuidedReport } from "./presentation/guidedRenderer";
 import { runBraviaNavigatorSlice } from "./runBraviaNavigatorSlice";
 
@@ -25,7 +25,7 @@ if (!context) {
   process.exit(1);
 }
 
-const OUTPUT_MODE: "json" | "clean" | "guided" = "guided";
+const OUTPUT_MODE = (process.argv[3] ?? "guided") as "json" | "clean" | "guided";
 
 console.log(
   OUTPUT_MODE === "json"

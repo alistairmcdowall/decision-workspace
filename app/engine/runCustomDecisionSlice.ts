@@ -138,12 +138,34 @@ function buildPaths(subject: string, kind: DecisionKind) {
   if (kind === "PURCHASE") {
     return [
       {
-        id: "A",
+        id: "A" as const,
         title: `Buy ${subject}`,
+        requiredConditions: [
+          "The price is fair for the condition and market.",
+          "The seller and history checks do not reveal major concerns.",
+          "The downside is acceptable if the purchase proves disappointing.",
+        ],
+        commitment: {
+          type: "purchase",
+          amount: 0,
+          currency: "GBP" as const,
+        },
+        outcome: `You commit to buying ${subject}.`,
       },
       {
-        id: "B",
+        id: "B" as const,
         title: `Do not buy ${subject}`,
+        requiredConditions: [
+          "The evidence is not strong enough to justify the commitment.",
+          "Waiting preserves flexibility.",
+          "There may be better verified alternatives later.",
+        ],
+        commitment: {
+          type: "avoid_purchase",
+          amount: 0,
+          currency: "GBP" as const,
+        },
+        outcome: `You do not buy ${subject}.`,
       },
     ];
   }
@@ -151,12 +173,34 @@ function buildPaths(subject: string, kind: DecisionKind) {
   if (kind === "RELOCATION") {
     return [
       {
-        id: "A",
+        id: "A" as const,
         title: "Make the move",
+        requiredConditions: [
+          "The household can adapt to the new location.",
+          "The financial and practical commitments are acceptable.",
+          "The move supports the main reason for relocating.",
+        ],
+        commitment: {
+          type: "relocation",
+          amount: 0,
+          currency: "GBP" as const,
+        },
+        outcome: "You commit to the relocation path.",
       },
       {
-        id: "B",
+        id: "B" as const,
         title: "Do not move",
+        requiredConditions: [
+          "The relocation benefits are not strong enough.",
+          "The disruption or risk is too high.",
+          "Remaining in place preserves a better base case.",
+        ],
+        commitment: {
+          type: "stay_put",
+          amount: 0,
+          currency: "GBP" as const,
+        },
+        outcome: "You do not relocate.",
       },
     ];
   }
@@ -164,28 +208,83 @@ function buildPaths(subject: string, kind: DecisionKind) {
   if (kind === "PORTFOLIO") {
     return [
       {
-        id: "A",
+        id: "A" as const,
         title: "Choose a growth-oriented portfolio",
+        requiredConditions: [
+          "The time horizon is long enough for volatility.",
+          "The downside risk is tolerable.",
+          "The allocation can be held through difficult periods.",
+        ],
+        commitment: {
+          type: "portfolio_allocation",
+          amount: 0,
+          currency: "GBP" as const,
+        },
+        outcome: "You choose a growth-oriented allocation.",
       },
       {
-        id: "B",
+        id: "B" as const,
         title: "Choose a simpler balanced portfolio",
+        requiredConditions: [
+          "Simplicity is more valuable than maximum expected growth.",
+          "The allocation remains diversified.",
+          "The expected return is sufficient for the goal.",
+        ],
+        commitment: {
+          type: "portfolio_allocation",
+          amount: 0,
+          currency: "GBP" as const,
+        },
+        outcome: "You choose a balanced allocation.",
       },
       {
-        id: "C",
+        id: "C" as const,
         title: "Choose a more cautious portfolio",
+        requiredConditions: [
+          "Capital preservation matters more than higher expected return.",
+          "The lower-risk allocation still supports the objective.",
+          "Reduced volatility is worth the growth trade-off.",
+        ],
+        commitment: {
+          type: "portfolio_allocation",
+          amount: 0,
+          currency: "GBP" as const,
+        },
+        outcome: "You choose a more cautious allocation.",
       },
     ];
   }
 
   return [
     {
-      id: "A",
+      id: "A" as const,
       title: "Make the change",
+      requiredConditions: [
+        "The upside is clear enough.",
+        "The downside is acceptable.",
+        "The change remains reversible or manageable.",
+      ],
+      commitment: {
+        type: "generic_change",
+        amount: 0,
+        currency: "GBP" as const,
+      },
+      outcome: "You make the change.",
     },
     {
-      id: "B",
+      id: "B" as const,
       title: "Do not make the change",
+      requiredConditions: [
+        "The case for change is not yet strong enough.",
+        "Waiting preserves flexibility.",
+        "The current path remains acceptable.",
+      ],
+      commitment: {
+        type: "generic_no_change",
+        amount: 0,
+        currency: "GBP" as const,
+      },
+      outcome: "You do not make the change.",
     },
   ];
 }
@@ -194,13 +293,13 @@ function buildEstablishingShots(kind: DecisionKind) {
   if (kind === "PURCHASE") {
     return [
       {
-        pathId: "A",
+        pathId: "A" as const,
         title: "The purchase becomes ordinary",
         shot:
           "You are using the thing you bought on an ordinary day. The payment has already happened, the initial excitement has faded, and what remains is whether the purchase genuinely fits your life.",
       },
       {
-        pathId: "B",
+        pathId: "B" as const,
         title: "The money remains available",
         shot:
           "The purchase did not happen. Nothing new has arrived, nothing needs resolving, and the money remains available for other priorities or a better-verified opportunity.",
@@ -211,13 +310,13 @@ function buildEstablishingShots(kind: DecisionKind) {
   if (kind === "RELOCATION") {
     return [
       {
-        pathId: "A",
+        pathId: "A" as const,
         title: "The move becomes normal life",
         shot:
           "You are walking through an ordinary week in the new place. The move is no longer a proposal; it is the setting in which work, routines, friendships, and household life now happen.",
       },
       {
-        pathId: "B",
+        pathId: "B" as const,
         title: "The life you kept",
         shot:
           "You are still living in the familiar place. The routines, rooms, routes, and obligations remain recognisable. The possible move still exists, but as a path not taken.",
@@ -228,19 +327,19 @@ function buildEstablishingShots(kind: DecisionKind) {
   if (kind === "PORTFOLIO") {
     return [
       {
-        pathId: "A",
+        pathId: "A" as const,
         title: "The growth line with volatility",
         shot:
           "You are looking at a long-term investment statement. The value has grown, but the chart is uneven, with falls along the way that had to be lived through.",
       },
       {
-        pathId: "B",
+        pathId: "B" as const,
         title: "The plan held",
         shot:
           "You are looking at a long-term investment statement. The result is not spectacular, but the plan remained understandable and sustainable through changing markets.",
       },
       {
-        pathId: "C",
+        pathId: "C" as const,
         title: "The quieter statement",
         shot:
           "You are looking at a long-term investment statement. The fluctuations were smaller, the outcome was more modest, and the portfolio rarely dominated your attention.",
@@ -250,13 +349,13 @@ function buildEstablishingShots(kind: DecisionKind) {
 
   return [
     {
-      pathId: "A",
+      pathId: "A" as const,
       title: "The change becomes real",
       shot:
         "You are living with the consequences of making the change. It is no longer theoretical; it has become part of the ordinary shape of your week.",
     },
     {
-      pathId: "B",
+      pathId: "B" as const,
       title: "The current path continues",
       shot:
         "You are living with the decision not to change. The situation remains recognisable, and the disruption of changing course has not happened.",
@@ -268,7 +367,7 @@ function buildSteelman(kind: DecisionKind) {
   if (kind === "PURCHASE") {
     return [
       {
-        pathId: "A",
+        pathId: "A" as const,
         objective: "Capture a worthwhile opportunity",
         case:
           "The strongest case for buying is that the item may represent good value if the seller is legitimate, the condition is clean, the price is fair, and the downside is limited by warranty, inspection, or buyer protection.",
@@ -280,7 +379,7 @@ function buildSteelman(kind: DecisionKind) {
         ],
       },
       {
-        pathId: "B",
+        pathId: "B" as const,
         objective: "Preserve flexibility",
         case:
           "The strongest case for not buying is that an attractive purchase can become a bad decision if verification is weak. Keeping the money preserves flexibility and avoids being forced into solving problems after payment.",
@@ -297,7 +396,7 @@ function buildSteelman(kind: DecisionKind) {
   if (kind === "RELOCATION") {
     return [
       {
-        pathId: "A",
+        pathId: "A" as const,
         objective: "Accept a major life opportunity",
         case:
           "The strongest case for moving is that the opportunity may improve work, household prospects, and life experience if the practical route is viable and the family can genuinely inhabit the move.",
@@ -309,7 +408,7 @@ function buildSteelman(kind: DecisionKind) {
         ],
       },
       {
-        pathId: "B",
+        pathId: "B" as const,
         objective: "Preserve stability",
         case:
           "The strongest case for not moving is that a relocation can impose disruption across work, family, schooling, housing, and identity. Staying avoids converting an attractive opportunity into an all-consuming transition.",
@@ -326,7 +425,7 @@ function buildSteelman(kind: DecisionKind) {
   if (kind === "PORTFOLIO") {
     return [
       {
-        pathId: "A",
+        pathId: "A" as const,
         objective: "Maximise long-term growth",
         case:
           "The strongest case for a growth-oriented portfolio is that a long time horizon can justify accepting volatility in pursuit of higher expected returns.",
@@ -338,7 +437,7 @@ function buildSteelman(kind: DecisionKind) {
         ],
       },
       {
-        pathId: "B",
+        pathId: "B" as const,
         objective: "Balance growth and sustainability",
         case:
           "The strongest case for a simpler balanced portfolio is that it may capture enough growth while being easier to understand, maintain, and stick with.",
@@ -350,7 +449,7 @@ function buildSteelman(kind: DecisionKind) {
         ],
       },
       {
-        pathId: "C",
+        pathId: "C" as const,
         objective: "Reduce regret and volatility",
         case:
           "The strongest case for a cautious portfolio is that avoiding large drawdowns may matter more than maximising upside, especially if the money has a near-term purpose.",
@@ -366,7 +465,7 @@ function buildSteelman(kind: DecisionKind) {
 
   return [
     {
-      pathId: "A",
+      pathId: "A" as const,
       objective: "Make the change",
       case:
         "The strongest case for acting is that the current situation may not improve without a deliberate change, and the chosen path may open up a better future state.",
@@ -377,7 +476,7 @@ function buildSteelman(kind: DecisionKind) {
       ],
     },
     {
-      pathId: "B",
+      pathId: "B" as const,
       objective: "Avoid unnecessary disruption",
       case:
         "The strongest case for not acting is that change can create avoidable cost, stress, and complexity when the current path remains workable.",
@@ -739,6 +838,13 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
     landscape: {
       v2: {
         subject,
+        commitment: "Choose the most appropriate path for this decision.",
+        decisionAxes: [
+          "Expected benefit",
+          "Downside risk",
+          "Reversibility",
+          "Evidence quality",
+        ],
         resolvedUncertainties: resolvedUncertainties({
           kind,
           subject,
@@ -751,6 +857,7 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
           price,
           timeHorizon,
         }),
+        state: "NARROWED",
       },
     },
 
@@ -767,3 +874,5 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
 
   return context;
 }
+
+

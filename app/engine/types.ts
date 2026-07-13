@@ -34,11 +34,6 @@ export type DecisionCore = {
 };
 export type ClarifierMethod = "ISOLATION" | "THRESHOLD" | "COUNTERFACTUAL";
 
-export type MoneyAmount = {
-  amount: number;
-  currency: "GBP";
-};
-
 export type DiagnosticStatus = "available" | "manual" | "future";
 
 export type DiagnosticRecommendation = {
@@ -56,11 +51,13 @@ export type DecisionContext = {
   facts: {
     userStated: {
       subject: string;
-      price: MoneyAmount;
+      price?: MoneyAmount;
     };
     assumedForSlice: {
-      marketClass: string;
-      pricePosition: string;
+      marketClass?: string;
+      pricePosition?: string;
+      source?: string;
+      kind?: DecisionKind;
     };
   };
 
@@ -155,6 +152,8 @@ export type DecisionContext = {
     trigger: string;
     label?: string;
     explanation?: string;
+    irreversibleAfter?: string[];
+    transition?: string;
   };
 
   establishingShots?: {
@@ -166,6 +165,7 @@ export type DecisionContext = {
   steelman?: {
     pathId: PathId;
     objective: string;
+    case: string;
     supportingConditions: string[];
   }[];
 
@@ -188,6 +188,6 @@ export type DecisionContext = {
   };
   
   diagnostics?: DiagnosticRecommendation[];
-  
+
   finalOutput?: string;
 };

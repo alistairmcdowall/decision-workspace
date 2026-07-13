@@ -3,7 +3,7 @@
 import type { DecisionContext } from "./types";
 
 export function runPortfolioSlice(): DecisionContext {
-  const context = {
+  const context: DecisionContext = {
     prompt:
       "I want to reinvest a substantial portfolio for 8–10 years of growth before switching toward income. I am considering a conviction growth portfolio, a simpler balanced global portfolio, or a lower-risk capital preservation approach.",
       decision: {

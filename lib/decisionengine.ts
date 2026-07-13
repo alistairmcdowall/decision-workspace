@@ -277,23 +277,26 @@ clarifiers: [
         summary:
           "First-pass view: keeping everything is unlikely to be the only sensible option, while selling everything is not obviously necessary. The strongest candidate appears to be simplifying the portfolio by selling selected properties and reducing debt on the strongest remaining assets. The central question is not whether the properties have been successful in the past, but whether they represent the best balance of income, risk, complexity and quality of life going forward.",
     
-        clarifiers: [
-          {
-            id: "property_income_required",
-            question:
-              "If a diversified investment portfolio could realistically replace the rental income, would you still want to own rental property?",
-          },
-          {
-            id: "property_high_rates",
-            question:
-              "If mortgage rates averaged 6–7% for the next decade, would you still consider the portfolio attractive?",
-          },
-          {
-            id: "property_stress_tradeoff",
-            question:
-              "If you reached retirement with less wealth but substantially less stress, would that be acceptable?",
-          },
-        ],
+          clarifiers: [
+            {
+              id: "property_income_required",
+              question:
+                "If a diversified investment portfolio could realistically replace the rental income, would you still want to own rental property?",
+              options: ["Yes", "No", "Unsure"],
+            },
+            {
+              id: "property_high_rates",
+              question:
+                "If mortgage rates averaged 6–7% for the next decade, would you still consider the portfolio attractive?",
+              options: ["Yes", "No", "Unsure"],
+            },
+            {
+              id: "property_stress_tradeoff",
+              question:
+                "If you reached retirement with less wealth but substantially less stress, would that be acceptable?",
+              options: ["Yes", "No", "Unsure"],
+            },
+          ],
     
         analysis: judges,
     
@@ -334,11 +337,23 @@ clarifiers: [
     return {
       summary:
         "First-pass view: this decision should be analysed by preserving the user's intent, identifying what is at risk, finding the practical constraints, and surfacing only the highest-value unknowns.",
-      clarifiers: [
-        "Would one specific outcome make this decision clearly successful?",
-        "Would one downside make this decision unacceptable?",
-        "Is there a hidden constraint that would change the answer?",
-      ],
+        clarifiers: [
+          {
+            id: "generic_success_condition",
+            question: "Would one specific outcome make this decision clearly successful?",
+            options: ["Yes", "No", "Unsure"],
+          },
+          {
+            id: "generic_failure_condition",
+            question: "Would one downside make this decision unacceptable?",
+            options: ["Yes", "No", "Unsure"],
+          },
+          {
+            id: "generic_hidden_constraint",
+            question: "Is there a hidden constraint that would change the answer?",
+            options: ["Yes", "No", "Unsure"],
+          },
+        ],
       analysis: judges,
       comparison: {
         agreement: {
