@@ -385,40 +385,55 @@ function buildSteelman(kind: DecisionKind) {
   ];
 }
 
-function remainingUncertainties(kind: DecisionKind): string[] {
+function remainingUncertainties({
+  kind,
+  subject,
+  price,
+  timeHorizon,
+}: {
+  kind: DecisionKind;
+  subject: string;
+  price?: number;
+  timeHorizon?: string;
+}): string[] {
   if (kind === "PURCHASE") {
     return [
+      price
+        ? `Whether £${price.toLocaleString("en-GB")} is attractive relative to comparable ${subject} alternatives`
+        : `Whether the price is attractive relative to comparable ${subject} alternatives`,
       "Seller legitimacy",
-      "Condition",
-      "Warranty or return route",
-      "Whether the price is attractive relative to realistic alternatives",
+      "Condition, history, or hidden defect risk",
+      "Warranty, inspection, or return route",
     ];
   }
 
   if (kind === "RELOCATION") {
     return [
-      "Employment terms",
+      `Whether ${subject} is practically workable for the household`,
+      "Employment terms and dependency risk",
       "Housing route",
-      "Schooling route",
-      "Household stress and adaptation",
+      "Schooling or family adaptation route",
       "Exit or return route",
     ];
   }
 
   if (kind === "PORTFOLIO") {
     return [
+      timeHorizon
+        ? `Whether the ${timeHorizon} horizon supports the desired level of risk`
+        : "Whether the time horizon supports the desired level of risk",
       "Risk tolerance under drawdown",
-      "Time horizon",
+      "Liquidity and cash reserve requirements",
       "Tax wrapper sequencing",
-      "Fund selection",
       "Implementation plan",
     ];
   }
 
   return [
-    "What would make the change worthwhile",
-    "What could make the change fail",
+    `What would make ${subject} worthwhile`,
+    `What could make ${subject} fail`,
     "What information is still missing",
+    "How reversible the first serious commitment would be",
   ];
 }
 function resolvedUncertainties({
@@ -509,7 +524,12 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
           price,
           timeHorizon,
         }),
-        remainingUncertainties: remainingUncertainties(kind),
+        remainingUncertainties: remainingUncertainties({
+          kind,
+          subject,
+          price,
+          timeHorizon,
+        }),
       },
     },
 
