@@ -1,8 +1,21 @@
 # Decision Workspace Schema
 
-Canonical snapshot after the production-build fix commit.
+Canonical snapshot after the production-build fix commit, corrected against a
+line-by-line read of the live `app/engine` code.
 
-This file describes the current implemented data model and rendering contract for Decision Workspace. If older Docs conflict with this file, this file should be treated as the working schema unless the code has moved on. If this file conflicts with the current TypeScript types, the TypeScript types and a green `npm run build` are the source of truth.
+This file describes the current implemented data model and rendering contract
+for Decision Workspace. If older Docs conflict with this file, this file
+should be treated as the working schema unless the code has moved on. If this
+file conflicts with the current TypeScript types, the TypeScript types and a
+green `npm run build` are the source of truth.
+
+Standing decisions for this version:
+
+- `app/engine` wins over `lib/decisionengine.ts`.
+- A green build wins over `DECISION_WORKSPACE_CONSTITUTION.md`.
+- `lib/decisionengine.ts` is legacy/dead code unless explicitly revived.
+- No LLM wiring exists yet, anywhere.
+- No code changes until this schema is agreed.
 
 ---
 
@@ -10,15 +23,81 @@ This file describes the current implemented data model and rendering contract fo
 
 Decision Workspace is a Next.js / TypeScript decision modelling app.
 
-Current implemented app flow:
+**There is no single implemented app flow.** Three different patterns
+currently coexist under `app/engine`, and which one runs depends on which
+slice is selected.
+
+### Pattern A - full pipeline (used by exactly one slice: Bravia)
 
 ```text
-User input / selected slice
-→ DecisionContext
-→ eventHorizons(context)
-→ buildStructuredReport(context)
-→ WorkspaceReportView
+reframer(context)
+-> landscape(context)          [v1]
+-> guardian(context)
+-> pragmatist(context)
+-> empathiser(context)
+-> auditor(context)
+-> clarifier(context)
+-> landscape(context)          [v2, re-run after clarifier response]
+-> paths(context)
+-> eventHorizons(context)
+-> establishingShots(context)
+-> steelman(context)
+-> buildStructuredReport(context)
+-> WorkspaceReportView
 ```
+
+Used only by `runBraviaSlice.ts` (and `runBraviaNavigatorSlice.ts`, which
+wraps it and adds a `navigator` field).
+
+### Pattern B - hand-authored fixture, no shared functions
+
+```text
+DecisionContext literal, built by hand
+(panel: {}, landscape: { v2 } only, eventHorizon set directly)
+-> buildStructuredReport(context)
+-> WorkspaceReportView
+```
+
+Used by `runSingaporeSlice.ts` and `runPortfolioSlice.ts`. Neither calls
+`reframer`, `landscape`, `guardian`, `pragmatist`, `empathiser`, `auditor`,
+`clarifier`, `paths`, or `eventHorizons`. The `panel` field is an empty
+object, so these two slices currently render **no** Guardian, Pragmatist,
+Empathiser, or Auditor content in the UI.
+
+### Pattern C - deterministic classifier + local templates
+
+```text
+input prompt
+-> classify DecisionKind (regex/keyword match: PURCHASE/RELOCATION/PORTFOLIO/GENERAL)
+-> extract subject, price, time horizon
+-> build resolved/remaining uncertainties (local template logic)
+-> build representative paths (local template logic)
+-> build establishing shots (local template logic)
+-> build steelman cases (local template logic)
+-> add diagnostics (local template logic)
+-> eventHorizons(context)        [the one shared function this pattern uses]
+-> buildStructuredReport(context)
+-> WorkspaceReportView
+```
+
+Used by `runCustomDecisionSlice.ts` - the only slice that accepts arbitrary
+user input rather than a fixed prompt.
+
+**Practical consequence:** the individual files under `app/engine`
+(`guardian.ts`, `pragmatist.ts`, `empathiser.ts`, `auditor.ts`, `clarifier.ts`,
+`landscape.ts`, `paths.ts`, `establishingShots.ts`, `steelman.ts`,
+`reframer.ts`) are laid out like reusable components but are currently
+**single-use fixtures**: each one ignores its `context` argument and returns
+hardcoded Sony Bravia text regardless of what decision is passed in. E.g.
+`landscape.ts` always returns `subject: "Sony Bravia 9 II purchase"`. This is
+why Patterns B and C don't call them - doing so would inject Bravia-specific
+text into an unrelated decision.
+
+**The one exception:** `eventHorizons.ts` genuinely branches on
+`context.decision.kind` (PURCHASE / RELOCATION / PORTFOLIO / fallback) and
+produces kind-appropriate output. It's the only component in the engine that
+behaves like a real, reusable function today. If/when the other components
+are generalised, this is the pattern to follow.
 
 Main files:
 
@@ -26,17 +105,29 @@ Main files:
 app/page.tsx
 app/ui/WorkspaceReportView.tsx
 app/engine/types.ts
+app/engine/reframer.ts            (Pattern A only - hardcoded fixture)
+app/engine/landscape.ts           (Pattern A only - hardcoded fixture)
+app/engine/guardian.ts            (Pattern A only - hardcoded fixture)
+app/engine/pragmatist.ts          (Pattern A only - hardcoded fixture)
+app/engine/empathiser.ts          (Pattern A only - hardcoded fixture)
+app/engine/auditor.ts             (Pattern A only - hardcoded fixture)
+app/engine/clarifier.ts           (Pattern A only - hardcoded fixture)
+app/engine/paths.ts               (Pattern A only - hardcoded fixture)
+app/engine/establishingShots.ts   (Pattern A only - hardcoded fixture)
+app/engine/steelman.ts            (Pattern A only - hardcoded fixture)
+app/engine/eventHorizons.ts       (shared, genuinely DecisionKind-aware)
 app/engine/runCustomDecisionSlice.ts
 app/engine/runBraviaSlice.ts
 app/engine/runBraviaNavigatorSlice.ts
 app/engine/runSingaporeSlice.ts
 app/engine/runPortfolioSlice.ts
-app/engine/eventHorizons.ts
 app/engine/presentation/structuredReport.ts
 app/engine/presentation/guidedRenderer.ts
 app/engine/presentation/CleanRenderer.ts
-lib/decisionengine.ts
 ```
+
+**Not a main file:** `lib/decisionengine.ts` exists in the repo but is
+imported nowhere. See section 22.
 
 Important casing:
 
@@ -45,6 +136,8 @@ app/engine/presentation
 ```
 
 The presentation folder is lowercase. This matters for Linux/Vercel builds.
+This has been fixed and is confirmed consistent in git-tracked paths as of
+the last pack.
 
 ---
 
@@ -65,6 +158,8 @@ type DecisionKind =
 | `PORTFOLIO` | Investment allocation or retirement portfolio decisions |
 | `GENERAL` | Fallback for decisions that do not classify cleanly |
 
+Confirmed exact match to `types.ts`.
+
 ---
 
 ## 3. Money amount
@@ -76,7 +171,13 @@ type MoneyAmount = {
 };
 ```
 
-Current app mostly uses GBP, but the wider currency type is retained for future relocation/international cases.
+Confirmed exact match to `types.ts`. This is the type that was previously
+duplicated with a conflicting `"GBP"`-only definition (fixed - see section
+21). Current app mostly uses GBP; the wider currency type is retained for
+future relocation/international cases, but note `RepresentativePath.commitment.currency`
+(section 9) is separately typed as the literal `"GBP"` only, not this wider
+union - that's a real, current inconsistency in `types.ts` itself, not a
+schema error. Worth deciding whether that's intentional.
 
 ---
 
@@ -91,20 +192,7 @@ type DecisionCore = {
 };
 ```
 
-This is the headline identity of the decision.
-
-Example:
-
-```ts
-decision: {
-  subject: "a used Lexus GS",
-  kind: "PURCHASE",
-  price: {
-    amount: 6500,
-    currency: "GBP",
-  },
-}
-```
+Confirmed exact match to `types.ts`.
 
 ---
 
@@ -128,6 +216,9 @@ A = higher growth / higher commitment
 B = balanced / simpler
 C = cautious / lower risk
 ```
+
+No slice currently uses a third path (`C`) in practice - all five
+implemented slices are two-path. `C` exists in the type but is unexercised.
 
 ---
 
@@ -164,7 +255,10 @@ type DecisionContext = {
 
   auditor?: AuditorState;
 
-  representativePaths: RepresentativePath[];
+  clarifier?: ClarifierState;
+  clarifierResponse?: { answer: string; effect: string };
+
+  representativePaths?: RepresentativePath[];   // optional - see correction below
 
   eventHorizon?: EventHorizon;
 
@@ -177,31 +271,41 @@ type DecisionContext = {
   navigator?: NavigatorState;
 
   diagnostics?: DiagnosticRecommendation[];
+
+  finalOutput?: string;
 };
 ```
+
+**Correction from prior version:** `representativePaths` is optional
+(`?`) in `types.ts`, not required. `clarifier` and `clarifierResponse` were
+missing from the prior version of this schema entirely - added here.
+
+### `PanelState` (previously undefined in this doc)
+
+```ts
+panel: {
+  guardian?: { protectedValue: string; concern: string }[];
+  pragmatist?: { requirement: string }[];
+  empathiser?: { humanFactor: string }[];
+};
+```
+
+Note: no `auditor` field inside `panel` - Auditor has its own top-level
+`auditor?` field on `DecisionContext`, sibling to `panel`, not nested inside
+it.
 
 ---
 
 ## 7. Facts
 
-### `facts.userStated`
-
-Captures facts explicitly extracted from the prompt or selected slice.
+Unchanged from prior version - confirmed exact match to `types.ts`.
 
 ```ts
 userStated: {
   subject: string;
   price?: MoneyAmount;
 }
-```
 
-`price` is optional because relocation, portfolio, and general decisions may not have a direct purchase price.
-
-### `facts.assumedForSlice`
-
-Slice assumptions or custom-input metadata.
-
-```ts
 assumedForSlice: {
   marketClass?: string;
   pricePosition?: string;
@@ -210,29 +314,9 @@ assumedForSlice: {
 }
 ```
 
-Examples:
-
-```ts
-assumedForSlice: {
-  marketClass: "investment_strategy",
-  pricePosition: "long_term_growth_decision",
-}
-```
-
-```ts
-assumedForSlice: {
-  source: "custom_decision_input",
-  kind: "PURCHASE",
-}
-```
-
 ---
 
 ## 8. Landscape
-
-Landscape captures the state of the decision after reframing/narrowing.
-
-### `landscape.v1`
 
 ```ts
 type LandscapeV1 = {
@@ -243,11 +327,7 @@ type LandscapeV1 = {
   remainingUncertainties: string[];
   state: "BROAD";
 };
-```
 
-### `landscape.v2`
-
-```ts
 type LandscapeV2 = {
   subject: string;
   commitment: string;
@@ -258,7 +338,11 @@ type LandscapeV2 = {
 };
 ```
 
-Current custom decisions generally populate `v2`.
+Confirmed exact match to `types.ts`. Note per section 1: only the Bravia
+slice populates both `v1` and `v2` via the shared `landscape.ts` function
+(itself hardcoded). Singapore and Portfolio slices populate `v2` only, by
+hand, with no `v1` ever produced. Custom decision slice populates `v2` only,
+built by local template logic.
 
 ---
 
@@ -272,33 +356,13 @@ type RepresentativePath = {
   commitment: {
     type: string;
     amount: number;
-    currency: "GBP";
+    currency: "GBP";        // literal GBP only - not the wider MoneyAmount union
   };
   outcome: string;
 };
 ```
 
 Purpose: show distinct live options, not recommendations.
-
-Example:
-
-```ts
-{
-  id: "A",
-  title: "Buy a used Lexus GS",
-  requiredConditions: [
-    "The price is fair for the condition and market.",
-    "The seller and history checks do not reveal major concerns.",
-    "The downside is acceptable if the purchase proves disappointing."
-  ],
-  commitment: {
-    type: "purchase",
-    amount: 0,
-    currency: "GBP"
-  },
-  outcome: "You commit to buying a used Lexus GS."
-}
-```
 
 ---
 
@@ -314,18 +378,13 @@ type EventHorizon = {
 };
 ```
 
-Purpose: identify the point where the decision becomes materially harder to reverse.
-
-Examples by kind:
-
-| Kind | Event horizon |
-|---|---|
-| `PURCHASE` | payment / binding purchase commitment |
-| `RELOCATION` | lease, school, job, visa, or household move commitment |
-| `PORTFOLIO` | large trades placed / allocation materially changed |
-| `GENERAL` | explicit irreversible commitment |
-
-`eventHorizons(context)` enriches or normalises the event horizon.
+`eventHorizons(context)` is the one genuinely generic, `DecisionKind`-driven
+component in the engine (see section 1). It branches on `PURCHASE` /
+`RELOCATION` / `PORTFOLIO` / fallback and returns kind-appropriate content.
+Used by the custom-decision slice for all inputs; used by Bravia via the
+shared pipeline; **not used** by Singapore or Portfolio, which set
+`eventHorizon` directly by hand instead (their hand-set values happen to
+match what the function would produce, but that's not enforced or tested).
 
 ---
 
@@ -339,17 +398,9 @@ type EstablishingShot = {
 };
 ```
 
-Purpose: make each path feel concrete before evaluation.
-
-Example:
-
-```ts
-{
-  pathId: "A",
-  title: "The purchase becomes ordinary",
-  shot: "You are using the thing you bought on an ordinary day..."
-}
-```
+`establishingShots.ts` is a Bravia-only fixture (section 1). Singapore and
+Portfolio slices hand-author their own establishing shots inline. Custom
+decision slice builds them via local template logic keyed on `DecisionKind`.
 
 ---
 
@@ -364,28 +415,12 @@ type SteelmanCase = {
 };
 ```
 
-Purpose: give the strongest fair case for each path.
-
-Example:
-
-```ts
-{
-  pathId: "B",
-  objective: "Preserve flexibility",
-  case: "The strongest case for not buying is that an attractive purchase can become a bad decision if verification is weak.",
-  supportingConditions: [
-    "Verification remains incomplete",
-    "Condition or history is uncertain",
-    "Price advantage is unclear"
-  ]
-}
-```
+Same pattern as section 11 - `steelman.ts` is Bravia-only; other slices
+either hand-author or use local templates.
 
 ---
 
 ## 13. Diagnostics
-
-Diagnostics are evidence recommendations attached to uncertainty.
 
 ```ts
 type DiagnosticStatus = "available" | "manual" | "future";
@@ -400,68 +435,42 @@ type DiagnosticRecommendation = {
 };
 ```
 
-Current implementation is still decision-kind driven, but the intended direction is uncertainty-class driven.
-
-Current examples:
-
-| Decision kind | Diagnostic examples |
-|---|---|
-| `PURCHASE` | market price comparison, seller check, condition/history check, reversibility/warranty check |
-| `RELOCATION` | employment dependency check, housing route check, schooling/family adaptation, exit route |
-| `PORTFOLIO` | rolling-period stress test, drawdown tolerance check, allocation concentration check, wrapper/tax sequencing |
-| `GENERAL` | reversibility check, downside check, dependency check |
+Current implementation is decision-kind driven (in `runCustomDecisionSlice.ts`
+only); the intended direction is uncertainty-class driven. Not yet built.
 
 Target future architecture:
 
 ```text
 DecisionContext
-→ unresolved uncertainties
-→ uncertainty classes
-→ diagnostic recommendations
-→ evidence layer
-```
-
-Example uncertainty classes:
-
-```text
-price_value
-counterparty_risk
-condition_quality
-reversibility
-sequence_risk
-volatility_tolerance
-cashflow_sustainability
-logistical_feasibility
-legal_constraint
-household_adaptation
-dependency_risk
-opportunity_cost
-implementation_complexity
+-> unresolved uncertainties
+-> uncertainty classes
+-> diagnostic recommendations
+-> evidence layer
 ```
 
 ---
 
 ## 14. Navigator
 
-Navigator is execution-mode support. It does not reopen the decision; it manages implementation of a selected path.
-
 ```ts
 navigator?: {
   pathSelected: string;
   status: string;
-  scale?: string;
-  summary?: string;
-  sections?: unknown[];
+  scale: "CHECKLIST" | "IMPLEMENTATION_PLAN" | "PROGRAMME_MAP";  // required, strict literal
+  summary: string;                                                // required
+  sections: { title: string; items: string[] }[];                 // required, typed
   pauseBeforeProceedingIf?: string[];
   nextAction?: string;
 };
 ```
 
-Current known use:
+**Correction from prior version:** `scale`, `summary`, and `sections` are
+required in `types.ts`, not optional. `scale` is a strict three-value union,
+not a free string. `sections` is a typed array (`{ title, items }[]`), not
+`unknown[]`.
 
-```text
-Bravia + Navigator slice
-```
+Currently used only by `runBraviaNavigatorSlice.ts`, which wraps
+`runBraviaSlice()` and adds this field on top.
 
 Mode distinction:
 
@@ -481,26 +490,15 @@ presentation?: {
 };
 ```
 
-Used to frame the report in natural language.
-
-Example:
-
-```ts
-presentation: {
-  decisionStateSummary:
-    "The question is no longer whether growth is the objective. It is what kind of growth path is most suitable.",
-  decisionTurn:
-    "The decision now turns on risk tolerance, behavioural sustainability and implementation detail."
-}
-```
+Confirmed exact match to `types.ts`.
 
 ---
 
 ## 16. Structured report
 
-`app/engine/presentation/structuredReport.ts` converts `DecisionContext` into the browser-facing shape.
-
-Current output includes:
+`app/engine/presentation/structuredReport.ts` converts `DecisionContext` into
+the browser-facing shape. Not independently re-verified line-by-line in this
+pass - carried forward from prior schema version pending direct review.
 
 ```ts
 type StructuredReport = {
@@ -539,11 +537,12 @@ The UI should consume `StructuredReport`, not parse markdown.
 
 ## 17. Browser UI contract
 
-Main browser component:
-
 ```text
 app/ui/WorkspaceReportView.tsx
 ```
+
+Not independently re-verified line-by-line in this pass - carried forward
+pending direct review.
 
 Expected rendered sections:
 
@@ -561,70 +560,19 @@ Closing note
 Structured JSON debug toggle
 ```
 
-The report UI should be driven by structured fields, not markdown parsing.
-
 ---
 
-## 18. Implemented slices
+## 18. Implemented slices - corrected status
 
-### Bravia purchase
+| Slice | Pattern | Panel populated? | v1 landscape? | Uses shared eventHorizons()? |
+|---|---|---|---|---|
+| `runBraviaSlice.ts` | A (full pipeline) | Yes (Guardian, Pragmatist, Empathiser, Auditor all run) | Yes | Yes |
+| `runBraviaNavigatorSlice.ts` | A + Navigator wrapper | Yes (inherited) | Yes (inherited) | Yes (inherited) |
+| `runSingaporeSlice.ts` | B (hand fixture) | No - `panel: {}` | No | No - set by hand |
+| `runPortfolioSlice.ts` | B (hand fixture) | No - `panel: {}` | No | No - set by hand |
+| `runCustomDecisionSlice.ts` | C (classifier + templates) | Not populated (no panel logic in this pattern) | No | Yes |
 
-```text
-app/engine/runBraviaSlice.ts
-```
-
-Fixed purchase slice.
-
-### Bravia Navigator
-
-```text
-app/engine/runBraviaNavigatorSlice.ts
-```
-
-Execution-mode slice with Navigator.
-
-### Singapore relocation
-
-```text
-app/engine/runSingaporeSlice.ts
-```
-
-Fixed relocation slice.
-
-### Retirement portfolio
-
-```text
-app/engine/runPortfolioSlice.ts
-```
-
-Fixed portfolio slice.
-
-### Custom decision
-
-```text
-app/engine/runCustomDecisionSlice.ts
-```
-
-Deterministic custom-input slice.
-
-Current custom flow:
-
-```text
-input prompt
-→ classify DecisionKind
-→ extract subject
-→ extract price / time horizon
-→ build resolved uncertainties
-→ build remaining uncertainties
-→ build representative paths
-→ build establishing shots
-→ build steelman cases
-→ add diagnostics
-→ apply event horizon
-→ return DecisionContext
-```
-
-Example prompts:
+Example prompts for the custom-decision slice:
 
 ```text
 Should I buy a used Lexus GS for £6,500?
@@ -642,7 +590,7 @@ Production build must remain green:
 npm run build
 ```
 
-Current known fixed issues:
+Known fixed issues (carried forward, confirmed):
 
 ```text
 Duplicate MoneyAmount type removed
@@ -656,9 +604,13 @@ establishingShots / steelman pathId literal typing fixed
 steelman.case added to type
 eventHorizon widened to include irreversibleAfter and transition
 fixed-slice context objects typed as DecisionContext
-lib/decisionengine clarifiers aligned with Clarifier type
 accidental Docs/Components/DecisionReport.tsx moved out of build path
 ```
+
+**Removed from this list:** "lib/decisionengine clarifiers aligned with
+Clarifier type." That file is not imported anywhere in the codebase (confirmed
+by full-repo grep). Whatever alignment work happened there did not wire it
+into the app. See section 22.
 
 ---
 
@@ -670,11 +622,7 @@ Do not use:
 git add .
 ```
 
-Docs changes may intentionally remain unstaged.
-
-Use targeted adds.
-
-Example:
+Docs changes may intentionally remain unstaged. Use targeted adds.
 
 ```bat
 git add app/engine/types.ts
@@ -693,18 +641,58 @@ git status --short
 
 ---
 
-## 21. Current doctrine
+## 21. Currency type history
 
-The repo is the source of truth.
+`MoneyAmount` was previously declared twice in `types.ts` with conflicting
+shapes (one four-currency, one GBP-only), which produced a hard
+`TS2300: Duplicate identifier` build error. Fixed by keeping the four-currency
+definition and removing the duplicate. Confirmed resolved - only one
+declaration exists now.
 
-The chat is not the source of truth.
+---
 
-Before changing code:
+## 22. `lib/decisionengine.ts` and the Constitution - status, not resolution
 
-```text
-inspect actual file
-make one small edit
-run build or relevant test
-commit only targeted files
-leave Docs noise alone unless explicitly instructed
-```
+`lib/decisionengine.ts` (396 lines) exists in the repo but is imported by
+nothing - confirmed by a full-repo grep for its filename and its exported
+symbols. It is not part of the running app in any way.
+
+Its shape is not arbitrary: it closely mirrors
+`DECISION_WORKSPACE_CONSTITUTION.md` - a `JudgeOutput` type with exactly
+`Guardian`, `Pragmatist`, `Auditor`, `Reframer` (no Empathiser, Reframer
+treated as a judge rather than a pre-panel stage), a `comparison: { agreement,
+tension, uncertainty }` field matching the Constitution's "Comparison Layer,"
+and a flat `summary -> clarifiers -> analysis -> comparison` flow matching the
+Constitution's Decision Flow exactly.
+
+The live `app/engine` code has diverged from this: it has four different
+judges (Guardian, Pragmatist, **Empathiser**, Auditor, with Reframer as a
+separate pre-panel stage), no Comparison Layer anywhere, and a much longer
+pipeline (Landscape v1/v2, Representative Paths, Event Horizon, Establishing
+Shots, Steelman) that the Constitution doesn't mention at all.
+
+Per standing decision at the top of this file: `app/engine` wins, and
+`lib/decisionengine.ts` is legacy/dead code. This section exists so that fact
+is visible in the schema itself rather than only in chat history. **This is a
+status note, not a design decision** - whether to delete
+`lib/decisionengine.ts`, revive it, or fold the Comparison Layer concept into
+`app/engine` (e.g. as new Auditor output) is still open and unresolved.
+
+---
+
+## 23. What isn't built yet, stated plainly
+
+- No LLM or reasoning-model call exists anywhere in the codebase. Every
+  component that looks like reasoning (`guardian.ts`, `pragmatist.ts`,
+  `empathiser.ts`, `auditor.ts`, `clarifier.ts`, `reframer.ts`) returns fixed
+  text regardless of input. `package.json` has no AI SDK dependency.
+- Of the five reasoning/judge components, only `eventHorizons.ts` actually
+  branches on decision content (`DecisionKind`). The rest are single-scenario
+  fixtures dressed as modular components.
+- Two of five slices (Singapore, Portfolio) don't exercise the panel at all -
+  in the live UI today, selecting either of those shows no Guardian,
+  Pragmatist, Empathiser, or Auditor output.
+- No diagnostic recommendation is uncertainty-class driven yet, despite that
+  being the stated target architecture (section 13).
+- `lib/decisionengine.ts` / Constitution reconciliation is unresolved
+  (section 22).
