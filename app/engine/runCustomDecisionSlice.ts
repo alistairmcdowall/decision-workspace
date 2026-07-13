@@ -13,6 +13,15 @@ function extractPrice(input: string): number | undefined {
   return Number(match[1].replace(/,/g, ""));
 }
 
+function extractTimeHorizon(input: string): string | undefined {
+  const match = input.match(/(?:for|over|next)\s+(?:the\s+)?(\d+)\s+years?/i);
+
+  if (!match) {
+    return undefined;
+  }
+
+  return `${match[1]} years`;
+}
 function classifyDecision(input: string): DecisionKind {
   const lower = input.toLowerCase();
 
@@ -412,11 +421,38 @@ function remainingUncertainties(kind: DecisionKind): string[] {
     "What information is still missing",
   ];
 }
+function resolvedUncertainties({
+  kind,
+  subject,
+  price,
+  timeHorizon,
+}: {
+  kind: DecisionKind;
+  subject: string;
+  price?: number;
+  timeHorizon?: string;
+}): string[] {
+  const resolved = [
+    `Decision type: ${kind.toLowerCase()}`,
+    `Subject: ${subject}`,
+  ];
+
+  if (kind === "PURCHASE" && price) {
+    resolved.push(`Approximate price: £${price.toLocaleString("en-GB")}`);
+  }
+
+  if (kind === "PORTFOLIO" && timeHorizon) {
+    resolved.push(`Time horizon mentioned: ${timeHorizon}`);
+  }
+
+  return resolved;
+}
 
 export function runCustomDecisionSlice(input: string): DecisionContext {
   const kind = classifyDecision(input);
   const subject = cleanSubject(input, kind);
   const price = extractPrice(input);
+  const timeHorizon = extractTimeHorizon(input);
 
   let context: DecisionContext = {
     prompt: input,
@@ -467,10 +503,12 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
     landscape: {
       v2: {
         subject,
-        resolvedUncertainties:
-          kind === "PURCHASE" && price
-            ? [`Approximate price identified: £${price.toLocaleString("en-GB")}`]
-            : [],
+        resolvedUncertainties: resolvedUncertainties({
+          kind,
+          subject,
+          price,
+          timeHorizon,
+        }),
         remainingUncertainties: remainingUncertainties(kind),
       },
     },
