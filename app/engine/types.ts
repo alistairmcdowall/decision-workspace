@@ -71,6 +71,8 @@ export type DecisionContext = {
       subjectCount: number;
       pricePresent: boolean;
     };
+    suggestedReframe?: string;
+    clarifyOptions?: string[];
   };
 
   landscape?: {

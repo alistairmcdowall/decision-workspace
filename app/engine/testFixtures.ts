@@ -130,3 +130,58 @@ export const sisterTestContext: DecisionContext = {
   
     panel: {},
   };
+
+  export const lexusEmotionalTestContext: DecisionContext = {
+    prompt:
+      "I've always wanted a Lexus GS, and I've found one for £6,500 - should I buy it?",
+    decision: {
+      subject: "a used Lexus GS",
+      kind: "PURCHASE",
+      price: { amount: 6500, currency: "GBP" },
+    },
+    facts: {
+      userStated: {
+        subject: "a used Lexus GS",
+        price: { amount: 6500, currency: "GBP" },
+      },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };
+
+  export const broadbandTestContext: DecisionContext = {
+    prompt: "Should I switch broadband providers to save money?",
+    decision: {
+      subject: "broadband provider",
+      kind: "GENERAL",
+    },
+    facts: {
+      userStated: { subject: "broadband provider" },
+      assumedForSlice: {},
+    },
+    reframer: {
+      status: "PASS",
+      governingObjective: "Decide whether to switch broadband providers to reduce cost.",
+      route: "DECISION_LANDSCAPE",
+      reason: { decisionCount: 1, decisionType: "subscription_switch", subjectCount: 1, pricePresent: false },
+    },
+    landscape: {
+      v1: {
+        subject: "Broadband provider switch",
+        commitment: "Cancel the current contract and sign up with a new provider.",
+        decisionAxes: ["price", "service reliability", "switching hassle", "contract terms"],
+        resolvedUncertainties: ["a cheaper alternative provider has been found"],
+        remainingUncertainties: ["exact price difference", "reliability of the new provider", "switching process length"],
+        state: "BROAD",
+      },
+    },
+    panel: {},
+  };
+  
+  export const broadbandWithClarifierContext: DecisionContext = {
+    ...broadbandTestContext,
+    clarifierResponse: {
+      answer: "No, I wouldn't stay even if they matched the lowest price I found.",
+      effect: "Price is not the actual driver of the switching decision.",
+    },
+  };

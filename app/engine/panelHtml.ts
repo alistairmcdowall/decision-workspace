@@ -94,3 +94,108 @@ export function renderPanelHtml(context: DecisionContext, title: string): string
 </body>
 </html>`;
 }
+
+type LandscapeLike = {
+  subject: string;
+  commitment: string;
+  decisionAxes: string[];
+  resolvedUncertainties: string[];
+  remainingUncertainties: string[];
+  state: string;
+} | undefined;
+
+function landscapeBlock(title: string, tint: string, data: LandscapeLike): string {
+  if (!data) return "";
+  return `
+    <div style="border:1px solid ${tint};border-radius:12px;padding:16px 18px;margin-bottom:20px;background:#fff;">
+      <div style="font-weight:700;color:#0f172a;margin-bottom:2px;">${escapeHtml(title)}</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:10px;">State: ${escapeHtml(data.state)}</div>
+      <div style="font-weight:600;color:#0f172a;">${escapeHtml(data.subject)}</div>
+      <div style="color:#334155;margin:4px 0 12px 0;">${escapeHtml(data.commitment)}</div>
+
+      <div style="font-weight:600;color:#0f172a;font-size:13px;margin-bottom:4px;">Decision axes</div>
+      ${list(data.decisionAxes)}
+
+      <div style="font-weight:600;color:#0f172a;font-size:13px;margin:12px 0 4px 0;">Resolved</div>
+      ${list(data.resolvedUncertainties)}
+
+      <div style="font-weight:600;color:#0f172a;font-size:13px;margin:12px 0 4px 0;">Remaining</div>
+      ${list(data.remainingUncertainties)}
+    </div>
+  `;
+}
+
+export function renderLandscapeComparisonHtml(
+  handAuthored: LandscapeLike,
+  generatedV1: LandscapeLike,
+  generatedV2: LandscapeLike
+): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Landscape comparison</title>
+</head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;background:#f8fafc;">
+  <h1 style="font-size:22px;color:#0f172a;">Landscape - hand-authored vs. real generated</h1>
+  ${landscapeBlock("Hand-authored reference (ChatGPT's worked example)", "#94a3b8", handAuthored)}
+  ${landscapeBlock("Real generated V1", "#38bdf8", generatedV1)}
+  ${landscapeBlock("Real generated V2 (after clarifier answer)", "#34d399", generatedV2)}
+</body>
+</html>`;
+}
+
+export function renderLandscapeEmotionCheckHtml(
+  handAuthored: LandscapeLike,
+  generatedV1: LandscapeLike,
+  generatedV2: LandscapeLike,
+  emotionalSignalV1: LandscapeLike,
+  empathiserOutput: { humanFactor: string }[] | undefined
+): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Landscape / emotional-signal check</title>
+</head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;background:#f8fafc;">
+  <h1 style="font-size:22px;color:#0f172a;">Landscape - discipline and emotional-signal check</h1>
+
+  ${landscapeBlock("Hand-authored reference", "#94a3b8", handAuthored)}
+  ${landscapeBlock("Real V1 - no emotional signal in prompt", "#38bdf8", generatedV1)}
+  ${landscapeBlock("Real V2 - after clarifier answer", "#34d399", generatedV2)}
+  ${landscapeBlock("Real V1 - prompt DOES state emotional attachment (\"I've always wanted a Lexus GS\")", "#f472b6", emotionalSignalV1)}
+
+  <div style="border:1px solid #f59e0b;border-radius:12px;padding:16px 18px;margin-bottom:20px;background:#fff;">
+    <div style="font-weight:700;color:#0f172a;margin-bottom:10px;">Real Empathiser, run against the real (non-emotional) Landscape V1</div>
+    ${list((empathiserOutput ?? []).map((e) => e.humanFactor))}
+  </div>
+</body>
+</html>`;
+}
+
+export function renderEmpathiserComparisonHtml(
+  bare: { humanFactor: string }[] | undefined,
+  withClarifier: { humanFactor: string }[] | undefined
+): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Empathiser - dry decision test</title>
+</head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;background:#f8fafc;">
+  <h1 style="font-size:22px;color:#0f172a;">Empathiser - broadband switch (deliberately mundane)</h1>
+
+  <div style="border:1px solid #94a3b8;border-radius:12px;padding:16px 18px;margin-bottom:20px;background:#fff;">
+    <div style="font-weight:700;color:#0f172a;margin-bottom:10px;">Bare decision - no revealed preference</div>
+    ${list((bare ?? []).map((e) => e.humanFactor))}
+  </div>
+
+  <div style="border:1px solid #34d399;border-radius:12px;padding:16px 18px;margin-bottom:20px;background:#fff;">
+    <div style="font-weight:700;color:#0f172a;margin-bottom:10px;">With clarifier answer: "No, wouldn't stay even at matched price"</div>
+    ${list((withClarifier ?? []).map((e) => e.humanFactor))}
+  </div>
+</body>
+</html>`;
+}

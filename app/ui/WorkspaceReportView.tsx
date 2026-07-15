@@ -5,6 +5,7 @@ import type {
   StructuredDiagnostic,
   StructuredReasoningPanel,
   StructuredAuditor,
+  StructuredReframer,
 } from "../engine/presentation/structuredReport";
 
 export function WorkspaceReportView({ report }: { report: StructuredReport }) {
@@ -17,6 +18,8 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
       {report.mode === "execution" && (
         <ExecutionStateStrip report={report} />
       )}
+
+      {report.reframer && <ReframerSection reframer={report.reframer} />} 
 
       {report.reasoningPanel && (
         <ReasoningPanelSection panel={report.reasoningPanel} />
@@ -518,5 +521,55 @@ function NavigatorCard({
         </section>
       )}
     </article>
+  );
+}
+
+function ReframerSection({ reframer }: { reframer: StructuredReframer }) {
+  const statusColor =
+    reframer.status === "PASS"
+      ? "bg-slate-700"
+      : reframer.status === "CLARIFY"
+        ? "bg-sky-700"
+        : reframer.status === "SUGGEST_REFRAME"
+          ? "bg-violet-700"
+          : reframer.status === "PREREQUISITE_REQUIRED"
+            ? "bg-amber-700"
+            : "bg-emerald-700";
+
+  return (
+    <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <h2 className="text-2xl font-semibold text-slate-100">Reframer</h2>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white ${statusColor}`}
+        >
+          {reframer.status.replace(/_/g, " ")}
+        </span>
+      </div>
+
+      <p className="leading-7 text-slate-300">{reframer.governingObjective}</p>
+
+      {reframer.suggestedReframe && (
+        <div className="mt-4 rounded-xl border border-violet-800/60 bg-violet-950/20 p-4">
+          <p className="text-xs uppercase tracking-[0.14em] text-violet-300/90">
+            An alternative framing to consider
+          </p>
+          <p className="mt-2 leading-6 text-slate-200">{reframer.suggestedReframe}</p>
+        </div>
+      )}
+
+      {reframer.clarifyOptions && reframer.clarifyOptions.length > 0 && (
+        <div className="mt-4 rounded-xl border border-sky-800/60 bg-sky-950/20 p-4">
+          <p className="text-xs uppercase tracking-[0.14em] text-sky-300/90">
+            This could mean a few different things
+          </p>
+          <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-slate-200">
+            {reframer.clarifyOptions.map((opt) => (
+              <li key={opt}>{opt}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }

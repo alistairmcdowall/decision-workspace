@@ -13,6 +13,7 @@ export type StructuredReport = {
   resolved: string[];
   remaining: string[];
   decisionTurn: string;
+  reframer?: StructuredReframer;
   reasoningPanel?: StructuredReasoningPanel;
   auditor?: StructuredAuditor;
   paths: StructuredPath[];
@@ -22,6 +23,14 @@ export type StructuredReport = {
   };
   navigator?: StructuredNavigator;
   closingNote: string;
+};
+
+export type StructuredReframer = {
+  status: string;
+  governingObjective: string;
+  route: string;
+  suggestedReframe?: string;
+  clarifyOptions?: string[];
 };
 
 export type StructuredReasoningPanel = {
@@ -134,6 +143,16 @@ export function buildStructuredReport(
     decisionTurn:
       c.presentation?.decisionTurn ??
       "So the decision now turns on the remaining unresolved issues.",
+
+      reframer: c.reframer
+      ? {
+          status: c.reframer.status,
+          governingObjective: c.reframer.governingObjective,
+          route: c.reframer.route,
+          suggestedReframe: c.reframer.suggestedReframe,
+          clarifyOptions: c.reframer.clarifyOptions,
+        }
+      : undefined,
 
     reasoningPanel:
       c.panel?.guardian || c.panel?.pragmatist || c.panel?.empathiser

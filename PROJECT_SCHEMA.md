@@ -567,3 +567,347 @@ test route only proves it works server-side. It does not prove the calling
 context you eventually wire it into is *also* server-side. Check that
 explicitly, for every future component, rather than assuming success in
 isolation implies success once integrated.
+
+---
+
+## 25. Reframer - now real, wired, and empirically validated
+
+`app/engine/reframer.ts` was converted from a hardcoded Bravia fixture to a
+real component, following the same pattern as Guardian/Pragmatist/Empathiser/
+Auditor (async, calls Claude via `callClaudeForJSON`, role-constrained lens
+prompt, visible-but-non-fatal fallback). It is wired into `runBraviaSlice.ts`
+and its output is now genuinely used by the live Bravia report (see section
+17 for the new UI section).
+
+### The five states, tested against real, defensible cases
+
+| Status | Test prompt | Result | Verdict |
+|---|---|---|---|
+| `PASS` | "Should I buy the Sony Bravia 9 II for £2,000?" (bare, no price-position signal) | `PASS` | Correct - nothing in the bare prompt justifies intervention |
+| `CLARIFY` | "My partner and I disagree about whether to have kids and where to live - what should we do?" | `CLARIFY`, correctly identified `decisionCount: 2`, four well-shaped clarify options | Correct - two structurally independent decisions genuinely present |
+| `ROUTE_TO_NAVIGATOR` | "I've decided to become an airline pilot. What qualifications do I need?" | `ROUTE_TO_NAVIGATOR` | Correct - decision already made, implementation question |
+| `PREREQUISITE_REQUIRED` | Bravia + real price-position context (43% below typical retail) | `PREREQUISITE_REQUIRED` - "determine why this is priced below market before assessing whether to buy" | **Confirmed correct after direct discussion** - see below |
+| `SUGGEST_REFRAME` | Multiple attempts (see below) | Never fired | **Unresolved, but understood** - see below |
+
+### The SUGGEST_REFRAME investigation, and what it taught us
+
+The original Docs example ("Should I buy the Sony Bravia 9 for £3,500?" ->
+suggested reframe "How should I spend my £3,500 television budget?") was
+tested directly, in several variants, and never reproduced `SUGGEST_REFRAME`
+- the model consistently chose `PREREQUISITE_REQUIRED` instead, reasoning
+that a suspiciously-good price on a *specific, already-identified listing*
+is evidence something needs investigating, not evidence the question should
+be reframed upward into a general budget question.
+
+After direct discussion, this was judged to be **correct model behaviour,
+not a defect** - and the original Docs example was judged to be based on a
+ChatGPT paraphrase that had collapsed two genuinely different original
+scenarios into one:
+
+- **The actual original scenario** was "Should I spend £3,500 on a Bravia 9
+  II TV?" at **full, undiscounted retail price** - a genuine allocation
+  question from the start (this TV vs. a different TV vs. not buying a TV at
+  all), with a real three-path structure (buy this one / buy a better-value
+  alternative / don't buy at all).
+- **The discounted-price scenario** ("this specific listing is suspiciously
+  cheap") is a different question entirely - investigate-before-deciding,
+  not reframe-the-question.
+
+Tested directly: the full-retail £3,500 scenario, with no discount signal,
+correctly returned `PASS` with a governing objective that already
+acknowledged the implicit "or something better" framing where the prompt
+contained it, and correctly did NOT try to force `SUGGEST_REFRAME` when the
+prompt hadn't actually asked for it.
+
+**Resolved conclusion:** the three-path structure this scenario exposes
+(buy this / buy alternative / don't buy) is **Representative Paths'
+responsibility, not Reframer's.** Reframer's job is only "is there one clear
+governing decision" - not "how many live alternatives will eventually be
+surfaced." Do not force Reframer to create multi-path structures. Fix/extend
+`paths.ts` (still fixture, see section 30) to genuinely generate alternatives
+under a passed governing decision instead.
+
+`SUGGEST_REFRAME` remains real, specified, and implemented correctly - it
+has simply not yet been triggered by any test case constructed so far. It
+may be genuinely rarer than the other four states. Not treated as a defect;
+worth revisiting if a real future case surfaces it naturally rather than
+manufacturing an artificial trigger.
+
+### Type addition required and made
+
+`ReframerState` in `types.ts` had no field to hold a suggested reframe or
+clarify options - a real, necessary widening, not scope creep:
+
+```ts
+reframer?: {
+  status: ReframerStatus;
+  governingObjective: string;
+  route: ReframerRoute;
+  reason: { decisionCount: number; decisionType: string; subjectCount: number; pricePresent: boolean; };
+  suggestedReframe?: string;   // NEW
+  clarifyOptions?: string[];   // NEW
+};
+```
+
+### New dev-only test route
+
+`GET /api/test-reframer` - runs Reframer against the bare-prompt test set
+plus two hand-built contexts carrying real price-position signal, for
+comparing behaviour with and without contextual evidence present.
+
+---
+
+## 26. Landscape - now real, tested against a known-good reference
+
+`app/engine/landscape.ts` converted from a Bravia-hardcoded fixture to a
+real component. One function handles both V1 and V2: if `landscape.v1`
+already exists AND `clarifierResponse` is present, it builds V2 (narrowing);
+otherwise it builds V1 (initial mapping). This mirrors the existing
+structural branching the old fixture already had - only the *content*
+generation became real, not the V1/V2 decision logic itself.
+
+### Validated against a known-good reference, not just plausibility-checked
+
+`testFixtures.ts`'s `lexusTestContext` already contained a hand-authored
+`landscape.v1`, built days earlier directly from a detailed worked example.
+This made a real comparison possible, not just "does this look reasonable":
+real, independently-generated V1 was compared directly against that
+hand-authored reference on the same decision.
+
+**Result: the generated version was judged better-aligned with the mature
+architecture than the hand-authored reference**, not merely comparable to
+it. Specifically:
+- More precise subject/commitment description.
+- More concrete, specific remaining uncertainties (e.g. correctly flagged
+  potential known reliability issues with Lexus hybrid electronics -
+  unprompted, matching a similar independent catch Auditor made days
+  earlier on the same underlying vehicle detail).
+- Correctly declined to include "emotional appeal" and "reversibility" as
+  decision axes - judged, after discussion, to be appropriate discipline
+  rather than a gap, since both are explicitly owned by other components
+  (Empathiser and Event Horizon respectively) and Landscape re-stating their
+  territory would be duplication, not thoroughness.
+
+### The emotional-signal exception rule, tested directly and confirmed
+
+Standing rule (Alistair's, prior to this test): Landscape should NOT invent
+emotional content, but SHOULD pick it up if the prompt states it directly.
+
+Tested directly: same Lexus decision, run twice - once with a plain prompt,
+once with a prompt stating "I've always wanted a Lexus GS." Result:
+
+- Plain prompt: no emotional content anywhere in the generated Landscape.
+- Prompt with stated attachment: independently added "The buyer has long
+  wanted a Lexus GS" as a **resolved fact**, and added a new decision axis,
+  "Personal fit and long-held desire versus practical need."
+
+**Confirmed working exactly as specified**, on the first real test, with the
+signal present and absent side by side on the same underlying decision.
+
+### V2 narrowing behaviour, tested and confirmed
+
+Fed a hand-constructed clarifier answer with genuine conditionality
+("yes, if the inspection comes back clean"). V2 correctly preserved the
+conditionality rather than falsely fully-resolving the purchase decision -
+it resolved the narrower, accurate fact ("willingness is conditional on
+clean inspection"), not "willing to buy."
+
+**Caveat, stated plainly:** this tested Landscape's narrowing logic in
+isolation. It did NOT test the full Reframer -> Landscape V1 -> Clarifier ->
+Landscape V2 chain end-to-end, because Clarifier itself is still fixture and
+never actually generated the question - the "answer" was hand-written to
+isolate Landscape's behaviour specifically. Full-chain validation remains
+outstanding until Clarifier is real (see section 28).
+
+### An observed inconsistency, not yet fixed
+
+In one comparison run, generated V1 included a "Reversibility / resale exit"
+axis; in another run (the emotional-signal variant), it didn't - on
+materially the same underlying decision. Given the standing decision that
+reversibility belongs to Event Horizon, not Landscape (section 26 above,
+confirmed by discussion), this should be made a hard rule in the prompt
+rather than left to vary run-to-run. **Not yet fixed - flagged for the next
+time `landscape.ts` is touched.**
+
+### New dev-only test routes
+
+`GET /api/test-landscape` - runs the full comparison above (hand-authored
+reference vs. real V1 vs. real V2 vs. emotional-signal V1 vs. real Empathiser
+run against the plain V1), rendered as readable HTML via
+`renderLandscapeEmotionCheckHtml()` in `panelHtml.ts`.
+
+---
+
+## 27. Empathiser - clarifier-awareness added, and a significant finding
+
+`app/engine/empathiser.ts`'s prompt builder was extended to read
+`context.clarifierResponse` when present, and explicitly instructed to treat
+a revealed-preference answer as a strong emotional signal, not just a fact
+to log. This was a real, justified fix, not a test-only hack - the docs'
+own stated purpose for revealed-preference clarifiers is exactly this.
+
+### The broadband test - the clearest single finding of the day
+
+Deliberately mundane decision constructed to test whether "how much
+Empathiser matters" holds up on a dry subject, not just an inherently
+emotional one (a desirable car): "Should I switch broadband providers to
+save money?"
+
+Run twice on identical underlying facts:
+
+**Bare (no revealed preference):** competent but generic - disruption
+anxiety, reliability regret, switching-hassle-as-chore. True, plausible,
+but the kind of thing anyone could guess without real reasoning.
+
+**With one hand-constructed clarifier answer added** ("No, I wouldn't stay
+even if they matched the lowest price I found." / effect: "Price is not the
+actual driver of the switching decision."):
+
+- "...underlying frustration or accumulated resentment toward the current
+  provider that persists regardless of price... a desire to emotionally
+  'break free' from a relationship they feel wronged by."
+- "...signals a loss of trust... the switch about restoring a sense of
+  control and confidence rather than financial gain."
+- "...the emotional weight of anticipated relief... a wish to move past
+  ongoing irritation rather than simply optimise spending."
+
+**This is a qualitative jump, not just more text.** The bare version
+describes the *situation*. The with-clarifier version demonstrates genuine
+understanding of the *person* - specific, non-generic, only possible because
+one revealed-preference fact was available to reason from.
+
+### The conclusion this forces, stated plainly
+
+The "is there enough Empathiser" question that motivated this whole
+investigation does not have a prompt-tuning answer. **Empathiser is capable
+of real, sharp, person-specific insight - but only when it has access to
+revealed-preference information, and the current live pipeline never gives
+it that access.** In `runBraviaSlice.ts`, Empathiser runs once, before
+Clarifier, and is never re-run. This means the live product is currently
+structurally limited to Empathiser's "bare" quality tier, permanently -
+regardless of how good its prompt is.
+
+This is a pipeline-ordering gap, not a component quality gap. See section 28
+for the confirmed design requirement this creates for Clarifier.
+
+### New dev-only test route
+
+`GET /api/test-empathiser-broadband` - runs the comparison above, rendered
+via `renderEmpathiserComparisonHtml()` in `panelHtml.ts`.
+
+---
+
+## 28. Confirmed design requirement for real Clarifier: selective panel re-evaluation
+
+**This is not yet built. Clarifier remains a hardcoded fixture (see section
+30). This section records a requirement for its eventual real design,
+backed by two independent pieces of evidence.**
+
+### Evidence 1 - historical, from the original torture tests
+
+Direct grep of `torture-test-results.md` confirms the original Portfolio
+test explicitly recorded, as a single observation: *"Comparison layer
+produced useful insight"* alongside *"User-answer -> reasoning-change loop
+was successfully demonstrated."* A "Comparison layer" concept existed
+alongside the original clarifier-response loop, predating the richer
+Landscape V1/V2 + Representative Paths + Event Horizon architecture that was
+eventually built. This is the same "Comparison Layer" concept that survives
+today only in the dead, unwired `lib/decisionengine.ts` file, which mirrors
+`DECISION_WORKSPACE_CONSTITUTION.md`'s architecture (see section 22). Its
+disappearance from the live pipeline appears to have been an unintentional
+casualty of building the richer architecture, not a deliberate decision to
+drop it.
+
+### Evidence 2 - empirical, from today's broadband test (section 27)
+
+Direct proof that Empathiser's best output requires clarifier-answer access
+that the current pipeline structurally never gives it.
+
+### The requirement
+
+Real Clarifier must, as part of its own output, judge **which panel members
+its own question-and-answer materially affects**, and those (and only
+those) should be re-run afterward. Not a blanket re-run of the whole panel
+after every clarifier answer - Alistair's own stated reasoning for why the
+original architecture likely avoided this is worth recording explicitly, as
+it is the actual answer to an obvious objection:
+
+**Design constraint, stated plainly: avoid an unbounded loop.** A system
+that re-runs judges after every clarifier answer, and then potentially
+generates *new* clarifying questions from the updated panel output, which
+then triggers another re-run, and so on, has no natural termination
+condition. This is why selective, judged re-evaluation (only the panel
+members a specific answer actually touches) is preferable to a blanket
+loop - and even then, the design should specify a hard bound (e.g. one
+clarifier round only for V1 of this feature, or an explicit maximum number
+of re-evaluation passes) rather than leaving termination implicit.
+
+Candidate trigger criteria (ChatGPT's proposal, not yet tested): Empathiser
+should re-run when an answer reveals preference, aversion, regret, stress,
+identity, relationship, trust, or fatigue signal. Worth testing directly
+once Clarifier is real, rather than assuming these criteria are complete or
+correctly calibrated.
+
+**Explicitly not resolved today:** whether the "judge which lenses this
+answer touches" decision is a new responsibility bolted onto Clarifier
+itself, or a separate new component. Either is a real, non-trivial piece of
+work - not a free addition to Clarifier's existing scope.
+
+---
+
+## 29. Event Horizon chapter - a correction identified, not yet made
+
+**Event Horizon remains fixture (see section 30). This section records a
+correction owed to Chapter 16 of the Engineering Manual for whenever it is
+built for real.**
+
+Direct reading of Chapter 16 found an internal inconsistency between two of
+its own sections:
+- **"Trigger"** lists moments like *"exchange of funds," "offer accepted"* -
+  firing at the moment of commitment.
+- **"Irreversible Conditions"** lists things like *"return period expires,"
+  "cooling-off period ends"* - treating the horizon as delayed until an
+  asset-level transaction can no longer be undone.
+
+Discussion resolved this is not a contradiction to eliminate, but two
+genuinely different mechanisms that the chapter doesn't clearly separate:
+
+**The corrected rule:** check whether a *formal, statutory reversal right*
+exists for this specific decision.
+
+- If yes (e.g. UK distance-selling regulations on a retail purchase) - the
+  event horizon is the loss of that right (return window expiry, item
+  opened beyond return conditions), because a genuine, complete reversal to
+  the prior state really is possible until then.
+- If no (e.g. a private used-car sale, which typically carries no statutory
+  cooling-off right) - the event horizon is the moment of commitment itself,
+  because even though the *asset* could later be resold, the *decision* -
+  the fact of having made the purchase, the time and risk incurred - can
+  never be undone. Selling the car back returns you to "no longer owning
+  this car," not to "never having bought it."
+
+This also resolves why "reversibility" correctly does not belong in
+Landscape (section 26) regardless of which reading applies to a given
+decision - it's Event Horizon's job to make that determination per-decision,
+not Landscape's job to pre-judge it as a generic axis.
+
+---
+
+## 30. Updated implementation status (supersedes relevant parts of section 18/23)
+
+As of this update, real (not fixture) components in the Bravia pipeline are:
+**Reframer, Guardian, Pragmatist, Empathiser, Auditor, Landscape (V1 and
+V2).** Still fixture: **Clarifier, Representative Paths, Establishing
+Shots, Steelman.** `eventHorizons.ts` remains the one component that was
+already genuinely `DecisionKind`-driven before any of today's work.
+
+This means more than half of the Bravia pipeline's semantic content is now
+real - but the parts most directly responsible for *presenting distinct
+options to choose between* (Paths, Establishing Shots, Steelman) are not.
+Practical consequence, visible on the live page today: Reframer can
+correctly say "investigate this price before deciding anything," and the
+Representative Paths section directly below it still shows an unchanged,
+generic two-path buy/don't-buy structure with no awareness that Reframer
+said anything at all. This is an honest, visible seam - not a bug, but a
+clear signal of exactly where the next real work should go (Paths, per the
+agreed next-step order).

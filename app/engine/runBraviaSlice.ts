@@ -46,8 +46,8 @@ export async function runBraviaSlice(): Promise<DecisionContext> {
     },
   };
 
-  context = reframer(context);
-context = landscape(context);
+context = await reframer(context);
+context = await landscape(context);
 
 context = await guardian(context);
 context = await pragmatist(context);
@@ -67,8 +67,7 @@ context = {
   },
 };
 
-context = landscape(context);
-
+context = await landscape(context);
 context = paths(context);
 context = eventHorizons(context);
 context = establishingShots(context);

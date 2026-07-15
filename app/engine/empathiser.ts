@@ -39,6 +39,10 @@ function buildEmpathiserUserPrompt(context: DecisionContext): string {
   const remainingUncertainties =
     context.landscape?.v1?.remainingUncertainties?.join("; ") ?? "not yet established";
 
+  const clarifierLine = context.clarifierResponse
+    ? `\n\nA revealed-preference clarifying question was asked and answered. Answer: "${context.clarifierResponse.answer}" Stated effect: ${context.clarifierResponse.effect}. Pay particular attention to what this answer reveals emotionally, not just what it resolves practically - a revealed preference often exposes the real human factor at stake more honestly than the original prompt did.`
+    : "";
+
   return `
 Decision subject: ${subject}
 Decision kind: ${kind}
@@ -46,7 +50,7 @@ Governing objective: ${governingObjective}
 Commitment description: ${commitment}
 Decision axes: ${decisionAxes}
 Remaining uncertainties: ${remainingUncertainties}
-Original prompt: ${context.prompt}
+Original prompt: ${context.prompt}${clarifierLine}
 
 Identify the human/emotional factor(s) at play in this specific decision.
 `.trim();
