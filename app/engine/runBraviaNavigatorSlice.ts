@@ -3,8 +3,8 @@
 import { runBraviaSlice } from "./runBraviaSlice";
 import type { DecisionContext } from "./types";
 
-export function runBraviaNavigatorSlice(): DecisionContext {
-  const context = runBraviaSlice();
+export async function runBraviaNavigatorSlice(): Promise<DecisionContext> {
+  const context = await runBraviaSlice();
 
   return {
     ...context,

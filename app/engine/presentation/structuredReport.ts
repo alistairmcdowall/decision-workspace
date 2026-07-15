@@ -13,6 +13,8 @@ export type StructuredReport = {
   resolved: string[];
   remaining: string[];
   decisionTurn: string;
+  reasoningPanel?: StructuredReasoningPanel;
+  auditor?: StructuredAuditor;
   paths: StructuredPath[];
   eventHorizon?: {
     label: string;
@@ -20,6 +22,24 @@ export type StructuredReport = {
   };
   navigator?: StructuredNavigator;
   closingNote: string;
+};
+
+export type StructuredReasoningPanel = {
+  guardian: { protectedValue: string; concern: string }[];
+  pragmatist: { requirement: string }[];
+  empathiser: { humanFactor: string }[];
+};
+
+export type StructuredAuditor = {
+  evidenceStrength: string;
+  assumptions: string[];
+  missingInformation: string[];
+  blockingUncertainties: string[];
+  supportedConclusions: string[];
+  unsupportedConclusions: string[];
+  internalConsistency: string;
+  readinessScore: number;
+  readinessState: string;
 };
 
 export type StructuredDiagnostic = {
@@ -114,6 +134,33 @@ export function buildStructuredReport(
     decisionTurn:
       c.presentation?.decisionTurn ??
       "So the decision now turns on the remaining unresolved issues.",
+
+    reasoningPanel:
+      c.panel?.guardian || c.panel?.pragmatist || c.panel?.empathiser
+        ? {
+            guardian: c.panel.guardian ?? [],
+            pragmatist: c.panel.pragmatist ?? [],
+            empathiser: c.panel.empathiser ?? [],
+          }
+        : undefined,
+
+    auditor: c.auditor
+      ? {
+          evidenceStrength: c.auditor.evidenceStrength,
+          assumptions: c.auditor.assumptions ?? [],
+          missingInformation: c.auditor.missingInformation ?? [],
+          blockingUncertainties: c.auditor.blockingUncertainties ?? [],
+          supportedConclusions: (c.auditor.supportedConclusions ?? []).map(
+            (x: any) => x.finding
+          ),
+          unsupportedConclusions: (c.auditor.unsupportedConclusions ?? []).map(
+            (x: any) => x.finding
+          ),
+          internalConsistency: c.auditor.internalConsistency,
+          readinessScore: c.auditor.readinessScore,
+          readinessState: c.auditor.readinessState,
+        }
+      : undefined,
 
     paths: paths.map((path: any) => {
       const shot = c.establishingShots?.find((x: any) => x.pathId === path.id);

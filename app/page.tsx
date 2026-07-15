@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { runBraviaSlice } from "./engine/runBraviaSlice";
-import { runBraviaNavigatorSlice } from "./engine/runBraviaNavigatorSlice";
+import { useEffect, useState } from "react";
 import { runSingaporeSlice } from "./engine/runSingaporeSlice";
 import { runPortfolioSlice } from "./engine/runPortfolioSlice";
 import { WorkspaceReportView } from "./ui/WorkspaceReportView";
@@ -48,18 +46,33 @@ const slices: {
   },
 ];
 
-function runSlice(sliceName: SliceName): StructuredReport {
-  const context =
-    sliceName === "bravia"
-      ? runBraviaSlice()
-      : sliceName === "bravia-navigator"
-        ? runBraviaNavigatorSlice()
-        : sliceName === "singapore"
-          ? runSingaporeSlice()
-          : runPortfolioSlice();
+async function runSlice(sliceName: SliceName): Promise<StructuredReport> {
+  if (sliceName === "bravia") {
+    const response = await fetch("/api/run-bravia");
+
+    if (!response.ok) {
+      throw new Error(`Failed to load Bravia report: ${response.status}`);
+    }
+
+    return (await response.json()) as StructuredReport;
+  }
+
+  if (sliceName === "bravia-navigator") {
+    const response = await fetch("/api/run-bravia-navigator");
+
+    if (!response.ok) {
+      throw new Error(`Failed to load Bravia + Navigator report: ${response.status}`);
+    }
+
+    return (await response.json()) as StructuredReport;
+  }
+
+  const context = sliceName === "singapore" ? runSingaporeSlice() : runPortfolioSlice();
 
   return buildStructuredReport(context);
 }
+
+
 function ReportView({ report }: { report: StructuredReport }) {
   return (
     <div className="space-y-4">
@@ -345,13 +358,36 @@ export default function Home() {
   const [useCustomInput, setUseCustomInput] = useState(false);
   const [showStructuredData, setShowStructuredData] = useState(false);
   
-  const report = useMemo(() => {
-    if (useCustomInput && customInput.trim()) {
-      return buildStructuredReport(runCustomDecisionSlice(customInput.trim()));
+  const [report, setReport] = useState<StructuredReport | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+  
+    async function loadReport() {
+      const nextReport =
+        useCustomInput && customInput.trim()
+          ? buildStructuredReport(runCustomDecisionSlice(customInput.trim()))
+          : await runSlice(selectedSlice);
+  
+      if (!cancelled) {
+        setReport(nextReport);
+      }
     }
   
-    return runSlice(selectedSlice);
+    loadReport();
+  
+    return () => {
+      cancelled = true;
+    };
   }, [customInput, selectedSlice, useCustomInput]);
+  
+  if (!report) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <p className="text-slate-300">Loading decision report…</p>
+      </main>
+    );
+  }
   
   const currentSlice = selectedSliceMeta(selectedSlice);
 

@@ -11,7 +11,7 @@ import { steelman } from "./steelman";
 import { clarifier } from "./clarifier";
 import type { DecisionContext } from "./types";
 
-export function runBraviaSlice(): DecisionContext {
+export async function runBraviaSlice(): Promise<DecisionContext> {
   let context: DecisionContext = {
     prompt: "Should I buy the Sony Bravia 9 II for £2,000?",
     decision: {
@@ -49,10 +49,10 @@ export function runBraviaSlice(): DecisionContext {
   context = reframer(context);
 context = landscape(context);
 
-context = guardian(context);
-context = pragmatist(context);
-context = empathiser(context);
-context = auditor(context);
+context = await guardian(context);
+context = await pragmatist(context);
+context = await empathiser(context);
+context = await auditor(context);
 
 context = clarifier(context);
 

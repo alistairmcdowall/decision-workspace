@@ -3,6 +3,8 @@ import type {
   StructuredPath,
   StructuredNavigator,
   StructuredDiagnostic,
+  StructuredReasoningPanel,
+  StructuredAuditor,
 } from "../engine/presentation/structuredReport";
 
 export function WorkspaceReportView({ report }: { report: StructuredReport }) {
@@ -15,6 +17,12 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
       {report.mode === "execution" && (
         <ExecutionStateStrip report={report} />
       )}
+
+      {report.reasoningPanel && (
+        <ReasoningPanelSection panel={report.reasoningPanel} />
+      )}
+
+      {report.auditor && <AuditorSection auditor={report.auditor} />}
 
       <ResolutionPanel
         title="What has already been resolved?"
@@ -136,6 +144,119 @@ function WorkspaceSummaryStrip({ report }: { report: StructuredReport }) {
           </p>
         </div>
       ))}
+    </section>
+  );
+}
+
+function ReasoningPanelSection({ panel }: { panel: StructuredReasoningPanel }) {
+  return (
+    <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+      <h2 className="mb-4 text-2xl font-semibold text-slate-100">
+        Reasoning Panel
+      </h2>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-2xl border border-sky-900/60 bg-slate-950 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-sky-400/80">
+            Guardian
+          </p>
+          <div className="mt-3 space-y-3">
+            {panel.guardian.map((g) => (
+              <div key={g.protectedValue}>
+                <p className="font-semibold text-slate-100">{g.protectedValue}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-400">{g.concern}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-amber-900/60 bg-slate-950 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-amber-400/80">
+            Pragmatist
+          </p>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300">
+            {panel.pragmatist.map((p) => (
+              <li key={p.requirement}>{p.requirement}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-rose-900/60 bg-slate-950 p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-rose-400/80">
+            Empathiser
+          </p>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300">
+            {panel.empathiser.map((e) => (
+              <li key={e.humanFactor}>{e.humanFactor}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AuditorSection({ auditor }: { auditor: StructuredAuditor }) {
+  const readinessColor =
+    auditor.readinessState === "GREEN"
+      ? "bg-emerald-600"
+      : auditor.readinessState === "AMBER"
+        ? "bg-amber-600"
+        : "bg-rose-600";
+
+  return (
+    <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-2xl font-semibold text-slate-100">Auditor</h2>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-white ${readinessColor}`}
+        >
+          {auditor.readinessState} · {auditor.readinessScore}/100
+        </span>
+      </div>
+
+      <p className="mb-4 text-sm text-slate-400">
+        Evidence strength: {auditor.evidenceStrength} · Internal consistency:{" "}
+        {auditor.internalConsistency}
+      </p>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <p className="text-sm font-semibold text-slate-200">Assumptions</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-400">
+            {auditor.assumptions.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-slate-200">Missing information</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-400">
+            {auditor.missingInformation.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-slate-200">Supported so far</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-400">
+            {auditor.supportedConclusions.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-sm font-semibold text-slate-200">Not yet supported</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-400">
+            {auditor.unsupportedConclusions.map((u) => (
+              <li key={u}>{u}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </section>
   );
 }
