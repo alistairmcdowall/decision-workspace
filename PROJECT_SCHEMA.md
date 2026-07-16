@@ -911,3 +911,258 @@ generic two-path buy/don't-buy structure with no awareness that Reframer
 said anything at all. This is an honest, visible seam - not a bug, but a
 clear signal of exactly where the next real work should go (Paths, per the
 agreed next-step order).
+
+---
+
+## 31. Representative Paths - now real, and the most heavily pressure-tested component so far
+
+`app/engine/paths.ts` converted from a hardcoded Bravia fixture to a real
+component. Takes the real `landscape` (v2 preferred, falling back to v1),
+`reframer.governingObjective`, and critically **Pragmatist's actual real
+output** as inputs - required conditions are drawn from Pragmatist's stated
+requirements, distributed to the paths they genuinely apply to, per Chapter
+15's own explicit rule that required conditions "often originate from the
+Pragmatist" and Paths should "preserve those conditions without
+re-evaluating them."
+
+### Two structural rules established, both independently confirmed against the actual Engineering Manual text
+
+Direct grep of `Landscapes/working_draft_0.1` found near word-for-word
+confirmation of what was independently derived through testing:
+
+> *"Representative Paths exist to represent fundamentally different
+> realities, not different routes towards the same reality."*
+
+and an explicit list of things that do NOT qualify as separate paths -
+*"implementation details, temporary pauses, intermediate milestones,
+tactical variations, different methods of achieving the same stable
+future"* - which belong to Navigator, not Paths.
+
+**Rule 1 (terminal-state test):** a path must represent an entered,
+immediate, stable outcome - not an open-ended process. "Verify, inspect,
+gather more information, then decide" is never a valid path on its own,
+regardless of framing - it has no destination, could continue indefinitely,
+and only delays arrival at a path that already exists.
+
+**Rule 2 (no-invention test):** a path must be constructible entirely from
+information already present in the decision. Inventing a new specific
+alternative (a different product, a different car) that was never named or
+implied anywhere is representing a different decision, not this one. The
+one legitimate exception: if the governing objective is genuinely about an
+unresolved *quantity* (e.g. how much of a stated budget to commit),
+resolutions using only the range already given (none / some / all) are
+legitimate, since nothing is invented.
+
+**No predetermined path count** - confirmed directly in the same doc:
+*"The number of paths is determined by the structure of the decision being
+represented rather than by any predefined architectural rule."* The prompt
+deliberately does not target 2 or 3; it constructs the smallest set that
+faithfully represents genuinely different outcomes.
+
+### Test results across four fixtures, with one later found to need correction
+
+| Case | Prompt shape | Result | Verdict |
+|---|---|---|---|
+| Lexus GS | Specific item | 2 paths (buy / don't buy) | Correct, confirmed twice |
+| Bravia 9 II at £3,500 | Specific item | 2 paths | Correct, confirmed after fixing an earlier mislabeled fixture (see below) |
+| £3,500 TV budget | Unresolved quantity | Initially 3 paths (full spend / spend+peripherals / value+retain) | **Initially accepted, later found incorrect on closer inspection - see section 32** |
+
+**Important correction to the record:** an earlier version of this test used
+a fixture literally named `bravia3500TestContext` with `decision.subject:
+"Bravia 9 II TV"` - a specific, named product, not a genuine budget
+question. Its 3-path result was wrongly treated as validating the
+historical "TV budget = 3 paths" finding from the original torture-test era.
+This was the same prompt-conflation mistake flagged elsewhere in this
+document (see section 25's SUGGEST_REFRAME investigation) recurring in a
+new place. Corrected by building a properly separate, genuinely
+quantity-shaped fixture (`tvBudgetTestContext`, prompt: "How should I spend
+my £3,500 TV budget?"), distinct from the specific-item Bravia fixture.
+
+### Iterative prompt fixes made during testing, in order
+
+1. Initial version allowed "delay/verify then decide" as a path (matching
+   the Lexus/GS problem seen with Guardian-style self-overlap on day one) -
+   fixed with an explicit terminal-state rule.
+2. That fix wasn't sufficient on its own - a "wait and see" / "monitor the
+   market" path still appeared on the Bravia-£3,500 case, apparently
+   triggered by a genuine timing axis in that decision's own Landscape.
+   Fixed with a more targeted rule: a timing-related Landscape axis reflects
+   real uncertainty, but does not by itself license a delay path - every
+   path must be tested against whether it actually resolves the governing
+   objective, not just whether it sounds reasonable given the axes present.
+3. `max_tokens` (in the shared `callClaude.ts`, affecting every real
+   component) was raised from 1024 to 4096 after the TV-budget case's
+   genuinely 3-item output was silently truncated mid-JSON, producing an
+   unreadable, uninformative "Paths unavailable" fallback with no indication
+   of the real cause. The fallback logic itself was also fixed to carry the
+   actual error/reason string rather than a generic unexplained message -
+   worth doing for every component's fallback path, not just this one.
+4. Output format instruction was tightened to require concise fields (title
+   under 8 words, outcome under 25 words, conditions under 15 words each) to
+   reduce the chance of hitting the token limit at all, not just raise the
+   ceiling.
+
+---
+
+## 32. Correction to the TV-budget 3-path result - not yet implemented in code
+
+**This correction was reached through discussion after the test in section
+31 above. It has NOT yet been implemented in `paths.ts` or `reframer.ts`.
+The code currently still reflects the pre-correction understanding.**
+
+### The problem, found by direct challenge, not by testing
+
+The initially-accepted 3-path TV-budget result was:
+
+- A: Spend the full £3,500 on one TV.
+- B: TV plus peripherals (soundbar, mount, streaming device).
+- C: Cheaper TV, bank the remaining money.
+
+Direct challenge exposed two separate, real problems:
+
+**Problem 1 - B and C are not actually different destinations.** Both are
+versions of "don't spend the full amount on the TV itself" - B narrates
+what the leftover money buys, C narrates that it's retained. Neither leads
+anywhere the other doesn't. This is the same failure family as the
+"verify, then decide" pattern rejected earlier in the same session, just
+with the process disguised as a spending choice rather than a delay.
+**Corrected default for this exact prompt: 2 paths (full spend on the best
+single TV / spend less and retain the difference), not 3.**
+
+**Problem 2 - "TV budget" does not automatically license "viewing setup
+budget."** A path that spends most of the money on non-TV items (soundbar,
+furnishing, etc.) has quietly redefined what the decision is about,
+without permission from anywhere upstream. This is scope creep, and it is
+not caught by either of the two rules in section 31 - both would have let
+it through, because the "peripherals" category itself was genuinely
+grounded in a real Landscape axis, and no single new item was invented.
+**The gap is a missing rule about preserving the stated object of the
+decision, not about inventing new items.**
+
+### The corrected rule, ready to write into `paths.ts`
+
+*"A complementary-spend path is valid only if the complementary items
+remain subordinate to, and functionally necessary for, the stated object of
+the decision. A path that would spend most of the budget on items other
+than the stated object is not preserving the decision's scope - it has
+silently redefined the decision (e.g. from 'TV budget' to 'home
+entertainment setup budget'), and that redefinition must be authorised
+upstream (see the Reframer addition below), not decided unilaterally by
+Paths."*
+
+### A new, confirmed responsibility for Reframer - also not yet implemented
+
+Reframer's job was extended, through direct discussion, to include: judging
+whether a prompt's stated object should be allowed to broaden into a wider
+category (e.g. "TV budget" -> "home entertainment setup budget", "bed
+budget" -> "bedroom furniture budget"), and recording that decision so
+Landscape and Paths both respect it. **Reframer must not silently broaden
+scope on its own** - if there isn't clear evidence for a broader frame, it
+should either keep the narrower one or (per its existing `CLARIFY`/
+`SUGGEST_REFRAME` states) surface the ambiguity rather than deciding it
+unilaterally.
+
+**Worked example, useful for testing once implemented:** "How should I
+spend my £1,000 bed budget?" - "bed plus bedroom furniture" (wardrobe,
+bedside tables, lamps) is scope creep and should be rejected by default.
+"Bed plus directly bed-functional items" (frame, mattress, delivery,
+bedding) is legitimately still "bed budget" and should be allowed. The
+difference is whether the additional spend remains functionally
+subordinate to the stated object, not whether it's a plausible-sounding
+category.
+
+---
+
+## 33. "Wait" as a path - concluded very unlikely to ever be valid, with one narrow exception
+
+Extensively pressure-tested via a hypothetical: a fully-capable future
+system with real web search, aware of a genuine, dated, verifiable sale
+event (e.g. an actual upcoming Black Friday), asked "how should I spend my
+£3,500 TV budget?" Does a "wait for the sale, then decide" path become
+legitimate once the honesty problem (the system fabricating a sale it has
+no real basis for knowing about) is solved by giving it genuine real-time
+information access?
+
+**Concluded: no, and this holds independently of tool access.** Solving the
+honesty problem does not solve the terminal-state problem (section 31,
+rule 1). Whatever the outcome of waiting - the sale happens or it doesn't -
+"wait" always resolves *into* one of the other paths once the event passes.
+It is never itself a stable, entered reality, no matter how well-grounded
+the reason to wait is. Real tool access would make the *reasoning* honest;
+it would not make "wait" a valid destination.
+
+A specific rescue attempt was also tested: a revealed-preference clarifier
+("if you bought today and saw the same TV much cheaper in six months, would
+that affect your enjoyment of the decision?"). Concluded this is a good,
+well-formed clarifier in its own right, but answers a different question
+than the one that matters - it measures the person's *regret sensitivity*
+(a preference), not whether a price drop is actually *going to happen* (a
+fact). A "yes" answer doesn't manufacture a legitimate wait path; instead,
+it should feed into Guardian and Empathiser, making the existing "buy now"
+path's risk assessment more accurate and evidenced. A "no" answer
+legitimately closes the question entirely, since it establishes waiting
+wouldn't matter even if the fact existed.
+
+**Standing conclusion: "wait" is not likely to ever be a valid
+Representative Path, with one narrow exception - when waiting IS the
+actual governing objective itself** (e.g. "should I buy this now or wait"),
+not an addition bolted onto a differently-framed decision. Even then, this
+produces its own clean, separately-scoped 2-path decision (buy now / wait),
+not a merger into an existing path set. This also retroactively explains,
+rather than merely observes, why the original torture-test-era finding "0
+and 1 paths are impossible, 4-path cases were never found" held up - not
+by luck, but because the actual structural rules make a 4th "wait" path
+essentially unconstructible under the current architecture.
+
+---
+
+## 34. Clarifier design - one more requirement added to section 28
+
+**Still not built - this adds to, not replaces, section 28's existing
+selective-panel-re-evaluation requirement.**
+
+A useful distinction emerged, worth keeping as part of Clarifier's eventual
+design: not all clarifying questions are the same *kind* of question, and
+the "prefer revealed over stated preference" principle does not apply
+equally to all of them.
+
+- **Preference/values questions** (does this person actually care about X,
+  even if they say they do/don't) - genuinely benefit from revealed-preference
+  framing, since people are unreliable self-reporters of their own values
+  and priorities. This is what the existing Clarifier voice work (Feynman
+  Isolation, Human Consequence) was designed for.
+- **Factual/scope questions** (does this £3,500 figure include peripherals
+  or not) - people generally know the answer to these about their own
+  stated intent. A direct question is not a weaker approach here; the
+  revealed-preference principle was never meant to cover this category, and
+  applying it where it doesn't belong (e.g. building an elaborate
+  hypothetical to indirectly divine a scope boundary the person could just
+  state directly) would be over-engineering, not rigor.
+
+Worth building this distinction into Clarifier's eventual voice/method
+selection logic, alongside the existing Feynman Isolation / Human
+Consequence / Sober Auditor framework - a factual/scope question may
+warrant a fourth, simpler mode that doesn't attempt indirection at all.
+
+---
+
+## 35. Current honest status - code vs. confirmed design conclusions
+
+As of this update, there is a real, explicit gap between what has been
+**tested and confirmed as correct through discussion** and what actually
+**exists in `paths.ts`/`reframer.ts` right now**:
+
+- Rules 1 and 2 (section 31) - **implemented in code**, tested, working.
+- The scope-preservation rule and Reframer's category-drift authority
+  (section 32) - **confirmed correct through discussion, NOT YET
+  implemented in code.** The current `paths.ts` would still incorrectly
+  produce something like the flawed 3-path TV-budget result if re-run today.
+- The "wait is essentially never valid" conclusion (section 33) - already
+  effectively enforced by Rule 1, no further code change believed
+  necessary, but not independently re-tested after the Rule 1 refinement
+  that specifically targeted timing-driven delay paths.
+
+**Do not wire Paths into the live `runBraviaSlice.ts` pipeline before
+section 32's correction is implemented and re-tested.** Wiring a
+known-incomplete version into the live product would be a regression from
+the discipline maintained everywhere else in this project so far.

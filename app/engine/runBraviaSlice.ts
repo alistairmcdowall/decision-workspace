@@ -68,7 +68,7 @@ context = {
 };
 
 context = await landscape(context);
-context = paths(context);
+context = await paths(context);
 context = eventHorizons(context);
 context = establishingShots(context);
 context = steelman(context);

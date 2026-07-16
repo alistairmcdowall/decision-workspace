@@ -199,3 +199,111 @@ export function renderEmpathiserComparisonHtml(
 </body>
 </html>`;
 }
+
+type PathsLike = {
+  id: string;
+  title: string;
+  requiredConditions: string[];
+  commitment: { type: string; amount: number; currency: string };
+  outcome: string;
+}[] | undefined;
+
+function pathsBlock(pathsData: PathsLike): string {
+  if (!pathsData || pathsData.length === 0) return "<p>No paths generated</p>";
+  return pathsData
+    .map(
+      (p) => `
+      <div style="border:1px solid #cbd5e1;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff;">
+        <div style="font-weight:700;color:#0f172a;">Path ${escapeHtml(p.id)} - ${escapeHtml(p.title)}</div>
+        <div style="font-size:13px;color:#64748b;margin:4px 0 8px 0;">Commitment: ${escapeHtml(p.commitment.type)} - ${p.commitment.amount} ${escapeHtml(p.commitment.currency)}</div>
+        <div style="font-size:13px;color:#334155;margin-bottom:8px;">Outcome: ${escapeHtml(p.outcome)}</div>
+        <div style="font-weight:600;font-size:13px;color:#0f172a;margin-bottom:4px;">Required conditions</div>
+        ${list(p.requiredConditions)}
+      </div>
+    `
+    )
+    .join("");
+}
+
+export function renderPathsComparisonHtml(
+  title1: string,
+  paths1: PathsLike,
+  title2: string,
+  paths2: PathsLike
+): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Paths comparison</title></head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;background:#f8fafc;">
+  <h1 style="font-size:22px;color:#0f172a;">Representative Paths - real generated output</h1>
+
+  <h2 style="font-size:16px;color:#0f172a;margin-top:24px;">${escapeHtml(title1)}</h2>
+  ${pathsBlock(paths1)}
+
+  <h2 style="font-size:16px;color:#0f172a;margin-top:24px;">${escapeHtml(title2)}</h2>
+  ${pathsBlock(paths2)}
+</body>
+</html>`;
+}
+
+function pre(label: string, content: string): string {
+  return `
+    <div style="margin-bottom:14px;">
+      <div style="font-weight:600;color:#0f172a;font-size:13px;margin-bottom:4px;">${escapeHtml(label)}</div>
+      <pre style="white-space:pre-wrap;background:#f1f5f9;border-radius:8px;padding:10px 12px;font-size:12px;color:#334155;border:1px solid #e2e8f0;">${escapeHtml(content)}</pre>
+    </div>
+  `;
+}
+
+export function renderFullChainHtml(
+  title1: string,
+  trace1: any,
+  title2: string,
+  trace2: any
+): string {
+  function traceBlock(title: string, trace: any): string {
+    return `
+      <div style="border:2px solid #64748b;border-radius:12px;padding:18px;margin-bottom:30px;background:#fff;">
+        <h2 style="font-size:18px;color:#0f172a;margin-top:0;">${escapeHtml(title)}</h2>
+        ${pre("Reframer output", JSON.stringify(trace.reframer, null, 2))}
+        ${pre("Landscape output", JSON.stringify(trace.landscape, null, 2))}
+        ${pre("Pragmatist output", JSON.stringify(trace.pragmatist, null, 2))}
+        ${pre("EXACT user prompt sent to Paths", trace.exactPathsUserPrompt)}
+        ${pre("Final Paths result", JSON.stringify(trace.finalPaths, null, 2))}
+      </div>
+    `;
+  }
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Full chain trace</title></head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;background:#f8fafc;">
+  <h1 style="font-size:22px;color:#0f172a;">Full chain trace - every real step, exact prompts</h1>
+  ${traceBlock(title1, trace1)}
+  ${traceBlock(title2, trace2)}
+</body>
+</html>`;
+}
+
+export function renderFullChainHtml3(
+  title1: string, trace1: any,
+  title2: string, trace2: any,
+  title3: string, trace3: any
+): string {
+  const base = renderFullChainHtml(title1, trace1, title2, trace2);
+  const extra = base.replace(
+    "</body>",
+    `${
+      // reuse the same block structure for the third trace
+      `<div style="border:2px solid #64748b;border-radius:12px;padding:18px;margin-bottom:30px;background:#fff;">
+        <h2 style="font-size:18px;color:#0f172a;margin-top:0;">${escapeHtml(title3)}</h2>
+        ${pre("Reframer output", JSON.stringify(trace3.reframer, null, 2))}
+        ${pre("Landscape output", JSON.stringify(trace3.landscape, null, 2))}
+        ${pre("Pragmatist output", JSON.stringify(trace3.pragmatist, null, 2))}
+        ${pre("EXACT user prompt sent to Paths", trace3.exactPathsUserPrompt)}
+        ${pre("Final Paths result", JSON.stringify(trace3.finalPaths, null, 2))}
+      </div>`
+    }</body>`
+  );
+  return extra;
+}

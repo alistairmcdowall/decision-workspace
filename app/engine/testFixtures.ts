@@ -185,3 +185,34 @@ export const sisterTestContext: DecisionContext = {
       effect: "Price is not the actual driver of the switching decision.",
     },
   };
+
+  export const bravia3500TestContext: DecisionContext = {
+    prompt: "Should I spend £3,500 on a Bravia 9 II TV?",
+    decision: {
+      subject: "Bravia 9 II TV",
+      kind: "PURCHASE",
+      price: { amount: 3500, currency: "GBP" },
+    },
+    facts: {
+      userStated: {
+        subject: "Bravia 9 II TV",
+        price: { amount: 3500, currency: "GBP" },
+      },
+      assumedForSlice: { marketClass: "premium_flagship" },
+    },
+    panel: {},
+  };
+
+  export const tvBudgetTestContext: DecisionContext = {
+    prompt: "How should I spend my £3,500 TV budget?",
+    decision: {
+      subject: "£3,500 TV budget",
+      kind: "PURCHASE",
+      price: { amount: 3500, currency: "GBP" },
+    },
+    facts: {
+      userStated: { subject: "£3,500 TV budget", price: { amount: 3500, currency: "GBP" } },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };
