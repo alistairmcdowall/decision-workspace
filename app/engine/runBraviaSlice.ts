@@ -41,37 +41,78 @@ export async function runBraviaSlice(): Promise<DecisionContext> {
     presentation: {
       decisionStateSummary:
         "The first question is no longer whether the offer is interesting. The model treats it as attractive if verified.",
-      decisionTurn:
-        "So the decision now turns on verification.",
+      decisionTurn: "So the decision now turns on verification.",
     },
   };
 
-context = await reframer(context);
-context = await landscape(context);
+  context = await reframer(context);
+  context = await landscape(context); // V1
 
-context = await guardian(context);
-context = await pragmatist(context);
-context = await empathiser(context);
-context = await auditor(context);
+  // Guardian, Pragmatist, and Empathiser are independent of each other - run in parallel.
+  const [guardianResult, pragmatistResult, empathiserResult] = await Promise.all([
+    guardian(context),
+    pragmatist(context),
+    empathiser(context),
+  ]);
 
-context = clarifier(context);
+  context = {
+    ...context,
+    panel: {
+      ...guardianResult.panel,
+      ...pragmatistResult.panel,
+      ...empathiserResult.panel,
+    },
+  };
 
-context = {
-  ...context,
-  clarifierResponse: {
-    answer:
-      "Yes. If the offer is genuine, fully warranted and free from hidden condition issues, I would feel comfortable buying it.",
-  
-    effect:
-      "Purchase willingness resolved",
-  },
-};
+  // Two independent branches from here:
+  // - Auditor only needs Guardian/Pragmatist/Empathiser (already available).
+  // - Paths needs Landscape V2 (which needs the clarifier answer) and Pragmatist (already available).
+  // Neither branch needs the other's output, so they run in parallel.
+  async function runAuditorBranch(ctx: DecisionContext): Promise<DecisionContext> {
+    return await auditor(ctx);
+  }
 
-context = await landscape(context);
-context = await paths(context);
-context = eventHorizons(context);
-context = establishingShots(context);
-context = steelman(context);
+  async function runPathsBranch(ctx: DecisionContext): Promise<DecisionContext> {
+    let c = clarifier(ctx); // still fixture, synchronous
 
-return context;
+    c = {
+      ...c,
+      clarifierResponse: {
+        answer:
+          "Yes. If the offer is genuine, fully warranted and free from hidden condition issues, I would feel comfortable buying it.",
+        effect: "Purchase willingness resolved",
+      },
+    };
+
+    c = await landscape(c); // V2
+    c = await paths(c);
+    c = eventHorizons(c); // synchronous, no real API call
+
+    return c;
+  }
+
+  const [auditorBranch, pathsBranch] = await Promise.all([
+    runAuditorBranch(context),
+    runPathsBranch(context),
+  ]);
+
+  context = {
+    ...pathsBranch, // carries clarifier, clarifierResponse, landscape v2, representativePaths, eventHorizon
+    auditor: auditorBranch.auditor,
+  };
+
+  // Final stage: Establishing Shots and Steelman are also independent of each other -
+  // Establishing Shots needs Paths/Landscape/Event Horizon; Steelman needs Paths/Landscape/panel/Auditor.
+  const [shotsResult, steelmanResult] = await Promise.all([
+    establishingShots(context),
+    steelman(context),
+  ]);
+
+  context = {
+    ...context,
+    establishingShots: shotsResult.establishingShots,
+    steelman: steelmanResult.steelman,
+  };
+
+  return context;
 }

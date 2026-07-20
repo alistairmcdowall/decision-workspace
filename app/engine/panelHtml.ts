@@ -307,3 +307,42 @@ export function renderFullChainHtml3(
   );
   return extra;
 }
+
+export function renderPathsAndShotsHtml(
+  reframerOutput: unknown,
+  pathsData: PathsLike,
+  shots: { pathId: string; title?: string; shot: string }[] | undefined
+): string {
+  const shotsByPathId = new Map((shots ?? []).map((s) => [s.pathId, s]));
+
+  const cards = (pathsData ?? [])
+    .map((p) => {
+      const shot = shotsByPathId.get(p.id);
+      return `
+        <div style="border:1px solid #cbd5e1;border-radius:12px;padding:16px 18px;margin-bottom:16px;background:#fff;">
+          <div style="font-weight:700;color:#0f172a;font-size:16px;">Path ${escapeHtml(p.id)} - ${escapeHtml(p.title)}</div>
+          <div style="font-size:12px;color:#64748b;margin:4px 0 10px 0;">Commitment: ${escapeHtml(p.commitment.type)} - ${p.commitment.amount} ${escapeHtml(p.commitment.currency)}</div>
+          <div style="font-size:13px;color:#334155;margin-bottom:10px;">Outcome: ${escapeHtml(p.outcome)}</div>
+          ${
+            shot
+              ? `<div style="border-left:3px solid #94a3b8;padding-left:12px;margin-top:10px;">
+                  <div style="font-weight:600;color:#0f172a;font-size:13px;">${escapeHtml(shot.title ?? "")}</div>
+                  <div style="color:#334155;line-height:1.6;margin-top:4px;">${escapeHtml(shot.shot)}</div>
+                </div>`
+              : `<p style="color:#94a3b8;">No establishing shot generated for this path</p>`
+          }
+        </div>
+      `;
+    })
+    .join("");
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /><title>Paths + Establishing Shots</title></head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;background:#f8fafc;">
+  <h1 style="font-size:22px;color:#0f172a;">Paths + Establishing Shots</h1>
+  <pre style="background:#f1f5f9;border-radius:8px;padding:10px 12px;font-size:12px;color:#334155;margin-bottom:20px;">${escapeHtml(JSON.stringify(reframerOutput, null, 2))}</pre>
+  ${cards}
+</body>
+</html>`;
+}

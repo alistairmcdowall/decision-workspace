@@ -46,25 +46,38 @@ const slices: {
   },
 ];
 
-async function runSlice(sliceName: SliceName): Promise<StructuredReport> {
-  if (sliceName === "bravia") {
-    const response = await fetch("/api/run-bravia");
+async function fetchWithTimeout(url: string, label: string): Promise<StructuredReport> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 180_000);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
 
     if (!response.ok) {
-      throw new Error(`Failed to load Bravia report: ${response.status}`);
+      throw new Error(`Failed to load ${label}: HTTP ${response.status}`);
     }
 
     return (await response.json()) as StructuredReport;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(
+        `${label} took longer than 90 seconds and was cancelled - this chain now makes several real reasoning calls in sequence, so a slow network or a cold dev-server start can occasionally exceed this. Try again.`
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+
+async function runSlice(sliceName: SliceName): Promise<StructuredReport> {
+  if (sliceName === "bravia") {
+    return await fetchWithTimeout("/api/run-bravia", "Bravia report");
   }
 
   if (sliceName === "bravia-navigator") {
-    const response = await fetch("/api/run-bravia-navigator");
-
-    if (!response.ok) {
-      throw new Error(`Failed to load Bravia + Navigator report: ${response.status}`);
-    }
-
-    return (await response.json()) as StructuredReport;
+    return await fetchWithTimeout("/api/run-bravia-navigator", "Bravia + Navigator report");
   }
 
   const context = sliceName === "singapore" ? runSingaporeSlice() : runPortfolioSlice();
@@ -357,34 +370,60 @@ export default function Home() {
   const [customInput, setCustomInput] = useState("");
   const [useCustomInput, setUseCustomInput] = useState(false);
   const [showStructuredData, setShowStructuredData] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   const [report, setReport] = useState<StructuredReport | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-  
+
     async function loadReport() {
-      const nextReport =
-        useCustomInput && customInput.trim()
-          ? buildStructuredReport(runCustomDecisionSlice(customInput.trim()))
-          : await runSlice(selectedSlice);
-  
-      if (!cancelled) {
-        setReport(nextReport);
+      setLoadError(null);
+
+      try {
+        const nextReport =
+          useCustomInput && customInput.trim()
+            ? buildStructuredReport(runCustomDecisionSlice(customInput.trim()))
+            : await runSlice(selectedSlice);
+
+        if (!cancelled) {
+          setReport(nextReport);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : "Unknown error loading report.";
+          setLoadError(message);
+        }
       }
     }
-  
+
     loadReport();
-  
+
     return () => {
       cancelled = true;
     };
   }, [customInput, selectedSlice, useCustomInput]);
+
+  if (loadError) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <div className="max-w-lg rounded-2xl border border-rose-800 bg-rose-950/30 p-6">
+          <p className="font-semibold text-rose-200 mb-2">Couldn't load this report</p>
+          <p className="text-sm text-rose-100/80">{loadError}</p>
+        </div>
+      </main>
+    );
+  }
   
   if (!report) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-        <p className="text-slate-300">Loading decision report…</p>
+      <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <div className="text-center max-w-sm">
+          <p className="text-slate-300 mb-2">Loading decision report…</p>
+          <p className="text-sm text-slate-500">
+            This runs several real reasoning steps in sequence and can take up to a minute. No need to refresh - it will appear here when ready.
+          </p>
+        </div>
       </main>
     );
   }

@@ -2,9 +2,11 @@ import { reframer } from "../../engine/reframer";
 import { landscape } from "../../engine/landscape";
 import { pragmatist } from "../../engine/pragmatist";
 import { paths, buildPathsUserPrompt } from "../../engine/paths";
-import { lexusTestContext, bravia3500TestContext, tvBudgetTestContext } from "../../engine/testFixtures";
+import { tvBudgetTestContext, bedBudgetTestContext } from "../../engine/testFixtures";
 import { renderFullChainHtml3 } from "../../engine/panelHtml";
+import { saveTestOutput } from "../../engine/testLogger";
 import type { DecisionContext } from "../../engine/types";
+
 
 async function runChainWithTrace(context: DecisionContext) {
   const afterReframer = await reframer(context);
@@ -23,19 +25,33 @@ async function runChainWithTrace(context: DecisionContext) {
 }
 
 export async function GET() {
-  const lexusBare: DecisionContext = { ...lexusTestContext, landscape: undefined };
-  const lexusTrace = await runChainWithTrace(lexusBare);
-  const braviaTrace = await runChainWithTrace(bravia3500TestContext);
-  const tvBudgetTrace = await runChainWithTrace(tvBudgetTestContext);
+  const tvTrace = await runChainWithTrace(tvBudgetTestContext);
+  const bedTrace = await runChainWithTrace(bedBudgetTestContext);
 
   const html = renderFullChainHtml3(
-    "Lexus GS (specific item) - expect 2",
-    lexusTrace,
-    "Bravia 9 II at £3,500 (specific item) - expect 2",
-    braviaTrace,
-    "£3,500 TV budget (unresolved quantity) - expect up to 3",
-    tvBudgetTrace
+    "£3,500 TV budget - RETEST, expect 2 paths now (was wrongly 3)",
+    tvTrace,
+    "£1,000 bed budget - expect bed-functional items OK, general furniture rejected",
+    bedTrace,
+    "(unused third slot)",
+    tvTrace
   );
+
+  saveTestOutput("tv-budget", {
+    prompt: tvBudgetTestContext.prompt,
+    reframer: tvTrace.reframer,
+    landscape: tvTrace.landscape,
+    panel: { pragmatist: tvTrace.pragmatist },
+    representativePaths: tvTrace.finalPaths,
+  } as DecisionContext);
+
+  saveTestOutput("bed-budget", {
+    prompt: bedBudgetTestContext.prompt,
+    reframer: bedTrace.reframer,
+    landscape: bedTrace.landscape,
+    panel: { pragmatist: bedTrace.pragmatist },
+    representativePaths: bedTrace.finalPaths,
+  } as DecisionContext);
 
   return new Response(html, { headers: { "content-type": "text/html" } });
 }

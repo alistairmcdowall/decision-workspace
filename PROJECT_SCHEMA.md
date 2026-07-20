@@ -1166,3 +1166,934 @@ As of this update, there is a real, explicit gap between what has been
 section 32's correction is implemented and re-tested.** Wiring a
 known-incomplete version into the live product would be a regression from
 the discipline maintained everywhere else in this project so far.
+
+---
+
+## 36. Three more Paths rules established - retesting section 32's fix exposed further gaps
+
+**Still not implemented in code as of this update - same status as section
+32's correction. `paths.ts` currently only has Rules 1 and 2 (section 31).
+Everything below is confirmed through discussion, ready to write in, not
+yet written in.**
+
+Section 32's scope-preservation rule was implemented and retested. Result:
+the bed-budget case correctly stopped inventing general furniture (no
+wardrobes, no lamps) - that part of the fix worked. But retesting surfaced
+two further, previously unnamed failure modes, plus a correction to
+section 32's own reasoning on the TV case.
+
+### Rule 3 - scope consistency across the whole path set, not just within one path
+
+The TV-budget retest initially produced 3 paths again: full-TV-only /
+TV-plus-accessories-full-spend / cheaper-TV-with-remainder-retained. The
+first instinct (matching the original, since-corrected view from section
+32) was to reject this as B and C being the same destination. Direct
+challenge exposed the real problem is different and sharper:
+
+**B and C use two incompatible definitions of what's in scope.** B treats
+accessories as inside the "TV budget" boundary. C treats them as outside it
+- because if they were inside it, C's "retained" money would just get spent
+on accessories anyway, which would collapse C into B. Both cannot be true
+about the same decision simultaneously. This is not a duplicate-destination
+problem (Rule 1) and not an invented-item problem (Rule 2) - it is the path
+*set* being internally inconsistent about its own scope boundary.
+
+**Rule 3:** all paths in a single result must share one consistent answer
+to what is in-scope and what is out-of-scope for this decision. Scope is
+decided once, for the whole set - never per-path. Under the correct default
+(no scope-broadening without explicit authorisation - see section 32),
+accessories are out of scope entirely for a "TV budget" prompt unless
+Reframer has explicitly authorised a broader frame. Applying this
+correctly eliminates B (assumes unauthorised scope) and leaves A and C -
+**genuinely 2 valid paths**, arrived at for a more defensible reason than
+section 32's original "B and C are duplicates" argument, which itself was
+identified as not quite right on reflection.
+
+A remaining implementation bug, unrelated to the rule itself: the
+generated Path C had `commitment.amount: 3500` while its own `outcome` text
+said money was retained - an internal contradiction worth fixing in the
+output validation regardless of the scope question.
+
+### Rule 4 - no manufactured spectrum
+
+The bed-budget retest correctly avoided general furniture, but produced 3
+paths that are a different, previously unnamed problem: mattress-priority /
+balanced / frame-priority - three arbitrary sample points along one
+continuous "how is the money weighted across mattress vs. frame" dial, with
+no natural breakpoint between them, all spending the full budget.
+
+**Rule 4:** if the real variation between candidate paths is a continuous
+weighting or trade-off with no natural, principled breakpoint, that is not
+a valid path set - it is a preference question, and belongs to Clarifier
+(see section 38's new third category), not to Paths manufacturing discrete
+samples along the spectrum to avoid asking it directly.
+
+### Rule 5 - minimum-functional-set tiebreaker for ambiguous scope objects
+
+Separate from Rule 3 (which governs consistency across a path set) is the
+question of where the correct scope boundary actually sits for a single,
+inherently ambiguous stated object - e.g. does "bed" mean frame only, frame
+plus mattress, or more. Direct discussion concluded:
+
+**Rule 5:** when a stated object's boundary is genuinely ambiguous, default
+to its minimum functional definition - the smallest set of components
+without which the object could not fulfil its basic, literal purpose -
+rather than a broader or more "complete" reading. For "bed": a frame alone
+does not function as a place to sleep; frame plus mattress does; anything
+beyond that (pillows, bedding, furniture) is enhancement, not function, and
+is out of scope by default.
+
+This was checked for consistency against the TV case rather than treated as
+an isolated bed-specific judgment: a TV's minimum functional definition is
+the TV alone (a screen fulfils "watch television" without a mount or
+soundbar), which is why TV and bed correctly land on different-sized
+minimum sets under the exact same rule, rather than the rule being bent
+per-object. The rule is intentionally biased toward narrow, matching the
+architecture's existing bias in Rules 2 and 3 - false positives (unwanted
+scope creep) are treated as the worse failure mode throughout, not a
+neutral toss-up between over- and under-inclusion.
+
+Explicitly acknowledged as imperfect: this is a real judgment call the
+system will not get right every time (a genuine type-1/type-2 tradeoff, not
+a solvable-with-more-rigor problem) - the minimum-functional-set default is
+the most defensible consistent tiebreaker available, not a claim of
+certainty.
+
+---
+
+## 37. Updated Paths rule set - full list, for direct use when code is next touched
+
+1. **Terminal-state** - a path must be an entered, stable, immediate
+   outcome, not an open-ended process, pause, or route to another path.
+2. **No-invention** - a path must be constructible entirely from
+   information already present in the decision; the one exception is
+   resolving an already-stated quantity (none/some/all of a budget).
+3. **Scope consistency across the set** - every path in one result must
+   share the same answer to what is in/out of scope; scope is decided once
+   for the whole set, never assumed differently by different paths.
+4. **No manufactured spectrum** - a continuous weighting/trade-off with no
+   natural breakpoint is a Clarifier question, not a set of Paths.
+5. **Minimum-functional-set default** - when a stated object's own scope
+   boundary is ambiguous, default to the smallest set of components without
+   which it could not fulfil its basic function, not a broader reading.
+
+Plus, from section 32 (Reframer's side): Reframer, not Paths, has sole
+authority to broaden a decision's stated object into a wider category, and
+must not do so without real evidence - the default is always the narrow
+reading, stated precisely enough in `governingObjective` that Landscape and
+Paths can treat it as an authoritative boundary.
+
+---
+
+## 38. Clarifier question taxonomy - third category added
+
+Extends section 34 (which established the factual/scope vs.
+preference/values distinction). A third category emerged directly from
+Rule 4 above:
+
+- **Factual/scope** - does this fact hold (e.g. does the budget include
+  accessories). Direct questions are appropriate; revealed-preference
+  framing is unnecessary here.
+- **Values/preference** - how does this person actually feel (e.g. would
+  they stay at matched price). Revealed-preference framing genuinely
+  matters, since stated self-report is unreliable for this category.
+- **Allocation/trade-off (new)** - how should a continuous resource be
+  weighted between competing uses (e.g. mattress quality vs. frame
+  quality). Neither a pure fact nor a pure values question - closer to
+  eliciting a preference *ratio* than a preference *direction*. Not yet
+  clear what the right question style is for this category; worth genuine
+  design attention when Clarifier is built, not just an extension of the
+  other two styles by default.
+
+---
+
+## 39. Status - still not implemented, second instance of this warning
+
+**Same situation as section 35, now covering a larger rule set. `paths.ts`
+currently implements only Rules 1 and 2. Rules 3, 4, and 5, plus Reframer's
+scope-authorisation responsibility (section 32) and the Clarifier taxonomy
+addition (section 38), are all confirmed through discussion and NOT YET
+written into any file.**
+
+Do not treat the current live `paths.ts` (wired into `runBraviaSlice.ts` as
+of the previous session) as reflecting this full rule set - it does not.
+The two live decisions currently wired (Bravia purchase, Bravia +
+Navigator) are both specific-item purchases, which only exercise Rules 1
+and 2 correctly; neither exercises Rules 3-5, since neither is a
+budget/allocation-shaped decision. This is why the live product currently
+looks correct despite the gap - the gap simply hasn't been triggered by
+either of the two decisions actually wired in yet.
+
+---
+
+## 40. Paths finalised - Rule 6 and single-path validity added
+
+`app/engine/paths.ts` received its final round of fixes today, on top of
+Rules 1-5 (sections 31-37):
+
+**Rule 6 - no arbitrary component selection.** Both the TV-budget and
+bed-budget cases were found to fork on one unresolved sub-component of a
+compound object (display technology, or "mattress" specifically) with
+nothing in the Landscape actually motivating that particular sub-component
+over the alternatives. This is a specific instance of Rule 2 (no
+invention), extended to cover invented *preference for one part of a
+compound object*, not just invented whole alternatives. Confirmed fixed:
+TV now correctly declines to fork on display technology (an unresolved,
+undifferentiated axis); bed now correctly does not invent "mattress-only"
+as a path.
+
+**Single-path validity.** Established, through direct discussion, that
+"there is no valid one-path Representative Paths state" was the wrong
+conclusion from earlier reasoning - the corrected position is the opposite:
+**a single, well-grounded path is a valid and honest output when no real
+fork exists yet**, and should never be padded to two by inventing an
+arbitrary second path just to reach a pair. `paths.ts` validation was
+changed from requiring 2+ valid paths to requiring only 1+. Confirmed
+working: the bed-budget case, once Rule 6 removed the invented
+"mattress-only" fork, correctly settled on exactly one path - full
+frame-and-mattress purchase - rather than being forced into two.
+
+**Internal consistency, both directions.** The existing amount-vs-outcome
+consistency check (section 31) only caught money-retained-but-labelled-
+full-spend. A second, opposite bug was found and fixed: money-spent-but-
+labelled-£0 (a partial-spend path whose `commitment.amount` incorrectly
+showed `0` instead of a genuine partial figure). Prompt now explicitly
+requires both directions to be consistent.
+
+**All six rules are now implemented in code, not just documented.** This
+closes the gap flagged in section 39 - `paths.ts` as it stands today
+matches the full rule set in section 37.
+
+---
+
+## 41. Establishing Shots and Steelman - now real
+
+`app/engine/establishingShots.ts` and `app/engine/steelman.ts` converted
+from Bravia-hardcoded fixtures to real components, following the
+established pattern (async, `callClaudeForJSON`, role-constrained lens
+prompt, visible fallback). Both are genuinely dynamic over however many
+paths exist - no hardcoded path count or IDs - confirmed by direct chapter
+reading (Chapter 17/18) rather than assumption.
+
+**Establishing Shot** takes the real `representativePaths`, `landscape`,
+and `eventHorizon` as input, and is instructed to give every path strictly
+equal semantic weight (a hard requirement per Chapter 17, not a style
+preference) - one API call covering all paths at once, specifically to
+make consistent treatment easier to guarantee than N independent calls
+would.
+
+**Steelman** takes `representativePaths` plus the real Guardian,
+Pragmatist, Empathiser, and Auditor output (per Chapter 18's documented
+inputs) - the first component whose prompt explicitly synthesises four
+other real components' output into new content, rather than just reading
+Landscape/Reframer.
+
+**First full end-to-end real-pipeline result, quality assessment:** tested
+live via the actual Bravia purchase page, not just an isolated route.
+Result was genuinely strong - both paths' Steelman cases cited specific
+real facts from upstream (Auditor's exact 35/100 score, Guardian's named
+concerns, Pragmatist's actual requirements) rather than generic reasoning.
+One minor asymmetry noted, not yet fixed: Path B's establishing shot read
+slightly warmer/more resolved than Path A's, a small deviation from the
+"perfectly equal treatment" rule - worth revisiting if it recurs, not
+urgent from a single observation.
+
+---
+
+## 42. Reliability and performance work
+
+**Retry logic added, shared across every real component.**
+`app/engine/llm/callClaude.ts` now retries once automatically (after a
+500ms delay) on any API failure or network error before falling back to
+the visible "unavailable" placeholder. Added after a real, observed
+transient failure: `paths()` genuinely failed once in the live pipeline
+(visible as literal "Paths unavailable - proceed / do not proceed" text on
+an otherwise fully real, high-quality report) - not a logic bug, a
+transient failure under increased concurrent load, most likely triggered
+by the same-day parallelization change (below). Confirmed via direct
+observation: this exact fallback text is otherwise invisible-looking
+enough that a user could easily mistake genuinely excellent surrounding
+content (real Establishing Shot/Steelman text, unaffected by Paths' own
+failure) for evidence that "the whole thing is basically working," missing
+that one specific component silently broke. Worth remembering as a general
+lesson: partial failure in a multi-component pipeline can be easy to miss
+precisely because the surrounding real content looks so convincing.
+
+**Partial parallelisation implemented.** Guardian, Pragmatist, and
+Empathiser do not depend on each other's output - only Auditor genuinely
+needs all three finished. `runBraviaSlice.ts` changed from four fully
+sequential calls to `Promise.all([guardian, pragmatist, empathiser])`
+followed by `auditor`. Cut real, observed load time roughly in half
+(original single-run baseline was ~70s cold, ~14s warm for the whole
+Bravia chain before this session's Establishing Shot/Steelman additions;
+untested precisely post-change, but subjectively faster in testing).
+
+**Client-side timeout tuned, and the reasoning behind the number matters.**
+`page.tsx`'s `fetchWithTimeout` helper was initially set to 90 seconds, an
+estimate made before retry logic existed. Once retries were added, real
+observed full-chain timings (with the new Establishing Shot/Steelman
+calls, and retries occasionally firing) reached 63-94 seconds in
+successive real tests, all genuinely successful (`HTTP 200`) but
+increasingly close to and eventually exceeding the original 90-second
+client budget - which caused a real, confusing failure (a clean
+"Couldn't load this report" client error, while the server request was
+still correctly in flight and would have succeeded). Raised to 180
+seconds. **Root cause understood, not just patched over:** more real
+components in the chain, plus retry logic, both legitimately increase
+worst-case latency; the timeout needs to track that, not be fixed once and
+forgotten.
+
+**Genuinely slow, not broken - and this is now the clear next task.**
+Current honest state: a live Bravia report reliably succeeds, but takes
+roughly 60-95 seconds end to end. This is a real UX problem worth solving
+properly, not tolerating indefinitely. The identified, not-yet-implemented
+fix: **`runBraviaSlice.ts` currently keeps Paths, Establishing Shots
+waiting behind Auditor unnecessarily** - Auditor is the only component
+that genuinely needs Guardian/Pragmatist/Empathiser's combined output;
+Paths only needs Landscape V1/Pragmatist, and Establishing Shots only
+needs Paths/Landscape/Event Horizon. A second parallel track (Landscape V2
+-> Paths -> Establishing Shots, running alongside the Guardian/Pragmatist/
+Empathiser -> Auditor track, both converging only at Steelman, which
+genuinely needs everything) should cut meaningful additional real time,
+not just raise the timeout further to tolerate the current shape.
+**This restructuring is the clear first task for the next session** -
+deliberately not attempted at the end of a long day, given several
+fatigue-shaped mistakes already occurred today (leftover code fragments in
+`panelHtml.ts`/`test-paths/route.ts` requiring multiple rounds of
+correction, and the Rule 6 miss that was only caught because it was
+independently re-checked rather than accepted on the first pass).
+
+---
+
+## 43. Updated implementation status - the live Bravia pipeline is now almost entirely real
+
+As of this update: **Reframer, Landscape (V1 and V2), Guardian, Pragmatist,
+Empathiser, Auditor, Representative Paths, Establishing Shots, and
+Steelman are all real** in the live `runBraviaSlice.ts` pipeline. **Only
+Clarifier remains a hardcoded fixture** within that pipeline - a
+significant milestone, worth stating plainly rather than letting it pass
+unremarked: eight of nine reasoning components in the flagship live
+decision are now genuine reasoning, not fixture text.
+
+This does not extend to Singapore, Portfolio, or the custom-decision path,
+none of which were touched this session and remain exactly as described in
+section 30/23 - still fixture, still client-side, still no connection to
+any real component.
+
+**What Clarifier being the last fixture actually means in practice, right
+now:** the live Bravia report still shows a hardcoded clarifying question
+and a hardcoded answer, which then feeds into the now-real Landscape V2 -
+meaning Landscape V2's narrowing is real and well-tested (section 26), but
+is currently always narrowing in response to the same fixed, fictional
+answer rather than a real one. This is the natural, obvious next
+foundational piece of work once the performance restructuring (section 42)
+is done - not just because it's the last fixture, but because sections
+28, 34, and 38's confirmed design requirements for Clarifier (selective
+panel re-evaluation, the three-category question taxonomy) have been
+sitting fully specified and completely unimplemented for several days now.
+
+---
+
+## 44. Performance restructuring - implemented, real gains confirmed
+
+`app/engine/runBraviaSlice.ts` restructured based on the actual dependency
+graph (checked directly against Chapters 15/17/18, not assumed):
+
+```text
+reframer -> landscape(v1)
+-> [guardian, pragmatist, empathiser run in parallel]
+-> merge panel results
+-> two independent branches, run in parallel:
+     Branch 1: auditor (needs panel results only)
+     Branch 2: clarifier(fixture) -> landscape(v2) -> paths -> eventHorizons
+-> merge both branches
+-> [establishingShots, steelman run in parallel]
+   (establishingShots needs paths/landscape/eventHorizon only;
+    steelman needs paths/landscape/panel/auditor - neither needs the other)
+```
+
+This corrects yesterday's looser "two track" framing - the real dependency
+graph supports parallelising establishingShots and steelman too, not just
+the auditor/paths split, since neither depends on the other's output.
+
+**Real, measured improvement:** pre-restructuring baseline was 60-95 seconds
+per live Bravia load. Post-restructuring, repeated real runs landed in the
+36-51 second range - roughly halved, not just faster in one lucky
+observation.
+
+---
+
+## 45. Two intermittent bugs found via new diagnostic logging, both fixed
+
+Console logging was added at all three possible failure points in the LLM
+call chain (`callClaude`'s network/HTTP failure, `callClaudeForJSON`'s parse
+failure, and each component's own shape-validation failure) after Paths
+failed silently in the live pipeline with no way to diagnose why. This
+logging should be considered a permanent, standing addition, not a
+one-off debugging aid - it caught two real, different bugs within the same
+testing session that would otherwise have looked identical from the
+outside (both surfaced only as generic "unavailable" fallback text).
+
+**Bug 1 - missing array brackets.** Several prompts (Establishing Shot,
+Steelman, Paths) described the required output as "an array" in prose but
+only showed a single bare object as the schema example, with no literal
+`[` `]` shown. The model sometimes returned multiple separate top-level
+JSON objects concatenated together instead of one array - a classic
+under-specified-example failure. Fixed across all three files by replacing
+every prose-only schema description with a literal, bracketed
+two-item example array.
+
+**Bug 2 - Paths occasionally returning a genuinely empty array.** Not
+malformed, just zero entries - likely the combined weight of six rules
+occasionally causing the model to conclude no valid path could be
+constructed and give up entirely, rather than committing to the one
+well-grounded path the rules explicitly say is always a valid outcome.
+Fixed with an explicit one-time retry specifically for the empty-array
+case (distinct from `callClaude`'s existing retry, which only fires on
+network/HTTP failure, not on a technically-successful-but-empty response).
+
+**Confirmed fixed via four consecutive clean runs after both fixes**,
+versus two failures in three runs beforehand. Not proof the bugs can never
+recur (both were always intermittent), but strong, real evidence, and the
+permanent logging means any recurrence will now be immediately diagnosable
+rather than another silent mystery.
+
+---
+
+## 46. Steelman internal-component-name leak - found and fixed
+
+Live Steelman output was found directly citing internal architecture names
+in user-facing text - e.g. *"directly protects against the Guardian's
+identified risks,"* *"sidesteps the Empathiser's concern."* These are
+internal component names with no meaning to an actual reader - a leaky
+abstraction, not a stylistic issue. Root cause: `STEELMAN_SYSTEM_PROMPT`
+labels its input sections by component name ("Guardian's findings,"
+"Empathiser's findings"), and nothing told the model not to cite those
+same labels back in its output.
+
+**Fixed** with an explicit rule: Steelman must translate every finding into
+plain, self-contained language describing the concern or fact itself,
+never naming which internal component produced it.
+
+**Standing house rule, agreed for any future component that reads another
+named component's output** (relevant to a future Auditor enhancement, and
+now to Establishing Shot, which was given the same four components'
+output today - see section 47): internal component names must never appear
+in any user-facing text. Confirmed Auditor's own existing output does not
+currently have this leak (checked directly), so this was Steelman-specific,
+not systemic - but worth checking any future component built the same way.
+
+---
+
+## 47. Establishing Shot - major rework, the deepest tuning pass of any component so far
+
+Started from a direct complaint: yesterday's live output, while
+technically rule-compliant, read as flat and added nothing - described in
+discussion as "we've stripped so much away with the 'don'ts' that we're
+left with a $2 steak." This section records the full diagnostic path, not
+just the final rules, because the reasoning behind each one matters for
+recognising similar failures in future components.
+
+### Diagnosis 1 - constraints without positive modelling
+
+The prompt had accumulated many "don't" rules (no bias, no invented
+decline, no narrated time, no third person, no telling emotion, no
+over-explaining) with almost no shown example of what excellent actually
+looks like. LLMs respond far more strongly to being shown one genuinely
+great example than to abstract rules alone. Fixed by pulling three real
+worked examples directly from `Landscapes/working_draft_0.1` and
+`Presentation_docs/Establishing_shot_presentation_ideas_0.1` into the
+prompt itself, rather than paraphrasing around them.
+
+### Diagnosis 2 - richness is a property of attention, not the object
+
+Direct discussion (the espresso-machine/iPhone analogy) established: a
+decision's inherent "worldly significance" must never affect how much care
+the shot gives it - a television purchase deserves the same close,
+respectful attention as a family relocation, because to the person asking,
+it may carry equivalent real weight. This was added explicitly to the
+prompt's Purpose section, not left implicit.
+
+### Diagnosis 3 - richer input helps, confirmed by direct A/B test
+
+Established that `establishingShots.ts` originally received only
+Landscape/Paths/Event Horizon - never Guardian/Pragmatist/Empathiser/
+Auditor's real findings, unlike Steelman, which gets all four. Tested
+directly: giving Establishing Shot the same four inputs Steelman uses
+produced a measurably richer result in the very next run (a specific,
+socially-textured detail - deflecting a friend's comment about price -
+directly traceable to a real Pragmatist requirement). **Confirmed real
+improvement, not assumed.** `buildEstablishingShotUserPrompt` now includes
+all four components' real output, explicitly framed as raw material for
+finding a scene, not material to argue from (this is also why the
+component-name leak rule from section 46 was extended to this file too).
+
+### Diagnosis 4 - "afterlife, not the transaction"
+
+Direct discussion (the £2k-savings/PS5-with-friends example) identified
+that early shots kept the person tethered to the transaction itself
+(holding a warranty folder, still comparing prices) rather than showing
+life happening *through or because of* the decision, with the object
+receded into the background. New rule added: a good shot depicts the
+decision's afterlife - a shared moment, a feeling, an unrelated
+possibility - never a moment still relating directly to the purchase
+itself.
+
+### Diagnosis 5 - the "frozen moment" rule was too literal, and its actual purpose is narrower than assumed
+
+Checked directly against the docs rather than assumed: the frozen-fact
+rule is never justified with an explicit rationale in the source material,
+but its own worked examples reveal the real concern - inference over
+narration. *"Your sister's last message remains unread"* works because it
+lets the reader silently infer an entire backstory; the forbidden version
+narrates a long-span change directly instead of showing one present fact.
+
+**This means a short, continuous take (a scene unfolding over a few real
+seconds - multiple small beats in one unbroken moment, like a single
+camera take) is NOT the same violation as narrating change across weeks or
+months, even though both technically involve "time."** The real test:
+"am I narrating a long-span change, or showing one true present moment
+(which may last a few seconds) and trusting the reader to infer the
+rest." Confirmed via direct testing: the best results of the entire day
+(the Friday-night film scene, the dinner-bill scene) were short continuous
+takes, not single frozen images, and were explicitly judged as genuinely
+excellent, not merely rule-compliant.
+
+### Diagnosis 6 - ambient reactions are safe, caused/directed reactions are not, and this needs a further refinement
+
+Direct discussion established a precise, causal test for when another
+person's visible reaction is acceptable in a shot: **ambient and
+unrelated to the decision (would happen identically regardless of which
+path was chosen) is safe; caused by or directed at the decision itself
+(a verdict on the choice) is not**, since it presumes an outcome the
+Decision Model has not established. Confirmed with a real example: a
+friend laughing about a dinner bill (unrelated, safe) versus a friend's
+face changing on hearing news about the actual decision (a rendered
+verdict, unsafe).
+
+**Refinement identified during the sister-scenario stress test, not yet
+written into the prompt:** the rule as stated only anticipated the person
+being kept unaware reacting to a truth they don't yet know. It did not
+anticipate a second person who IS aware of the situation (e.g. the sister
+herself, in the "don't tell" path) having a reaction of their own (a
+half-second glance, catching the reader's eye) that is arguably still
+caused by the shared secret, not genuinely ambient. **Not yet fixed** - the
+rule needs to cover any second person's reaction, not only the person
+being protected from the truth.
+
+### Two remaining open issues, confirmed via the sister-scenario stress test, neither yet fixed
+
+**Occasional near-verbatim mirroring between paths.** One test run
+produced two Establishing Shots that were nearly identical sentence-for-
+sentence, differing only in the final swapped object - directly
+contradicting the "equal dignity through difference, not mirroring" rule
+already in the prompt. The rule clearly isn't reliably holding on its own
+wording; a later run on the same Bravia case produced genuinely distinct,
+non-mirrored results, so this is inconsistent rather than a hard failure -
+worth a more concrete anti-mirroring instruction if it recurs, but
+deliberately not chased further on Bravia alone, since Bravia is a
+comparatively thin decision (one person, no relationship stakes) and the
+richer sister scenario was judged the better test to prioritise instead.
+
+**Path-outcome unfaithfulness - a real, more fundamental bug, confirmed
+once, not yet recurring on retest.** One Establishing Shot for "tell the
+best friend" actually depicted NOT telling him (phone turned face-down
+unopened, friend still happily unaware) - directly contradicting that
+same path's own stated `outcome` field ("friend learns of the affair
+immediately"). This is a different, more serious class of problem than
+tone or richness - the shot failed to render the correct path's actual
+consequence at all, which Chapter 17 treats as a hard requirement, not a
+style question. Two subsequent test runs on the same sister scenario did
+NOT reproduce this - both were faithful to their paths' stated outcomes -
+but two clean runs after one clear failure is not strong enough evidence
+to call this resolved. **Flagged as the first thing to test directly next
+time Establishing Shot is revisited**, likely via an explicit instruction
+to check the shot against its own path's outcome before finalising.
+
+### A genuine gap in Paths, found via the sister-scenario stress test, not yet fixed
+
+Predicted, then tested twice, that a legitimate third path should exist
+for the sister/best-friend scenario: "give the sister an ultimatum -
+tell him yourself, or I will." Checked against all six Paths rules and
+judged to pass every one - genuinely terminal (a real, different state:
+no longer personally deciding whether disclosure happens), no invention
+(both people already exist in the decision), and directly motivated by a
+real, already-established finding (Empathiser's "betrayal by the
+messenger" concern from a much earlier session). **This path did not
+appear in either of two independent test runs** - both stayed strictly at
+a binary tell/don't-tell. Two consistent misses on something specifically
+predicted and defensible under the existing rules is real evidence of a
+gap, not yet enough to be certain it's systemic. **Candidate rule for
+Paths, not yet written or tested:** for decisions involving a third
+party who could act instead of the decision-maker, explicitly check
+whether that third party's own agency creates a genuine middle path
+before settling for a binary.
+
+---
+
+## 48. Current status of Establishing Shot's rule set
+
+All of the following are now implemented in `ESTABLISHING_SHOT_SYSTEM_PROMPT`:
+worked examples in-prompt, richness-as-attention-not-object-significance,
+afterlife-not-transaction, the corrected frozen-state/continuous-take
+rule, the ambient-vs-caused-reaction rule (not yet covering aware third
+parties - see section 47), equal-dignity-through-difference, second person
+throughout, no internal component names.
+
+**Not yet implemented, both confirmed necessary via direct testing:**
+the aware-third-party refinement to the reaction rule, and any fix for
+path-outcome faithfulness (currently unconfirmed whether it needs fixing
+at all, given it hasn't recurred - worth testing more before assuming a
+fix is even needed).
+
+**Not yet implemented in Paths:** the third-party-agency rule suggested by
+the missing ultimatum path, based on two consistent test misses.
+
+---
+
+## 49. End-of-session amendment - two Establishing Shot issues are recurring, not resolved
+
+Further testing after section 47/48 found that two issues thought fixed
+reappeared in a later run, despite the relevant prompt rules being present
+throughout: the frozen-state/narrated-change rule (a shot used "longer than
+you used to," the same forbidden pattern as before) and disclosure-path
+outcome faithfulness (a shot for a "friend learns the truth" path showed no
+signal - neither shown nor minimally told - that disclosure had occurred).
+
+Both had been confirmed working cleanly in earlier runs the same night.
+Their reappearance suggests these two failure modes are more deeply rooted
+in how the model handles a disclosure-with-unshowable-reaction path than a
+single wording fix reliably closes - worth treating as **open and
+recurring**, not resolved, when this is next picked up. Do not assume a
+clean run means either is fixed; retest a handful of times before trusting
+either one.
+
+Two smaller fixes were also made and appear solid: a delegation rule added
+to `paths.ts` Rule 1 (rejecting "get someone else to disclose on your
+behalf" as a false path, confirmed directly against the docs' own
+"Tell your sister she must tell him... that is Navigator" example), and a
+duration/memorability refinement added to Establishing Shot's Purpose
+section (5-10 second window, "memorable enough to reference later without
+rereading" as a second success test alongside recognition).
+
+Also corrected from section 47: the "missing ultimatum path" flagged
+earlier as a Paths gap was itself a misreading - the docs explicitly
+reject that exact path shape as a valid Representative Path. Paths was
+correct to never produce it; no fix needed there.
+
+A readable HTML renderer for the Paths + Establishing Shots test route
+(`renderPathsAndShotsHtml` in `panelHtml.ts`) was added, matching the
+pattern already used for other test routes.
+
+---
+
+## 50. Establishing Shot - compression, tense, and camera-positioning fixes, all confirmed working
+
+Continuing from section 49's flagged recurring issues (the frozen-state
+narration slip and disclosure-path faithfulness), a separate, larger
+problem was identified: shots had drifted into narrating short but real
+*sequences* of several discrete actions (phone lights up, then you turn
+it, then you reach for something, then he laughs, then he rewinds) -
+technically brief, but genuinely accumulating real elapsed time, several
+seconds to perhaps half a minute per shot. Confirmed via direct
+discussion using a "bullet time" analogy (the Matrix): a huge amount of
+visual detail can be shown while almost no real time passes, because it
+is one compressed instant observed closely, not a short story with
+several beats.
+
+### Rule added and confirmed: one continuous action, not a sequence
+
+A shot may contain ONE continuous action or gesture already in progress
+(a laugh happening, a hand reaching, a cup beginning to tip) - this is
+still one simultaneous instant despite having a natural duration. Two or
+more discrete actions happening one after another is not allowed, however
+briefly each is phrased. **Confirmed working across multiple retests** -
+shots now consistently read as one tight moment rather than a chain of
+triggered events.
+
+### Rule added and confirmed: participle phrasing over simple present tense
+
+A genuine grammatical finding, not just a style preference: present
+participles ("your friend laughing," "the dog chasing") describe an
+ongoing state with no defined start or end - exactly what a simultaneous
+instant needs. Simple present tense ("your friend laughs," "the dog
+chases") is what screenplay action lines use specifically because it
+reads as a sequence of discrete, complete events - the opposite of what's
+wanted here. Rule added: favour participle phrasing for background
+detail, reserve simple-present verbs for at most the one true central
+action. **Confirmed working** - directly tested by comparing two
+near-identical sentences differing only in this grammatical choice.
+
+### Rule added and confirmed: camera positioning can smuggle in a verdict, separately from person-reaction bias
+
+A new, previously unnamed failure mode was found: a shot depicted the
+narrator ("you") standing physically apart from a group while passively
+watching them - *"you stand a few feet off... watching the two of them"* -
+which reads as isolation/exclusion even though no emotion is stated
+directly and no other person's reaction is shown. This is distinct from
+the existing ambient-reaction rule (section 47), which only covers other
+people's behaviour - this is about the narrator's own physical position
+and stance relative to the group.
+
+Two competing fixes were considered: removing "you" from shots entirely
+(a fully external, disembodied camera), versus a narrower fix targeting
+only the specific combination of physical distance plus passive
+observation. **Tested directly against the project's own established gold-
+standard examples** (the toast-on-the-knees / dinner-bill-with-friends
+pair) - both of those already place "you" in the scene, but always close
+among people, doing a small incidental action (settling onto a sofa arm,
+sliding a phone across a table), never at a distance watching. This
+confirmed the narrower fix was correct: **the problem is not whether "you"
+appears, it's whether "you" is placed apart from others as an observer
+versus among them as a participant.** Rule added accordingly and
+**confirmed fixed on retest** - the next sister-scenario run correctly
+kept "you" embedded and participatory (passing a beer, topping up a
+glass) with no distance/observation language anywhere.
+
+### Current honest status
+
+All of the following in `ESTABLISHING_SHOT_SYSTEM_PROMPT` are now
+confirmed working across multiple tests, not just single clean runs:
+worked examples, richness-as-attention, afterlife-not-transaction,
+frozen-state vs. continuous-take, compression (one action not a
+sequence), participle phrasing, ambient-vs-caused reactions (including
+aware third parties), the minimal-telling exception for disclosure paths,
+faithfulness to stated path outcomes, anti-mirroring, and now
+camera-positioning. This is the most heavily tested and iterated
+component in the entire project. Two items from section 49
+(frozen-state slip, disclosure faithfulness) had each individually
+reappeared once after being marked fixed, then held clean across several
+subsequent retests since - worth continued light monitoring rather than
+further active work, since no clear pattern of recurrence has held.
+
+---
+
+## 51. A genuine third path confirmed for the sister/best-friend scenario, and a ready-made Event Horizon worked example
+
+Direct discussion produced a clean, three-way irreversible-state analysis
+for the sister/best-friend decision, offered as the actual definition of
+that decision's Event Horizon (still fixture - see section 30) once real
+Event Horizon reasoning is built:
+
+1. **Say nothing** - a genuine, legitimate destination, not merely an
+   absence of action - staying silent carries its own real, irreversible
+   consequences (risk if the truth surfaces later, being seen as
+   complicit) regardless of whether anything is ever said.
+2. **Tell the best friend directly.**
+3. **Tell the sister that you know** (without telling the friend) -
+   confirmed as a genuinely separate, legitimate path, not a delegation
+   attempt. This is different from the previously-rejected "press her to
+   tell him herself" idea (section 32/49) - that was an uncertain attempt
+   to cause path 2's outcome by another route. This is its own stable,
+   irreversible destination: the sister now knows you know, the friend
+   still knows nothing, and this cannot be undone.
+
+None of these three can be reversed once entered, and each leads
+somewhere genuinely different - a clean, ready-made illustration of what
+Chapter 16's Event Horizon concept should identify for this decision,
+worth using directly as a worked example when Event Horizon is next built
+for real.
+
+**Open, unresolved issue, confirmed distinct from tonight's Establishing
+Shot work:** Paths (unchanged tonight) generates this third path
+("confront sister, not friend") inconsistently across otherwise similar
+runs of the same sister/best-friend prompt - present in some runs,
+absent in others, with no code change between them. Not yet diagnosed -
+worth investigating directly next time Paths is revisited, possibly
+connected to how strongly a given run's Landscape happens to ground the
+"confronting the sister" axis, but this is a hypothesis, not confirmed.
+
+---
+
+## 52. Establishing Shot - reroll mechanism, four more content fixes, and five new test scenarios
+
+### Reroll mechanism built and confirmed working
+
+`establishingShots()` now accepts an optional second parameter,
+`previousAttempts: { pathId: string; shot: string }[]`. When provided,
+the prompt explicitly lists what was already shown and instructs the
+model to write a genuinely different scene, not a variation on the same
+setting. **Confirmed working directly** - a dedicated test route ran the
+same context twice in sequence, passing the first result into the
+second call, and the two attempts used completely different material
+(hawker-stall noodles vs. a rainy condo pool; Saturday football vs. a
+birthday cake) with no repeated phrasing or imagery.
+
+**Product principle established, not yet implemented in the UI (belongs
+to the deferred "what's seen and not seen" conversation):** regeneration
+should be capped at a small number (proposed: 3) for an architectural
+reason, not just a UX one. The system's core premise is that most people
+already know their real answer and the job is to help them *recognise*
+it, not argue them into a different one - unlimited rerolling would let
+someone route around that premise entirely (reroll "stay" until it
+sounds bleak enough to justify a decision already made). A hard cap
+keeps the tool honest to its own founding principle. This also raises
+the bar on per-draw quality, since a user only gets a couple of chances,
+not an unlimited search for a result they already wanted.
+
+### Four content fixes made and confirmed via direct testing
+
+1. **Stock cultural imagery.** The "stay" path repeatedly defaulted to
+   generic British cultural furniture (Sunday roast, mother-in-law,
+   neighbourhood football, a pub) across three independent runs of the
+   Singapore relocation fixture - genre defaults standing in for genuine
+   specificity. Fixed with an explicit instruction against this pattern
+   when a decision has few concrete facts to draw from. **Confirmed
+   fixed** - the same fixture subsequently produced condo/hawker-centre/
+   grandmother's-kitchen detail with no repeated cliché across further
+   runs.
+
+2. **Named-person consistency.** A shot referred to the same person by
+   name ("Vera") and then by role ("your spouse") as if they were two
+   different people. Fixed with an explicit rule to pick one and use it
+   consistently within a shot.
+
+3. **Vague, unclear symbolism.** Two separate real examples surfaced -
+   "her sentence ending where your sister's name used to sit" and a
+   sketched floor plan meant to imply someone had left their job, but
+   vague enough to mean almost anything (a house move, a renovation).
+   Fixed with an explicit clarity rule: a confirming detail must be
+   specific enough that it could only belong to this exact outcome, not
+   merely compatible with several different situations.
+
+4. **Viewpoint consistency when the decision concerns someone else.**
+   When a prompt is framed as "should my wife take X," two independent
+   test runs made opposite, unstated assumptions about whose perspective
+   "you" occupies - one wrote "you" as the wife herself, the other as
+   her husband watching alongside her. Fixed with an explicit rule: "you"
+   must consistently mean the person actually facing and reasoning
+   through the decision, matching how the prompt itself is framed - never
+   shifting between paths or between generations of the same decision.
+
+**One rule clarified, not changed in substance:** confirmed that a
+duration describing a long-standing, unchanging routine ("the same
+parents who've stood here every Saturday for three years") is allowed
+under the frozen-state rule, since it asserts one continuous stable fact
+with no implied contrast to an earlier, different state - distinct from
+a duration that narrates a *change* (the previously forbidden "hasn't
+lit up for weeks" pattern). This distinction was tested directly against
+a real example before being confirmed, not assumed.
+
+### Five new test scenarios run, several genuinely new findings
+
+**Redundancy** (Vera, kept intentionally specific with agreement from
+the user rather than generalised - see section 51's approach). A real,
+generated PDF document from the old Constitution-era architecture was
+found sitting unused in the repo (`Redundancy_Decision_Framework.pdf`),
+proposing THREE paths including "negotiate an alternative" - structurally
+identical to the previously-rejected "negotiate remote work" pattern
+(a route toward an existing outcome, not a distinct destination). **The
+current, tested architecture was run directly against this scenario and
+correctly produced only 2 paths, declining to generate the negotiate
+option** - a clean, concrete confirmation that today's rule set has
+genuinely improved on the earlier architecture's actual output, not just
+changed it in the abstract.
+
+**Third child, framed with a partner explicitly present** ("should my
+partner and I have a third child"). A hypothesis going in - that this
+decision might create bias because neither path is a "safe" option the
+way most prior fixtures had - was tested and found unsupported. Both
+paths produced equally warm, equally dignified results with no implicit
+favouring of either. Worth recording as a real, tested finding rather
+than an assumption either way.
+
+**Third child, framed without stating a partner** ("should I have a third
+child") - deliberately built after the user identified this as a
+materially different and harder test than the partnered framing. This is
+the most significant finding of the two-day arc, detailed in section 53.
+
+**Also confirmed:** for the "have a third child" decision, Reframer,
+Landscape, and Paths all independently and correctly settled on exactly
+2 paths - no valid third option exists (no partial/intermediate state -
+"you can't be a bit pregnant"). This is now the second clean, concrete
+Event Horizon worked example on file (alongside the sister/best-friend
+scenario's three irreversible states from section 51) - a genuinely
+absolute, binary, biologically-irreversible threshold, ready to use
+directly whenever Event Horizon is built for real.
+
+---
+
+## 53. The central finding of this arc: Establishing Shot cannot fully solve an ambiguity that belongs to Clarifier
+
+Testing "should I have a third child?" (no partner stated) surfaced a
+real, precise problem: **Landscape and Auditor both correctly tracked
+"is a partner involved/in agreement" as a genuine, explicitly-flagged
+unresolved uncertainty** (visible directly in Auditor's `assumptions` and
+`blockingUncertainties` fields) - but Establishing Shot initially ignored
+this and confidently staged a specific partner doing specific things
+anyway, contradicting what its own upstream input had explicitly said was
+unknown.
+
+This was **not** a case of upstream reasoning failing and needing a
+fix - Reframer, Landscape, and Auditor all behaved correctly. The gap was
+narrower and more precise: Establishing Shot had no instruction to check
+whether something it was about to depict as settled fact was still
+flagged as genuinely open elsewhere in its own input.
+
+### Fix, iterated twice, second version confirmed working
+
+First attempt: a general instruction added to the system prompt asking
+Establishing Shot to respect Auditor's flagged uncertainties. **Tested
+directly - only partially worked.** One path (no partner mentioned at
+all) succeeded; the other path independently reintroduced a confidently-
+staged partner in the same generation. Diagnosed as a structural
+problem, not an instruction-strength problem: Auditor's `assumptions` and
+`blockingUncertainties` were being passed into the prompt as one
+unlabelled line buried among several other panels' worth of text,
+competing for attention rather than being visually distinct.
+
+Second attempt: `buildEstablishingShotUserPrompt` was restructured (not
+just the system prompt) to pull Auditor's `assumptions` and
+`blockingUncertainties` into their own clearly marked, impossible-to-miss
+section, with an explicit self-check instruction appended ("before
+finalising, check every detail in your own draft against this list").
+**Confirmed working on retest** - the following generation produced two
+shots with zero confident staging of a partner, built entirely from the
+reader's own actions and the two existing children, with no loss of
+vividness or specificity elsewhere in either shot.
+
+### The architectural conclusion, agreed directly in discussion
+
+Even with the fix now working, **this is fundamentally the wrong
+component to be solving this problem in.** Vividness and honestly-hedged
+uncertainty are in genuine tension by nature - every fix in this section
+was fighting that tension with progressively louder prompt instructions,
+with diminishing and uncertain returns. The actual correct architecture
+is Clarifier: "is a partner involved in this decision?" is exactly the
+single, high-value question the whole system exists to ask before
+reasoning proceeds much further downstream. Once Clarifier resolves it,
+Landscape V2 would carry a settled fact forward, and Establishing Shot
+would never face this dilemma at all.
+
+**This is now the strongest, most concrete motivating example on file for
+building Clarifier for real** - stronger than the redundancy or sister
+scenarios, because the ambiguity here cannot be fully resolved by writing
+technique alone, no matter how well-tuned the prompt gets. The fix made
+today should be kept (it's a genuine, working safeguard), but further
+tuning of Establishing Shot in pursuit of this exact problem is
+judged to have reached diminishing returns - the next real step is
+Clarifier itself, not another round of Establishing Shot instructions.
+
+---
+
+## 54. Current status: Establishing Shot tuning arc considered complete for now
+
+Across this and the previous session, Establishing Shot has been tested
+against eight genuinely distinct decision shapes (TV/bed budgets, Lexus,
+Bravia, sister/best-friend, Singapore relocation, redundancy, third child
+both framings) and iterated through roughly twenty distinct rule
+additions, each one added in direct response to a real, observed failure
+rather than speculatively. It is judged the most heavily tested and
+currently most reliable component in the pipeline, with one honest
+caveat carried over from section 49: two early-arc issues (frozen-state
+narration, disclosure-path faithfulness) each recurred once after being
+marked fixed, then held clean across many subsequent retests since -
+worth light continued monitoring, not further active work.
+
+**Next recommended step, agreed directly: Clarifier.** Three separate,
+independently-confirmed design requirements are already on file and ready
+to build against: selective panel re-evaluation with loop-avoidance
+(section 28), the three-category question taxonomy - factual/scope,
+values/preference, allocation/trade-off (sections 34, 38), and now this
+section's concrete "is a partner involved" case as a fourth, high-value
+motivating example.

@@ -216,3 +216,77 @@ export const sisterTestContext: DecisionContext = {
     },
     panel: {},
   };
+
+  export const bedBudgetTestContext: DecisionContext = {
+    prompt: "How should I spend my £1,000 bed budget?",
+    decision: {
+      subject: "£1,000 bed budget",
+      kind: "PURCHASE",
+      price: { amount: 1000, currency: "GBP" },
+    },
+    facts: {
+      userStated: { subject: "£1,000 bed budget", price: { amount: 1000, currency: "GBP" } },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };
+
+  export const singaporeRelocationTestContext: DecisionContext = {
+    prompt: "Should we move to Singapore for Vera's job, or stay where we are?",
+    decision: {
+      subject: "relocating the family to Singapore for a job offer",
+      kind: "RELOCATION",
+    },
+    facts: {
+      userStated: {
+        subject: "relocating the family to Singapore for Vera's job offer",
+      },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };
+
+  export const redundancyTestContext: DecisionContext = {
+    prompt: "Should my wife Vera take redundancy, or stay in her current role?",
+    decision: {
+      subject: "whether Vera, the user's wife, should take redundancy",
+      kind: "GENERAL",
+    },
+    facts: {
+      userStated: {
+        subject: "whether Vera, the user's wife, should take redundancy",
+      },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };
+
+  export const thirdChildTestContext: DecisionContext = {
+    prompt: "Should my partner and I have a third child?",
+    decision: {
+      subject: "whether to have a third child",
+      kind: "GENERAL",
+    },
+    facts: {
+      userStated: {
+        subject: "whether the user and their partner should have a third child",
+      },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };
+  
+  export const thirdChildSoloFramingTestContext: DecisionContext = {
+    prompt: "Should I have a third child?",
+    decision: {
+      subject: "whether to have a third child",
+      kind: "GENERAL",
+    },
+    facts: {
+      userStated: {
+        subject: "whether to have a third child",
+      },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };

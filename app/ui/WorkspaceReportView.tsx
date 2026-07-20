@@ -49,6 +49,12 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
         </h2>
       </div>
 
+      {report.paths.length === 1 && (
+        <p className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm leading-6 text-slate-400">
+          Only one clear path exists at this stage - the decision has not yet split into distinct alternatives worth comparing.
+        </p>
+      )}
+
       {report.paths.map((path) => (
         <PathCard key={path.id} path={path} />
       ))}
