@@ -784,7 +784,7 @@ function resolvedUncertainties({
   return resolved;
 }
 
-export function runCustomDecisionSlice(input: string): DecisionContext {
+export async function runCustomDecisionSlice(input: string): Promise<DecisionContext> {
   const kind = classifyDecision(input);
   const subject = cleanSubject(input, kind);
   const price = extractPrice(input);
@@ -870,7 +870,7 @@ export function runCustomDecisionSlice(input: string): DecisionContext {
     diagnostics: diagnosticRecommendations(kind),
   };
 
-  context = eventHorizons(context);
+  context = await eventHorizons(context);
 
   return context;
 }

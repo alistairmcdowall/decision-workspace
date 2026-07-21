@@ -2097,3 +2097,527 @@ to build against: selective panel re-evaluation with loop-avoidance
 values/preference, allocation/trade-off (sections 34, 38), and now this
 section's concrete "is a partner involved" case as a fourth, high-value
 motivating example.
+
+---
+
+## 55. Clarifier - now real, built directly from Chapter 13, with a genuine methodological finding along the way
+
+`app/engine/clarifier.ts` converted from a hardcoded fixture to a real
+component, following the established pattern. Built directly from a
+fresh, full re-read of Chapter 13 (not from memory of earlier
+discussion) - Clarifier's job is to identify the SINGLE highest-value
+clarifying question, driven primarily by Auditor's blocking
+uncertainties, outputting four fields: target, method, question,
+rationale.
+
+**`ClarifierMethod` widened from 3 to 7 values.** The existing type
+(`ISOLATION | THRESHOLD | COUNTERFACTUAL`) only overlapped with one of
+Chapter 13's five named methods (isolation, comparison, prioritisation,
+confirmation, decomposition). Since the chapter's own wording says these
+are "examples," not a closed list, the type was widened to include all
+seven rather than replacing the existing ones - `ISOLATION | COMPARISON
+| PRIORITISATION | CONFIRMATION | DECOMPOSITION | THRESHOLD |
+COUNTERFACTUAL`. Worth noting: the chapter's five methods map almost
+exactly onto the three-category Clarifier taxonomy independently derived
+through testing days earlier (factual/scope ~ CONFIRMATION,
+values/preference ~ ISOLATION/COUNTERFACTUAL/THRESHOLD,
+allocation/trade-off ~ PRIORITISATION) - genuine convergence between
+empirical testing and the formal spec, not something imposed after the
+fact.
+
+### A genuine architectural question surfaced and resolved before building
+
+Chapter 14 (Clarifier Response) explicitly lists what may be updated
+after a clarification (Landscape, uncertainties, Auditor readiness,
+Paths) and does NOT include re-running Guardian/Pragmatist/Empathiser -
+in real tension with the broadband test's finding (recorded weeks
+earlier) that Empathiser produces measurably richer output when it can
+see a revealed-preference answer. Rather than silently picking a side,
+this was surfaced directly and resolved by examining actual switching
+cost: since Empathiser already reads `clarifierResponse` when present
+(built weeks ago for the broadband test), building strictly to the
+documented spec first, and adding selective panel re-evaluation later if
+still warranted, was judged the lower-risk path in both directions.
+**Decision: build to the documented spec now (Clarifier/Clarifier
+Response do not trigger panel re-runs); revisit selective re-evaluation
+as a separate, later decision once real Clarifier output exists to
+evaluate it against.**
+
+### The critical, late-discovered correction: Clarifier answers are NOT free text
+
+After building and testing Clarifier Response around free-text answers
+(and getting genuinely good results interpreting a clean answer, a
+deliberately hedged/ambiguous answer, and a missing answer), it was
+identified that this was built on a wrong assumption: **real user
+answers to a Clarifier question should be selected from a small,
+fixed set of options (radio-button style), never free text.** This
+was confirmed by checking every worked example across both the chapter
+and the dedicated Clarifier voice document - every single example
+question is grammatically closed-form ("would you...", "does it feel
+like..."), consistent with a small answer set, never an open prompt for
+elaboration.
+
+**Both components were revised accordingly:**
+- `clarifier.ts`'s output gained a new required field, `answerOptions:
+  string[]` - the system prompt now requires 2-4 mutually exclusive
+  options, including "Not sure" whenever genuine uncertainty in the
+  person's own answer is plausible.
+- `clarifierResponse.ts` was simplified to take a selected option
+  (`string | null`) rather than a raw sentence - genuinely simpler code,
+  since it no longer needs to parse open-ended interpretation, only
+  determine the semantic effect of a known, bounded selection.
+
+**Confirmed working on retest against the frozen fixture (see below):**
+both real options correctly resolved to RESOLVED with accurate,
+consequence-stating effect text; "Not sure" correctly resolved to
+DEEPENED rather than being forced into a false resolution; no-selection
+correctly triggered the explicit default-assumption fallback.
+
+### A significant methodology finding: re-running the full chain confounds test results
+
+Testing Clarifier's question quality initially involved re-running the
+entire chain (Reframer through Auditor) fresh for every test. This was
+found to be a real problem, not just inefficient: Auditor's own output
+varied meaningfully between otherwise-identical runs of the same
+prompt (different blocking uncertainties surfaced each time), making it
+impossible to tell whether a change in Clarifier's output reflected a
+prompt fix working or failing, versus simply reacting to different
+upstream input. **A frozen-context test fixture
+(`cofounderFrozenClarifierTestContext`) was built, hand-authoring
+Reframer/Landscape/Panel/Auditor output once and holding it constant
+across repeated Clarifier-only test runs.** This immediately clarified
+a real result: five runs against frozen input showed near-total
+consistency in Clarifier's target/method/question, and clearly isolated
+one instruction that had completely failed to take effect (see below) -
+a distinction that would have been impossible to draw confidently
+against a re-generated chain. **This frozen-context approach should be
+the default for testing any single component's prompt changes going
+forward** - full-chain re-runs remain useful for genuine end-to-end
+tests, but not for isolating whether one specific prompt edit worked.
+
+### Four real Clarifier question-quality fixes, each confirmed via direct testing
+
+1. **Test the difficult hypothetical, not the easy one.** An early
+   Lexus test asked "if the inspection comes back clean, would you still
+   want it?" - almost always yields yes, low information value. Fixed:
+   revealed-preference questions must test the unfavourable case ("if it
+   needed £X of work, would you still proceed?"), while still remaining
+   fair and open (not stacking multiple worst-case details to steer
+   toward one answer).
+
+2. **Don't span two magnitudes in one threshold question.** A
+   subsequent version asked about "a few hundred to a couple thousand
+   pounds" as one range - two genuinely different scales of risk that
+   can't be distinguished by one answer. Fixed with an explicit
+   instruction to pick a single decision-relevant point.
+
+3. **Never bundle two facts with "or"/"and."** A cofounder-scenario
+   question asked about two distinct legal facts in one sentence. Fixed
+   with an explicit anti-bundling rule.
+
+4. **Don't substitute a superficially-similar but different mechanism.**
+   The clearest, hardest-won fix of the four: a question about "letting
+   the company fold" (informal, passive withdrawal of support) kept
+   defaulting to asking about formal "dissolution" (an active legal
+   procedure) - not the same thing, and a dissolution-agreement clause
+   would not necessarily prevent someone from simply walking away.
+   **A first, abstract instruction ("these are different, don't
+   conflate them") completely failed against the frozen fixture - 0 of 5
+   runs corrected the behaviour.** A second, more concrete version
+   (explicitly naming and defining two labelled categories -
+   FORMAL/ACTIVE vs. INFORMAL/PASSIVE - with a direct test for which one
+   a given scenario matches) succeeded completely - 5 of 5 runs
+   correctly reasoned about passive withdrawal on retest. **Worth
+   recording as a general lesson beyond this one fix: abstract
+   "don't do X" instructions can lose against a strong pattern-matching
+   pull in the underlying model (here, far more training data exists
+   about formal legal dissolution than informal business collapse);
+   naming concrete, labelled categories and giving an explicit test
+   between them succeeded where the abstract version did not.**
+
+### A methodological lesson worth keeping independent of any specific fix
+
+While investigating the third-child-solo scenario's partner-related
+Clarifier question, it was determined - after real back-and-forth, not
+assumed - that partner involvement was never actually the right target
+for that specific fixture's prompt ("should I have a third child," not
+"should we"). The question Clarifier had already produced (testing the
+person's own desire, held constant against external circumstances) was
+correct all along; two sessions of treating "partner ambiguity" as the
+thing to fix had drifted from what was actually asked. **Worth recording
+as a standing discipline: periodically re-derive the actual target from
+first principles (what did the prompt actually ask) rather than
+continuing to optimise toward an assumption that became load-bearing
+simply because it was the thing being discussed for a while.**
+
+---
+
+## 56. Note on source reliability, given this is now the second confirmed instance
+
+A claim relayed from ChatGPT this session ("Reframer owns Clarifiers; the
+panel consumes clarified context but doesn't request clarification
+itself; Clarifiers exist before the panel begins reasoning") was checked
+directly against the actual Chapter 13 text and found to be a direct
+contradiction: the chapter explicitly states Clarifier "is driven
+primarily by the Auditor" (a panel member), which is only coherent if
+Clarifier runs after the panel, not before - exactly matching the
+architecture already built and tested for weeks. This claim was
+discarded rather than incorporated.
+
+This is at least the second time in this project's history that a
+confidently-stated recollection from ChatGPT has been checked against
+primary source material and found to be incorrect (the first being the
+still-unverified "House of Horrors" / "98 out of 100" testing
+philosophy, never found in any document despite being cited with
+confidence on two separate occasions). **Standing practice, already
+being followed and worth continuing deliberately: treat any
+ChatGPT-relayed claim about prior project history or architecture as
+requiring direct verification against the actual source documents or
+tested code before being acted on, never as authoritative on its own.**
+
+---
+
+## 57. Current status - Clarifier and Clarifier Response both real, more work remains
+
+Both components are built, tested against a frozen fixture with multiple
+genuinely different response types, and behaving correctly. This is a
+real, working addition to the pipeline - but explicitly not yet
+integrated into any live slice (Bravia's pipeline still uses the
+hardcoded clarifier fixture and a hardcoded clarifierResponse). Wiring
+real Clarifier/Clarifier Response into the live pipeline, and building
+whatever UI is needed to actually present `answerOptions` as selectable
+choices to a real user, remain open next steps - explicitly acknowledged
+as unfinished, not a small remaining detail.
+
+---
+
+## 58. Clarifier UI - a real mockup, and four genuine design findings (none yet implemented)
+
+A live, working mockup of a Clarifier question was built and demonstrated
+directly - a card presenting the question text, rationale, and 2-4
+selectable answer options (matching `answerOptions`), each option a
+clickable, radio-style choice rather than free text. This confirmed the
+radio-button design decision from section 55 is genuinely buildable and
+reads well, not just correct in principle.
+
+**None of the following is yet implemented in code - all are design
+conclusions from direct discussion, ready to build against once the
+front-end work begins.**
+
+### Friction is not the only cost of asking more questions
+
+A real, valuable observation: because a vanishing, low-friction
+radio-card question costs almost nothing to answer (no scrolling, no
+permanent chat clutter), the traditional "minimise questions" discipline
+might seem less necessary than in a heavier chat-based interaction.
+**This is genuinely true for one input to that discipline (UI/UX
+friction) but not for a second, independent input: each answer can
+change what the next highest-value question even is.** Clarifier's job
+is to select the single best question given the Decision Model as it
+currently stands; pre-selecting a batch of several questions up front
+would mean later questions in the batch are answered against stale
+context - functionally the same "questionnaire, not focused reasoning"
+failure Chapter 13 explicitly rejects, just wearing a nicer UI.
+
+**Resolved design: low-friction UI makes several SEQUENTIAL, adaptive
+rounds pleasant and fast (ask one, incorporate the answer, re-evaluate,
+only ask again if a new highest-value question genuinely still exists) -
+it does not license presenting several questions SIMULTANEOUSLY as a
+batch.** Logging each round's question and answer for later review is a
+good, separate idea, worth keeping regardless of this distinction.
+
+### A genuine gap: no "undo" exists
+
+If a person selects the wrong option, or immediately realises they meant
+a different one, there is currently no way to correct it -
+`clarifierResponse()` treats a selection as immediately final. This is a
+real, acknowledged missing requirement for whenever the UI is built, not
+a hypothetical edge case.
+
+### Progress indicators would be dishonest, given how the architecture actually works
+
+A literal "Question 2 of 4" style progress bar was considered and
+rejected: the system genuinely does not know in advance how many
+clarifying rounds will be needed (each round is independently decided,
+per Chapter 13's explicit rejection of pre-planning a full question
+set), so a numbered total would be a false promise, not a UI nicety.
+
+**Resolved instead: contextual, honest primer text instead of a
+progress bar.** No primer at all when zero clarifiers are needed (the
+common case). "One quick question before we go further" when exactly one
+is needed. Something like "One more thing worth checking" only if a
+second round genuinely becomes warranted after the first answer - never
+stated in advance, since it isn't true in advance.
+
+---
+
+## 59. Clarifier voice selection - Feynman Isolation vs. Human Consequence, tested against the real chapter text
+
+A list of ten "Human Consequence" example questions, originally
+generated by ChatGPT under a self-invented label, was checked directly
+against the actual dedicated voice document
+(`Presentation_docs/Clarifier_presentation_ideas_0.1`) rather than taken
+at face value - consistent with the standing practice recorded in
+section 56. Several genuinely diverged from the documented shape: some
+bundled two questions in one, several were open-ended essay prompts with
+no reducible answer set (directly incompatible with the radio-button
+design), and a few read as generic, ungrounded pop-psychology rather
+than the doc's own requirement that the scenario be concretely anchored
+to established facts. Two of the ten (once user-reviewed) were judged to
+have crossed into an unwanted tone entirely.
+
+### The real, documented core shapes, confirmed by direct reading
+
+**Feynman Isolation** - two valid moves, both confirmed in the source
+text:
+- **Move A (remove one uncertainty):** "Suppose X is solved. Would the
+  decision still feel blocked?"
+- **Move B (isolate one factor):** "Forget everything except X. Does X
+  materially change the decision?"
+
+**Human Consequence** - one core shape: "Imagine X has happened. The
+initial feeling has faded. Now you are living with the consequence.
+Does it still feel acceptable?"
+
+The document also contains its own ten-point Clarifier quality self-test
+(e.g. "is it testing one hinge only," "does it avoid adding facts,"
+"what would Answer A/B change in the Decision Model," "is the scenario
+short enough") - richer than the single self-check currently built into
+`clarifier.ts`. **Not yet incorporated into the real prompt - worth
+adding in full next time Clarifier is revisited.**
+
+### A recurrence of an already-solved Establishing Shot problem, caught and fixed in wording
+
+A generated Human Consequence example included "the tension of the
+standoff has faded" - directly narrating an emotional change rather than
+showing a concrete detail that implies it, exactly the "tell, don't
+show" failure spent an entire prior session eliminating from
+Establishing Shot. Confirmed as a real recurrence, not a one-off: the
+doc's own template phrase ("the initial excitement/fear/pressure has
+faded") risks the identical failure by construction. **Worth explicitly
+importing Establishing Shot's show-don't-tell discipline into Human
+Consequence's construction, not just describing the core shape - a
+concrete image doing the same work ("you watch the company carry on
+without you") is what actually earns the "time has passed" quality, not
+a stated feeling.**
+
+### A working hypothesis for choosing between the two voices, tested across four scenarios
+
+Initial hypothesis (domain-based: emotional topic leads to Human
+Consequence, logical topic leads to Feynman) was tested directly against
+Bravia, Singapore relocation, third-child (solo framing), and the
+cofounder buyout - and found to make a wrong prediction for Singapore,
+an emotionally loaded decision the user nonetheless judged as still
+better served by Feynman.
+
+**Corrected hypothesis, arrived at through discussion, explicitly held
+as a working brief rather than confirmed architecture:** the real axis
+is not how emotional the topic is, but whether the targeted uncertainty
+is a fact or probability about the world (however emotionally loaded the
+subject - "will the child settle happily" is still a predictive fact)
+versus a preference that has no existence until imagined (e.g. genuine
+desire for a third child, which cannot be externally verified at all,
+only surfaced by inhabiting it). Fact/probability uncertainties favour
+Feynman; ungroundable preference uncertainties favour Human Consequence.
+Confirmed by the user's own independent judgment across all four test
+scenarios once articulated this way, including correctly predicting why
+Singapore felt "close" but still Feynman-favoured, and why third child
+was "no debate" in Human Consequence's favour.
+
+**Status: explicitly a working hypothesis, not yet written into
+`clarifier.ts`'s method-selection logic, and not confirmed against the
+actual documentation (no textual support was found connecting voice
+choice to this specific fact-vs-preference distinction - this is a
+genuine synthesis from this session's discussion, not a rediscovered
+documented rule).** To be used until a real test case breaks it, per
+explicit agreement, then revised.
+
+---
+
+## 60. Two real UI visibility gaps closed - Clarifier surfaced, Auditor staleness explained
+
+Following section 58's finding that Clarifier's question/answer was entirely
+invisible on the actual rendered page, and that Auditor's output could
+visibly contradict Landscape's own resolved facts once Clarifier
+successfully narrowed something Auditor had flagged, both were fixed and
+confirmed working via direct screenshot.
+
+**A significant process note, worth flagging on its own:** while
+investigating this, it was discovered that the local reference copies of
+`structuredReport.ts`, `WorkspaceReportView.tsx`, `eventHorizons.ts`, and
+`landscape.ts` were all meaningfully out of date relative to the real,
+live repo - missing fields and functions that had genuinely been added
+over past sessions. Proceeding on the stale copies would have produced
+incorrect instructions. **Standing practice going forward, worth treating
+as firm: before editing any file that has been touched across multiple
+past sessions, ask for its current real content rather than trust a
+locally-held copy, especially for files central to rendering or type
+definitions.**
+
+### Clarifier surfaced in the live report
+
+Added `StructuredClarifier` type (question, answerOptions, selectedAnswer,
+effect) to `structuredReport.ts`, mapped from real `context.clarifier` /
+`context.clarifierResponse`. Added a corresponding `ClarifierSection` to
+`WorkspaceReportView.tsx`, rendered between the Reasoning Panel and
+Auditor sections, showing the real question, all options with the
+actually-selected one visually highlighted, and the genuine computed
+effect. **Confirmed rendering correctly via screenshot.**
+
+### Auditor staleness explained rather than architecturally fixed
+
+Rather than re-running Auditor after Clarifier resolves something (which
+would reopen the deliberately-deferred "selective panel re-evaluation"
+question from section 55), a one-line honest caption was added directly
+beneath the Auditor section whenever a clarifier exists: *"this
+assessment reflects the decision as it stood before the clarifying
+question below was answered."* This turns a visible, unexplained
+contradiction into something that makes sense once the full sequence is
+visible - solves the immediate user-facing confusion without reopening
+the bigger architectural decision. **Confirmed rendering correctly via
+screenshot.**
+
+---
+
+## 61. Landscape - taught to apply general product-pricing knowledge, with a real calibration correction along the way
+
+A genuine architectural question was raised: should the system be able to
+independently infer that a stated price looks unusual for a named
+product (the way Auditor once spontaneously, correctly flagged a Lexus
+hybrid reliability concern), rather than relying on the below-market
+signal being hand-authored into a test fixture (as Bravia's
+`pricePosition: "materially_below_expected_market"` always was)?
+**Resolved: yes** - `LANDSCAPE_V1_SYSTEM_PROMPT` was given explicit
+permission to apply general knowledge of typical pricing for specific,
+identifiable products, clearly labelled as a reasoned estimate rather
+than a verified fact, and only when real confidence exists (not for
+generic or unfamiliar items).
+
+### A real, generalisable calibration error found and fixed on first test
+
+The first test produced an unwanted side effect: Landscape expressed
+doubt about whether "Sony Bravia 9 II" was a real product at all,
+displacing the actual pricing question. Confirmed via direct web search
+that the product is real and correctly priced by Landscape's own
+estimate (~£3,000-£3,500) - the doubt was unwarranted. **Root cause,
+worth recording as a general lesson, not a one-off:** specificity had
+been treated as a risk signal rather than evidence of realism. A name
+closely matching a real product line's naming convention is MORE likely
+to be genuine, not less - a fabricated name would more plausibly be
+vague or generic. Fixed with an explicit instruction: treat close,
+well-formed matches (even with a plausible minor discrepancy, like a
+likely typo in a model number) as a near-match to assume and move past,
+not a reason to doubt existence - reserve genuine doubt for names that
+don't resemble any real pattern at all. **Confirmed fixed on retest** -
+product existence was accepted without hesitation, and Reframer
+correctly escalated to `PREREQUISITE_REQUIRED` based on the now-properly-
+surfaced pricing anomaly, with Clarifier correctly asking about seller
+channel (the one fact that genuinely could not be inferred) rather than
+repeating a now-redundant "is this a discount" question.
+
+### A related Clarifier fix: redundant answer options
+
+Noted directly: two generated options ("cannot verify who is selling
+it" and "not sure") were functional duplicates. Added an explicit
+self-check to `clarifier.ts`: before finalising, check every pair of
+options against each other, and merge any that would lead to the same
+semantic effect - "Not sure" is generally the better, plainer version
+to retain.
+
+### Full-chain validation of the alternate (private-seller) branch
+
+Using the real, corrected pipeline, the private-seller branch of the
+Bravia scenario was run in full (forcing the clarifier selection via a
+test route, since no real UI exists yet to collect this) and confirmed
+to produce genuinely differentiated reasoning throughout, not a merely
+darker copy of the retailer branch: Landscape V2 introduced a materially
+new remaining uncertainty ("whether the unit is stolen, counterfeit, or
+otherwise problematic") that never existed in the retailer branch; Paths
+renamed itself to reflect the specific channel; Establishing Shot
+correctly avoided stating the risk directly while still obliquely
+gesturing at it (an unopened, unneeded "stapled receipt and a scrawled
+phone number"); Steelman's case for buying explicitly named forgoing
+retailer protections as a real, load-bearing condition rather than
+glossing over it. This is the clearest demonstration to date of the full
+pipeline (Reframer through Steelman) reasoning as one coherent system
+around a single resolved fact, rather than eight independently-plausible
+components.
+
+---
+
+## 62. Event Horizon - now real, built from Chapter 16 and confirmed via frozen-context testing
+
+`app/engine/eventHorizons.ts` converted from a `DecisionKind`-branching
+fixture to a real component, built directly from a fresh full re-read of
+Chapter 16. Outputs trigger, label, explanation, `irreversibleAfter[]`,
+and `transition` (a semantic "X to Y" change in the nature of the
+decision, not merely the mechanical action) - the type already supported
+these fields (`irreversibleAfter`, `transition`), they were simply never
+populated by the old fixture.
+
+**Directly incorporates the section-29 correction from weeks earlier:**
+explicitly checks whether a genuine, formal reversal right exists for
+this specific decision (a statutory cooling-off period, a return policy)
+- if yes, the horizon is losing that right; if no (the common case for
+private sales and most life decisions), the horizon is the moment of
+commitment itself, since even a later-reversed consequence (e.g.
+reselling an asset) never undoes the fact that the commitment was made.
+
+### Honest assessment of the component's actual value, discussed directly before building
+
+Agreed directly: Event Horizon's value is real but narrower than its
+name suggests. For the user, it mainly earns its place in cases where
+the reversal structure is genuinely non-obvious (exactly the private-
+seller-vs-retailer case tested here) rather than adding insight into the
+decision itself. Architecturally, its primary designed purpose - a clean
+handoff point to Navigator - is currently unrealised, since Navigator
+does not yet exist. **Not treated as a reason to deprioritise it, but
+worth recording as an honest, calibrated expectation rather than
+overstating its current impact.**
+
+### A real bug found via testing methodology, not a logic error
+
+Two initial test attempts used independent, freshly-generated full-chain
+re-runs for the retailer vs. private-seller comparison, exactly the
+confound already identified and fixed for Clarifier in section 55 - both
+attempts produced answers to a DIFFERENT clarifying question each time
+(screen size, not seller channel), invalidating the comparison entirely
+without the mistake being obvious at first glance. **Fixed by building
+frozen fixtures directly from two already-validated real outputs**
+(`braviaRetailerFrozenContext`, `braviaPrivateSellerFrozenContext`),
+holding everything constant except the one fact under test. **Worth
+restating as a firm, recurring lesson: the frozen-context testing
+discipline established for Clarifier applies to every component's
+prompt testing, not just Clarifier's - any time two runs are being
+compared to isolate one variable, freeze everything else first.**
+
+### Confirmed working, cleanly differentiated result
+
+Retailer branch: correctly identified the return window's expiry as the
+real horizon, explicitly reasoning that payment alone is only
+"provisionally reversible" until that window lapses. Private-seller
+branch: correctly identified payment and handover itself as the horizon,
+explicitly reasoning through the absence of any statutory or retailer
+protection. Two genuinely differentiated, well-reasoned outputs from
+identical inputs bar one fact - confirms the component works as
+intended.
+
+---
+
+## 63. Updated implementation status
+
+As of this update, real (not fixture) components in the live Bravia
+pipeline: Reframer, Landscape (V1/V2), Guardian, Pragmatist, Empathiser,
+Auditor, Clarifier, Clarifier Response, Representative Paths,
+Establishing Shots, Steelman, and now Event Horizon. **No components in
+the live Bravia pipeline remain fixture.** Navigator remains unbuilt
+(explicitly out of scope until the decision-formation pipeline is fully
+real, which it now is) and the custom-decision path, Singapore, and
+Portfolio slices remain untouched and still fixture, as previously
+recorded.
+
+**Still an acknowledged, real limitation:** Clarifier's "selected answer"
+in the live pipeline is a placeholder (auto-picks the first non-"Not
+sure" option) rather than a genuine user selection, since no interactive
+UI exists yet to collect one. The mockups from section 58 remain
+designs, not implementation.

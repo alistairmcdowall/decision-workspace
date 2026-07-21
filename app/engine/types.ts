@@ -32,7 +32,14 @@ export type DecisionCore = {
   commitment?: string;
   price?: MoneyAmount;
 };
-export type ClarifierMethod = "ISOLATION" | "THRESHOLD" | "COUNTERFACTUAL";
+export type ClarifierMethod =
+  | "ISOLATION"
+  | "COMPARISON"
+  | "PRIORITISATION"
+  | "CONFIRMATION"
+  | "DECOMPOSITION"
+  | "THRESHOLD"
+  | "COUNTERFACTUAL";
 
 export type DiagnosticStatus = "available" | "manual" | "future";
 
@@ -125,17 +132,18 @@ export type DecisionContext = {
     readinessScore: number;
     readinessState: ReadinessState;
   };
-
   clarifier?: {
     target: string;
     method: ClarifierMethod;
     question: string;
     rationale: string;
+    answerOptions: string[];
   };
 
   clarifierResponse?: {
     answer: string;
     effect: string;
+    resolutionState: "RESOLVED" | "REDUCED" | "REPLACED" | "DEEPENED";
   };
 
   representativePaths?: {

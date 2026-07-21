@@ -383,7 +383,7 @@ export default function Home() {
       try {
         const nextReport =
           useCustomInput && customInput.trim()
-            ? buildStructuredReport(runCustomDecisionSlice(customInput.trim()))
+            ? buildStructuredReport(await runCustomDecisionSlice(customInput.trim()))
             : await runSlice(selectedSlice);
 
         if (!cancelled) {

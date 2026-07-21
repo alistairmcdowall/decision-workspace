@@ -9,7 +9,9 @@ import { eventHorizons } from "./eventHorizons";
 import { establishingShots } from "./establishingShots";
 import { steelman } from "./steelman";
 import { clarifier } from "./clarifier";
+import { clarifierResponse } from "./clarifierResponse";
 import type { DecisionContext } from "./types";
+
 
 export async function runBraviaSlice(): Promise<DecisionContext> {
   let context: DecisionContext = {
@@ -73,20 +75,20 @@ export async function runBraviaSlice(): Promise<DecisionContext> {
   }
 
   async function runPathsBranch(ctx: DecisionContext): Promise<DecisionContext> {
-    let c = clarifier(ctx); // still fixture, synchronous
+    let c = await clarifier(ctx); // real - generates a genuine question and answerOptions each run
 
-    c = {
-      ...c,
-      clarifierResponse: {
-        answer:
-          "Yes. If the offer is genuine, fully warranted and free from hidden condition issues, I would feel comfortable buying it.",
-        effect: "Purchase willingness resolved",
-      },
-    };
+    // TEMPORARY placeholder until real UI collects an actual user selection:
+    // picks the first non-"Not sure" option as a stand-in answer, so the pipeline
+    // has something real and consistent with whatever question was actually asked.
+    const options = c.clarifier?.answerOptions ?? [];
+    const placeholderSelection =
+      options.find((o) => !o.toLowerCase().includes("not sure")) ?? options[0] ?? null;
+
+    c = await clarifierResponse(c, placeholderSelection);
 
     c = await landscape(c); // V2
     c = await paths(c);
-    c = eventHorizons(c); // synchronous, no real API call
+    c = await eventHorizons(c); // synchronous, no real API call
 
     return c;
   }

@@ -17,6 +17,7 @@ export async function GET() {
       answer:
         "Yes, if the independent inspection comes back clean and the service history checks out, I'd be comfortable buying it.",
       effect: "Mechanical/history verification willingness resolved",
+      resolutionState: "RESOLVED",
     },
   };
   const afterLandscapeV2 = await landscape(withClarifierAnswer);

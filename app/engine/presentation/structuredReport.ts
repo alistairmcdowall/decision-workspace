@@ -15,6 +15,7 @@ export type StructuredReport = {
   decisionTurn: string;
   reframer?: StructuredReframer;
   reasoningPanel?: StructuredReasoningPanel;
+  clarifier?: StructuredClarifier;
   auditor?: StructuredAuditor;
   paths: StructuredPath[];
   eventHorizon?: {
@@ -37,6 +38,13 @@ export type StructuredReasoningPanel = {
   guardian: { protectedValue: string; concern: string }[];
   pragmatist: { requirement: string }[];
   empathiser: { humanFactor: string }[];
+};
+
+export type StructuredClarifier = {
+  question: string;
+  answerOptions: string[];
+  selectedAnswer?: string;
+  effect?: string;
 };
 
 export type StructuredAuditor = {
@@ -151,6 +159,15 @@ export function buildStructuredReport(
           route: c.reframer.route,
           suggestedReframe: c.reframer.suggestedReframe,
           clarifyOptions: c.reframer.clarifyOptions,
+        }
+      : undefined,
+      
+      clarifier: c.clarifier
+      ? {
+          question: c.clarifier.question,
+          answerOptions: c.clarifier.answerOptions ?? [],
+          selectedAnswer: c.clarifierResponse?.answer,
+          effect: c.clarifierResponse?.effect,
         }
       : undefined,
 

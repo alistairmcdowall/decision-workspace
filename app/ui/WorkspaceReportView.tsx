@@ -6,6 +6,7 @@ import type {
   StructuredReasoningPanel,
   StructuredAuditor,
   StructuredReframer,
+  StructuredClarifier,
 } from "../engine/presentation/structuredReport";
 
 export function WorkspaceReportView({ report }: { report: StructuredReport }) {
@@ -25,7 +26,18 @@ export function WorkspaceReportView({ report }: { report: StructuredReport }) {
         <ReasoningPanelSection panel={report.reasoningPanel} />
       )}
 
-      {report.auditor && <AuditorSection auditor={report.auditor} />}
+      {report.clarifier && <ClarifierSection clarifier={report.clarifier} />}
+
+      {report.auditor && (
+        <>
+          <AuditorSection auditor={report.auditor} />
+          {report.clarifier && (
+            <p className="rounded-xl border border-slate-800 bg-slate-950 p-3 text-xs leading-6 text-slate-500">
+              Note: this assessment reflects the decision as it stood before the clarifying question below was answered.
+            </p>
+          )}
+        </>
+      )}
 
       <ResolutionPanel
         title="What has already been resolved?"
@@ -201,6 +213,46 @@ function ReasoningPanelSection({ panel }: { panel: StructuredReasoningPanel }) {
           </ul>
         </div>
       </div>
+    </section>
+  );
+}
+
+function ClarifierSection({ clarifier }: { clarifier: StructuredClarifier }) {
+  return (
+    <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
+      <h2 className="mb-4 text-2xl font-semibold text-slate-100">
+        Clarifying Question
+      </h2>
+
+      <p className="leading-7 text-slate-300">{clarifier.question}</p>
+
+      <div className="mt-4 grid gap-2">
+        {clarifier.answerOptions.map((option) => {
+          const isSelected = option === clarifier.selectedAnswer;
+          return (
+            <div
+              key={option}
+              className={`rounded-xl border p-3 text-sm ${
+                isSelected
+                  ? "border-emerald-700 bg-emerald-950/30 text-emerald-200"
+                  : "border-slate-800 bg-slate-950 text-slate-400"
+              }`}
+            >
+              {isSelected ? "✓ " : ""}
+              {option}
+            </div>
+          );
+        })}
+      </div>
+
+      {clarifier.effect && (
+        <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 p-4">
+          <p className="text-xs uppercase tracking-[0.14em] text-slate-500">
+            What this resolved
+          </p>
+          <p className="mt-2 leading-6 text-slate-300">{clarifier.effect}</p>
+        </div>
+      )}
     </section>
   );
 }
