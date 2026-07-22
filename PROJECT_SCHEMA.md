@@ -2621,3 +2621,860 @@ in the live pipeline is a placeholder (auto-picks the first non-"Not
 sure" option) rather than a genuine user selection, since no interactive
 UI exists yet to collect one. The mockups from section 58 remain
 designs, not implementation.
+
+---
+
+## 64. The Bravia pipeline split into two real phases - the Clarifier UI is now genuinely functional
+
+`runBraviaSlice()` was split into `runBraviaSlicePhase1()` (Reframer through
+generating the real clarifying question) and `runBraviaSlicePhase2()`
+(Clarifier Response through the final report), since a single unbroken
+server call cannot pause for a genuine human answer. Two API routes now
+exist: `/api/run-bravia` (Phase 1, returns the intermediate context plus
+the question) and `/api/run-bravia/resume` (Phase 2, takes that context
+back plus the real selected answer, returns the finished report).
+`page.tsx` was rewritten to orchestrate this properly - calling Phase 1,
+rendering a real, clickable question card (`ClarifierWaitingCard`) with
+the actual generated options, then calling `resume` with whichever option
+was clicked and rendering the final report once it returns.
+
+**Confirmed working end-to-end via direct testing**, including the exact
+private-vs-authorised-retailer branch tested manually days earlier now
+reachable through a genuine click rather than a forced test route. This
+replaces the temporary auto-selected placeholder (section 60/63) with a
+real user choice for the first time.
+
+### A genuine bug found and fixed as a direct result of the split, unrelated to the UI work itself
+
+While restructuring the two phases, it was discovered that Auditor and
+Clarifier previously ran in the SAME parallel branch off IDENTICAL
+pre-Auditor context (`Promise.all` for both the Auditor branch and the
+Paths/Clarifier branch) - meaning **Clarifier in the live pipeline had
+never actually seen real Auditor output**, despite `clarifier.ts`'s own
+prompt explicitly treating Auditor's `blockingUncertainties` as its
+primary source of candidates. It had been silently falling back to
+Landscape's remaining uncertainties alone on every live run since
+Clarifier went real. **Fixed by making the ordering strictly sequential
+where it matters:** Auditor now genuinely completes before Clarifier
+runs, at a small, deliberate cost to overall parallelism, in exchange for
+Clarifier finally working as documented. Confirmed working correctly in
+the live pipeline afterward (real Clarifier questions now correctly
+reference genuine Auditor-flagged uncertainties, e.g. seller-channel
+questions grounded in Auditor's actual blocking list).
+
+### Ripple fixes required by the split (same pattern as every prior real-component conversion)
+
+`runBraviaNavigatorSlice.ts` and the standalone CLI script `run.ts` both
+called the old single-shot `runBraviaSlice()` - both updated to call
+Phase 1 then Phase 2 in sequence with the existing placeholder-selection
+logic, since neither has any way to collect a genuine answer either.
+
+### A repeated process lesson from this session, worth restating plainly
+
+Several local reference copies of files central to today's work
+(`structuredReport.ts`, `WorkspaceReportView.tsx`, `page.tsx`,
+`landscape.ts`) were found stale relative to the real, live repo more than
+once. **Standing practice, now reinforced by repeated direct evidence:
+always ask for a file's current real content before editing it, rather
+than trust a locally-held copy - this is not a one-off caution, it
+recurred multiple times in a single session.**
+
+---
+
+## 65. Two precision fixes confirmed via direct retest
+
+**Removed a stale, overriding hardcoded fixture fact.** Bravia's initial
+context still set `assumedForSlice.pricePosition:
+"materially_below_expected_market"` - a leftover from before real
+Landscape existed, and it was silently forcing Reframer's escalation to
+`PREREQUISITE_REQUIRED` before Landscape's own, more nuanced reasoning
+ever got a chance to run. Removed entirely. **Confirmed on retest:**
+Reframer now correctly returns `PASS` when Landscape's real reasoning
+judges the price merely "plausible but on the low end," and correctly
+still escalates to `PREREQUISITE_REQUIRED` when Landscape's real
+reasoning independently derives a genuinely material anomaly - the
+escalation decision is now driven by real reasoning, not a hardcoded
+assumption from weeks before real pricing-inference existed.
+
+**Fixed an overclaiming pattern in Clarifier Response.** A real generated
+effect claimed that confirming a private-seller channel "explains the
+below-market price" - it does not; it only explains the absence of
+retailer protections, while the actual reason for the low price remains
+a separate, genuinely open question (correctly still listed in the same
+report's own `remaining` uncertainties, an internal contradiction worth
+catching). Fixed with an explicit instruction distinguishing "makes X
+plausible/consistent" from "actually resolves X," with a worked example
+using this exact case. **Confirmed on retest**, including correctly
+handling a genuine "Not sure" answer with properly hedged, non-overclaiming
+language.
+
+---
+
+## 66. Reframer's PASS state - confirmed correct via direct chapter reading, and a real UI rule established
+
+A concern was raised that Reframer's `PASS` output looks thin -
+essentially restating the prompt with no visible added value - using the
+Bravia case as an example, and comparing it against a richer-sounding
+reframe generated by a different LLM.
+
+**Resolved via direct reading of Chapter 7 (not from memory):** the
+chapter explicitly states Reframer "deliberately performs no evaluation.
+It determines WHAT should be analysed. It does not determine HOW it
+should be analysed." Both the user's proposed reframes and the external
+LLM's example ("are there better alternatives at this price," "should
+peripherals be considered") are questions about HOW to evaluate the
+decision, not WHAT the decision is - by the chapter's own explicit
+division of labour, that is Landscape's and Paths' job. Confirmed
+directly that the real, current Bravia Landscape output already
+independently surfaces exactly this alternatives question as a genuine,
+earned uncertainty on its own - the concern was valid, but the gap (if
+any) belongs to a different, already-functioning component, not
+Reframer.
+
+**A real, generalisable UI rule established as a result, worth applying
+across the whole "what's seen vs hidden" question, not just Reframer:**
+Reframer's PASS state means, by its own documented definition, "nothing
+needed to be caught, no problem existed" - showing it to a user risks
+implying something meaningful happened when nothing did. **Default
+visibility for any component should track whether it changed or caught
+something, not merely whether it ran.** Reframer's other four states
+(CLARIFY, SUGGEST_REFRAME, PREREQUISITE_REQUIRED, ROUTE_TO_NAVIGATOR) are
+all genuinely meaningful and worth surfacing; PASS should likely be
+hidden by default. Not yet implemented - recorded for the deferred UI
+visibility session.
+
+---
+
+## 67. A genuinely difficult, realistic messy-prompt test - and a major reliability fix for SUGGEST_REFRAME
+
+A deliberately constructed, realistic 100-word rambling prompt (framed as
+tension between personal ambition and a relationship, heavy with
+emotional venting and self-judgment, explicitly confirmed as a fully
+fictional test case, not a real personal situation) was run against real
+Reframer specifically to stress-test its documented core purpose
+(separating symptom from decision) for the first time with genuinely
+messy input, rather than the clean single-sentence prompts used in every
+prior test.
+
+**Result: a strong, clean pass.** Reframer correctly extracted the real
+underlying decision (pursue the ambition vs. scale back for the
+relationship) while discarding all the surrounding emotional narrative,
+and correctly judged it as one decision (`PASS`), not two bundled ones -
+despite surface language ("should I dial it back," "should I stop
+pretending") that could have misled a less disciplined system into
+treating this as multiple decisions or drifting into melodrama.
+
+### SUGGEST_REFRAME fired for the first time in this project's history - but inconsistently
+
+Five repeated runs on the identical prompt produced `SUGGEST_REFRAME`
+only once, with the other four returning `PASS`. Directly investigated
+rather than dismissed as expected rarity (the earlier, days-old
+conclusion that "SUGGEST_REFRAME is genuinely rare" was based on it
+never firing across dozens of clean-prompt tests - an absence of
+evidence, not evidence of absence).
+
+**When it did fire, the content was genuinely excellent** - correctly
+identifying that the prompt's own framing asserted a false binary
+("scale back or pursue and risk the relationship") and suggesting the
+real question might be "how to openly negotiate a shared path
+accommodating both," rather than accepting the self-imposed either/or.
+
+### A user-proposed trigger mechanism tested against real evidence and found not to hold, with a better one derived in its place
+
+Proposed hypothesis: SUGGEST_REFRAME should correlate with how much a
+decision will need Clarifier's help later (fewer clarifying facts needed
+-> less need to reframe). **Tested directly against existing data and
+found to point the opposite direction from the evidence:** Lexus needs
+extensive factual clarification (inspection, service history, seller)
+and has never once produced SUGGEST_REFRAME across dozens of runs; the
+messy relationship prompt needs almost no factual clarification (it's
+almost entirely a values question) and is the one case that did produce
+it.
+
+**The actual distinguishing feature, derived by direct comparison of the
+two cases:** not "how much clarification will be needed," but **whether
+the prompt's own wording asserts an explicit binary/either-or framing** -
+Lexus and Bravia's prompts are neutral ("should I buy X"), with no
+self-imposed dichotomy to challenge; the messy prompt explicitly built
+its own false binary ("dial it back... or... stop pretending").
+
+**Root cause of the inconsistency, once investigated:** the existing
+prompt's only worked example for SUGGEST_REFRAME was the generic
+"narrow item vs. broader budget" pattern - the exact template already
+identified and rejected earlier the same day as too generic and
+ungrounded (the "should you consider peripherals instead" pattern). The
+prompt had never been given the actual mechanism that produces good
+reframes (false-dichotomy detection), only a different, weaker one -
+explaining why it fired unreliably.
+
+**Fixed with an explicit, concrete, labelled mechanism** (check for a
+self-asserted either/or in the prompt's own wording; if present, ask
+whether a broader, non-binary option is plausible; explicit instruction
+NOT to default to the generic budget-reframe pattern; explicit
+permission to lean toward surfacing this readily, since it costs the
+user nothing to see and reject). **Confirmed fixed via five further
+repeated runs on identical input: 5 of 5 correctly and consistently
+produced SUGGEST_REFRAME**, with genuinely varied wording each time, all
+correctly targeting the real false dichotomy rather than drifting toward
+the generic rejected pattern.
+
+**This is now the second confirmed instance of the same general lesson**
+(the first being Clarifier's formal/informal mechanism fix): an abstract
+"don't do X" instruction can lose reliably against a strong underlying
+pull in the model; naming the actual mechanism concretely, with a real
+worked example, and explicitly naming the wrong pattern to avoid, wins
+cleanly where the abstract version did not. Worth treating this as a
+general technique to reach for whenever an instruction is holding
+inconsistently, not just fixing each recurrence as a one-off.
+
+**Also confirmed directly from the chapter text:** "whenever ambiguity
+exists, it should be exposed rather than hidden... the Reframer should
+not silently guess" - providing real textual support for the "fire more
+liberally, since it's advisory-only" philosophy that motivated this
+whole investigation.
+
+---
+
+## 68. Agreed next steps, explicitly deferred rather than started
+
+**A dedicated "voices" implementation session** - Feynman Isolation and
+Human Consequence were designed and extensively tested in isolation
+(section 59) but never actually wired into `clarifier.ts`'s real prompt;
+the current live Clarifier only uses the seven abstract methods with no
+style guidance at all. Agreed to implement and test one component's voice
+work fully before moving to the next, rather than a scattered pass across
+several - and to first take a fuller inventory of which components have
+dedicated voice documents in `Docs/Presentation_docs/` before starting,
+given how many gaps this session alone surfaced between what's designed
+and what's actually wired.
+
+**Perceived performance / progressive reveal** - raised directly: this
+will be used on mobile, and waiting through an opaque, multi-step
+reasoning chain is a real concern. Agreed that the underlying wall-clock
+time is a genuine, structural cost of doing real sequential reasoning
+(today's own Auditor-before-Clarifier fix is a direct example of
+correctness being deliberately chosen over raw speed) and won't
+disappear - but that progressive, step-by-step reveal of each component's
+result as it completes (rather than one opaque wait per phase), plus
+specific rather than generic loading text, are genuine, buildable
+improvements to perceived speed, not yet implemented.
+
+---
+
+## 69. Genuine multi-round Clarifier support - built, and a chain of real bugs found and fixed along the way
+
+### Correction to last session's write-up
+
+Section 68 recorded the Feynman/Human Consequence voice work as "not yet
+wired" - this was wrong. Direct inspection of the live `clarifier.ts`
+showed the full voice-selection logic (fact/probability vs. ungroundable
+preference, both Feynman moves, Human Consequence's core shape, the
+show-don't-tell fix) was already present and complete, evidently folded
+in during an earlier combined-fix pass without being tracked. **Confirmed
+working correctly via direct testing this session** on a genuine
+Human-Consequence-shaped question (third-child desire) - worth recording
+the correction plainly rather than let the wrong status stand.
+
+### Multi-round architecture built
+
+- `DecisionContext["clarifier"]` widened to make every field except
+  `hasQuestion: boolean` optional, allowing an honest `{ hasQuestion:
+  false }` response when no further question is warranted, rather than
+  forcing a question to exist.
+- `clarifier()` now accepts an `isFollowUpRound` flag; when true, the
+  prompt applies a stricter self-check and explicitly permits declining
+  to ask further.
+- `landscape()` generalised to always narrow from the MOST RECENT state
+  (`v2` if it already exists from an earlier round, otherwise `v1`)
+  rather than always restarting from `v1` and discarding prior
+  narrowing - `v1` itself is preserved unchanged as the original
+  baseline; `v2` always holds the current, most-narrowed state
+  regardless of how many rounds produced it.
+- A new `rerunPanelAndAuditor()` helper re-runs Guardian, Pragmatist, and
+  Empathiser (in parallel) followed by Auditor, intended to run after
+  each answered round before a follow-up Clarifier call.
+
+### The scope decision this required, made deliberately rather than by default
+
+Building this forced a real decision on the "selective panel
+re-evaluation" question deferred since section 55: **the full panel
+(Guardian, Pragmatist, Empathiser) now re-runs alongside Auditor between
+rounds, not just Auditor alone.** Reasoned through directly: a resolved
+answer (e.g. "no, I don't want this") should meaningfully change
+Guardian's concerns, Pragmatist's requirements, and Empathiser's framing,
+not just Auditor's readiness assessment - leaving the other three stale
+would reproduce the same kind of internal contradiction already found
+and fixed elsewhere (Auditor reflecting new information, other output
+still reflecting old). Chapter 14's own explicit list (only Landscape/
+uncertainties/Auditor/Paths) is treated as superseded by this decision,
+consistent with how the broadband-test evidence already overrode it once
+before.
+
+### A significant methodological near-miss, caught mid-session
+
+An early multi-round test used a hand-typed answer
+("no, it feels driven mainly by outside expectations or pressure")
+instead of one of Clarifier's own actual generated `answerOptions`. This
+produced a misleading result (Landscape appeared to over-interpret a
+generic "no" into a specific causal narrative) that was nearly
+diagnosed as a real bug before being caught - the actual generated
+options never contained that specific phrase. **Standing lesson: always
+verify a test answer is one of the real, generated `answerOptions`
+values, never a plausible-sounding hand-typed substitute** - the same
+category of rigor as the "test with a frozen context, not a fresh
+re-run" lesson from the Clarifier work weeks earlier.
+
+### Four real bugs found and fixed through repeated, disciplined retesting
+
+1. **Landscape silently assuming a partner exists.** A prompt written in
+   the first person singular ("should I have a third child") had its
+   `resolvedUncertainties` silently include "implying two existing
+   children and prior parenting experience" - manufacturing a two-parent
+   household from nothing. Fixed with an explicit instruction never to
+   assume a partner/co-decision-maker unless the prompt states or clearly
+   implies one; unresolved partner-status is now correctly a
+   `remainingUncertainty`.
+
+2. **Landscape/Pragmatist silently assuming the decision-maker's own
+   biological role.** Requirements like "confirmed physical capacity to
+   conceive and carry a pregnancy" were phrased generically ("the
+   parent(s)") in a way that glossed over whose body the requirement
+   actually applied to - itself unestablished by the bare prompt. Fixed
+   with an explicit instruction treating this as its own genuine
+   `remainingUncertainty`, the same category of gap as unconfirmed
+   partner-existence, never defaulted or phrased around.
+
+3. **Auditor's blockingUncertainties not prioritised correctly.** For a
+   first-person-singular decision, Auditor was listing another person's
+   view (a partner's) ahead of the decision-maker's own stance, even
+   though the latter is normally the more foundational, sequencing-
+   relevant uncertainty (many other questions become moot depending on
+   it). Fixed with an explicit ordering instruction; confirmed Clarifier
+   subsequently respects Auditor's stated priority rather than
+   re-deriving its own competing view of what's structurally important
+   (a second, related fix - Clarifier was independently overriding
+   Auditor's ordering with its own reasoning about what "must" be
+   resolved first).
+
+4. **Auditor failing to check its own output against Landscape's
+   already-resolved facts.** After a round-one answer was correctly
+   resolved into Landscape's `resolvedUncertainties`, a freshly re-run
+   Auditor still listed the same fact as a top blockingUncertainty -
+   re-deriving it fresh from Guardian/Pragmatist/Empathiser's individual
+   (not-yet-updated) framing rather than checking whether Landscape had
+   already settled it. Fixed with an explicit cross-check instruction.
+   Confirmed working: Auditor now correctly excludes resolved facts from
+   blocking/missing lists, while still honestly flagging
+   `internalConsistency: INCONSISTENT` when it notices individual lenses
+   still silently resting on assumptions Landscape has since resolved -
+   a subtle, correct distinction between "this is still blocking" and
+   "this reasoning hasn't fully caught up yet," both real and both worth
+   surfacing differently.
+
+5. **Clarifier repeating the same underlying question in a follow-up
+   round**, even when correctly identifying that the same target
+   genuinely still needed firming up (e.g. a vague "something feels
+   missing" answer). The follow-up round re-asked an almost identical
+   Human Consequence scenario, reworded, rather than probing a genuinely
+   different angle (e.g. what specifically feels missing). Fixed with an
+   explicit instruction: a follow-up round on the same target must use a
+   genuinely different angle or method, never restate the same scenario
+   - and must return `hasQuestion: false` if no genuinely distinct angle
+   exists, rather than manufacturing a cosmetic reword.
+
+### Confirmed working end-to-end after all four fixes
+
+A final test run produced a genuinely well-formed two-round sequence:
+round one (Human Consequence, probing genuine desire, correctly using
+`REDUCED` rather than a false `RESOLVED` for an ambivalent answer), round
+two (correctly pivoting to the distinct, previously-flagged biological-
+role uncertainty, correctly using plain CONFIRMATION rather than either
+voice since it's a fact question) - no repetition, correct voice
+selection throughout, correct priority ordering, correct handling of
+partial/ambiguous resolution.
+
+### Current status
+
+This is built and validated via direct test routes only - **not yet
+wired into the live Bravia pipeline or `page.tsx`'s UI.** The live
+product still runs a single Clarifier round. Wiring multi-round support
+into the actual user-facing flow (showing a second question card if one
+is generated, with a hard cap of 2 rounds per the standing design
+principle) remains the next concrete step before this reaches real
+users.
+
+### Deferred: a genuine real-world test case, deliberately held back
+
+A real (not test-fixture) three-way espresso machine purchase comparison
+(Londinium Vectis vs. Bezzera Strega vs. Quick Mill Rapida) was proposed
+as the next strong test case once the above work is complete - chosen
+because it is a genuine three-way NAMED comparison (never tested; every
+prior test has been binary or budget-allocation), involves niche/
+specialist products (untested territory for Landscape's knowledge-
+confidence calibration), and is a real decision with real stakes, unlike
+every fixture used so far. Deliberately NOT run yet, given today's two
+outstanding gaps (now the live-wiring gap specifically, following this
+session's fixes) - agreed to hold it until the pipeline is in a state
+worth trusting for something that actually matters.
+
+---
+
+## 70. Multi-round Clarifier wired into the live pipeline, tested end-to-end through the real browser flow
+
+`rerunPanelAndAuditor()` (built but never actually exercised in section 69)
+is now genuinely used: `runBraviaSlicePhase2` uses it as intended, and the
+whole architecture was wired through three real routes
+(`/api/run-bravia`, `/api/run-bravia/resume`, a new
+`/api/run-bravia/resume2`) and `page.tsx`, replacing every remaining
+placeholder auto-selection with genuine user clicks.
+
+### A real, serious bug found and fixed live in the browser
+
+The first end-to-end test produced a runaway loop - six consecutive
+clarifying questions in a single page load, all variants of the same
+underlying pricing uncertainty, when the design explicitly caps this at
+two rounds. **Root cause: `page.tsx` had no concept of "which round am I
+on"** - `selectClarifierAnswer` always posted to `/api/run-bravia/resume`
+(Phase 2 logic) regardless of round, so a round-2 answer would trigger
+another full Phase 2 pass (re-run panel, re-run Auditor, ask Clarifier
+again with `isFollowUpRound: true`) instead of routing to Phase 3, which
+is the only phase designed to always finish. Since Auditor's own
+imperfect resolution of a pricing question could plausibly keep
+re-triggering a "not quite settled" follow-up, this had no natural
+ceiling. **Fixed by adding explicit round-tracking state to
+`braviaPending`** (`round: 1 | 2`), with `selectClarifierAnswer` routing
+to `resume` only for round 1 and unconditionally to `resume2` (which
+always finishes) for round 2 - restoring the intended hard cap.
+
+**Confirmed fixed and the full architecture validated end-to-end**: two
+genuinely distinct clarifying questions appeared in sequence with real
+waits between them, both correctly answerable via click, producing a
+final report that reasons coherently across both rounds with no
+contradictions, no repetition, and no further questions beyond the
+second.
+
+### Smaller UX fix made alongside
+
+`ClarifierWaitingCard` gave no visual feedback that a click had
+registered before the (multi-second) wait began. Fixed: selecting an
+option now immediately highlights it, dims and disables the other
+options to prevent a stray double-click mid-wait, and shows a small
+"Thinking this through…" note.
+
+---
+
+## 71. A major, previously-undetected data-loss problem found and fixed: full reasoning history is now preserved and viewable
+
+Reviewing a complete real run via screenshots (not just JSON) surfaced a
+significant gap: **the polished report only ever shows the LATEST
+Clarifier question and answer** - `clarifierResponse` was being
+overwritten each round, meaning round one's actual question and the
+user's actual answer to it were completely and permanently gone from
+what a user could ever see or what any test/audit could recover, once a
+second round completed. Auditor's own "missing information" panel in
+the same report still implicitly referenced context from the vanished
+first round, with nothing shown explaining why.
+
+**Fixed by adding `clarifierHistory` to `DecisionContext`** - an array
+that accumulates every round's question, answer options, selected
+answer, effect, and resolution state, appended to (not overwritten) at
+each `runBraviaSlicePhase2`/`Phase3` call. **Confirmed working** - a full
+two-round test correctly showed both rounds' complete Q&A in order.
+
+### A new, separate, deliberately-scoped "full reasoning" view built
+
+Rather than complicate the existing polished `WorkspaceReportView`, a
+new, separate `FullReasoningView` component was built - a plain,
+organised (not stylised) dump of every real reasoning step in true
+execution order: Reframer, Landscape V1, the initial Guardian/
+Pragmatist/Empathiser pass, Auditor, the complete Clarifier history
+(all rounds), Landscape V2, Representative Paths with their Establishing
+Shots and Steelman cases, and Event Horizon. A toggle button
+("Show full reasoning (every step)") switches between this and the
+polished report. This required also returning the full, raw
+`DecisionContext` (`fullContext`) from both resume routes, not just the
+polished `StructuredReport`, since the full view needs data the polished
+report deliberately never surfaces (decision axes, the initial Landscape
+pass, the initial panel pass, etc.).
+
+**Explicitly deferred, not decided:** whether any of this should be
+shown to a real user by default, versus hidden behind a toggle or
+omitted entirely, remains part of the still-open "what's seen vs
+hidden" conversation. The purpose of this work was narrower and
+concrete: ensure a complete, honest, non-lossy record of every real
+reasoning step exists and can be inspected, independent of what a future
+default-visibility decision settles on - you cannot make a good decision
+about what to hide if the underlying information has already been
+silently destroyed.
+
+### A known, explicitly accepted limitation, and a stated future design goal
+
+**Current limitation:** the "Guardian / Pragmatist / Empathiser" section
+of the full reasoning view only shows their LATEST state (after the most
+recent re-run), not their state before a clarifying answer changed it -
+unlike Clarifier, which now correctly preserves full history. Section
+labels were corrected to be honest about this (e.g. "shown here is the
+LATEST pass, after clarifying answer(s)" rather than a misleading
+"(initial pass)" label found and corrected during review - the same
+review also correctly caught Auditor's section being mislabelled
+"(final pass)" when, depending on the run, it may only ever have run
+once, or may itself be a re-run rather than an initial pass).
+
+**Stated design goal, explicitly recorded now even though not built:**
+the long-term target is not just showing latest-state snapshots, but a
+genuine **before / after / differential** view for every component whose
+output changes as a result of a clarifying answer - not just Clarifier's
+own question-and-answer history, but what specifically changed in
+Guardian's, Pragmatist's, Empathiser's, and Auditor's actual reasoning
+as a direct result of each answer. This is a larger piece of work than
+today's fix and was deliberately not attempted this session, but is
+recorded here as the intended direction for whenever the full-reasoning
+transparency work is next picked up.
+
+---
+
+## 72. A content-quality observation, flagged but not yet investigated
+
+While reviewing the same full test run, Empathiser's output for the
+Bravia scenario was noted as reading somewhat presumptuous about the
+user's psychology - "the buyer's confident assertion that their use case
+'genuinely' needs flagship performance may reflect a personal need for
+self-justification, easing residual guilt... about spending £2,000 on a
+want that could be framed as excess." This resembles the same
+speculative-psychoanalysis pattern already identified and rejected in
+the Clarifier voice work days earlier (the "who benefits, who quietly
+pays the price" style questions). **Not yet investigated or fixed** -
+worth checking whether Empathiser's prompt has a similar over-reach
+tendency the next time that component is revisited.
+
+---
+
+## 73. Milestone: a genuine real-world decision run end-to-end, the strongest single result the project has produced
+
+The multi-round architecture (sections 69-70) was generalised beyond
+Bravia and pointed at a real, live decision the user was actually facing
+- not a constructed test fixture. `runBraviaSlicePhase1()` was made to
+accept an optional starting context (defaulting to the existing Bravia
+context for every prior caller, so nothing already working changed), and
+a parallel set of routes (`/api/run-espresso` and its `resume`/`resume2`
+pair) and a new `page.tsx` tile were added, reusing every already-built
+component unchanged.
+
+**The real prompt:** *"I've got a Sage DTP but I want a lever machine and
+I can't decide between the Londinium Vectis, the Bezzera Strega and the
+Quick Mill Rapida - which one should I buy?"* Deliberately harder than
+any prior test in three specific ways, chosen precisely because none had
+been tried: a genuine three-way NAMED comparison (every previous test was
+binary or budget-allocation), no stated budget at all, and genuinely
+niche/specialist products (untested territory for Landscape's
+knowledge-confidence calibration).
+
+### A real, useful gap found before the test even properly began
+
+The first clarifying question offered four options (thermal stability,
+ease of use, footprint/aesthetics, brand support) - none of which
+actually matched the user's genuine answer ("upgrade my existing setup to
+improve my coffee"), forcing a "closest fit" pick instead. **Identified as
+a real, generalisable design gap**: the radio-button design has an
+escape hatch for genuine uncertainty ("Not sure") but none for "my honest
+answer doesn't fit any offered category." Proceeded pragmatically with
+the closest-fit pick, explicitly flagged as an imperfect proxy.
+
+**The system's own handling of this imperfect input turned out to be a
+significant, unprompted validation:** `clarifierResponse` correctly
+returned `resolutionState: "REPLACED"` rather than falsely accepting the
+answer as resolving the original question, with an honest effect
+description stating the priority "doesn't map onto any of the three
+targeted attributes... introduces forgiving/ease-of-use as the actual
+decision-driving quality... previously unscoped attribute." The
+following Clarifier round correctly rebuilt its options around what had
+actually been revealed, rather than repeating the original ill-fitting
+frame. This is real evidence the architecture has a genuine safety net
+against a real, unplanned failure mode, not just against the specific
+cases it was deliberately tested against.
+
+### Full results, reviewed via the FullReasoningView (not raw JSON, given its length)
+
+**Reframer, Landscape, and the panel handled the novel three-way,
+no-budget, niche-product shape without any new prompt fixes required** -
+correctly recognised as one decision (not split), correctly avoided
+inventing a budget or specific prices, correctly reasoned about genuine
+uncertainty (`evidenceStrength: LOW`, `readinessState: RED`) rather than
+either false confidence or an unhelpfully generic response.
+
+**Two clarifying rounds, well-sequenced and causally connected, not
+independent facts:** round one resolved a real budget ceiling (~£1,500-
+£2,500). Round two - a clean Feynman Isolation move ("setting aside your
+design preferences for a moment, have you owned a lever machine
+before?") - revealed the user is a first-time lever buyer, which then
+correctly reshaped Landscape's own framing toward favouring
+"forgiving, PID-assisted options over fully manual ones requiring
+existing skill."
+
+**Representative Paths correctly produced a genuine three-way
+comparison** (Path A: Vectis, Path B: Strega, Path C: Rapida) - the
+first true multi-way named comparison this project has ever tested,
+confirmed as legitimate under the existing no-invention rule (these are
+options the user themselves named, not invented alternatives).
+
+**Steelman built three genuinely distinct, non-arbitrary cases directly
+from a real tension Empathiser had already identified** (wanting
+hands-on mastery vs. needing forgiveness as a beginner) - Vectis for
+someone who wants the demanding, authentic manual experience; Strega for
+craft with a safety net; Rapida for long-term durability/support over
+either. This is the "shared concern, different lens" discipline
+(originally tuned into Guardian/Pragmatist/Empathiser weeks earlier)
+holding correctly across three paths, not just two.
+
+**Establishing Shots passed every rule established across the entire,
+lengthy Establishing Shot tuning arc** - in-motion openings, the
+object/decision genuinely receded into the background (an unanswered
+phone message, unopened post, the Sage DTP now dark/unplugged), no
+invented bias between paths, and - worth noting specifically - no
+recurrence of the internal-sensation stock-phrase problem (each path
+used a distinct physical technique: forearm tension, a phone's glow, a
+kettle ticking, rather than three variations of "something settles in
+your chest").
+
+**Event Horizon correctly reasoned through private-purchase logic** with
+no formal return right assumed, correct "evaluation to ownership"
+transition.
+
+**One small, already-known limitation recurred as expected, not a new
+finding:** Auditor's `assumptions` retained a stale note about a budget
+range "assumed... without landscape confirmation" from before round one
+resolved it - the same latest-snapshot-only limitation already
+documented in section 71.
+
+### Significance
+
+This is treated as the strongest single validation of the architecture
+produced to date - not because it is flawless, but because it is the
+first time a genuinely novel, real, unplanned decision (not constructed
+to exercise a specific rule) was run through the complete real pipeline
+end to end and held together coherently, including surfacing and
+honestly handling its own imperfect input along the way.
+
+---
+
+## 74. A major design conversation, prompted directly by the espresso machine milestone - all design, nothing built yet
+
+The strength of section 73's result immediately surfaced a real,
+previously unexamined architectural gap: the current pipeline has no
+defence against a genuinely large number of named alternatives (the
+motivating real example: seven used luxury car models the user was
+actually considering, sourced from a prior ChatGPT conversation). This
+section records a substantial design conversation that followed,
+resolved through direct back-and-forth rather than settled in one pass -
+several early proposals were tested against the user's real example and
+found wanting before the final shape emerged. **None of this is
+implemented in code. All of it is design, deliberately captured now so
+it is not lost, to be built or revisited later.**
+
+### The core problem: Representative Paths currently conflates two different jobs
+
+Representative Paths was found to be doing both SHORTLISTING (which of
+many named options are even worth deep consideration) and DEEP
+DEVELOPMENT (Establishing Shot, Steelman, Event Horizon per path) in a
+single step. This works at N=2-3, where deep-developing everything is
+cheap and where weeks of hard-won fairness/anti-bias/anti-mirroring work
+(the entire Establishing Shot tuning arc, section 47-54) was tuned and
+validated. It was never tested, and there is no reason to assume it
+would hold, at N=5-7 - and deep-developing seven named options is both
+expensive and poor UX regardless.
+
+### An initial proposed fix (extending Rule 4) was tested honestly against real data and found insufficient
+
+First proposal: extend Rule 4 (no manufactured spectrum, section 31) from
+operating only "within one option" to operating across whole named
+alternatives - collapsing options that represent the same underlying
+STRATEGY (e.g. two ultra-formal JDM flagship sedans) while keeping
+options that represent genuinely different strategies (sporty vs.
+formal vs. understated) as separate paths.
+
+**Tested directly and honestly against the user's real seven-car list**
+(Lexus GS450, Jaguar XJ, Infiniti Q70, Toyota Century, Honda Legend,
+Toyota Crown Majesta, Lexus LS460) rather than assumed to work. Result:
+only 2 of the 7 (Century and Crown Majesta) genuinely collapse under
+this test - the rest represent real, distinct strategic choices. **The
+rule, honestly applied, does not reduce most large real lists down to
+2-3 at all** - this was an important, deliberately-not-glossed-over
+finding, since a weaker version of this project might have quietly
+declared the rule sufficient without checking it against real data.
+
+### The real, load-bearing constraint that reframed the whole conversation: Navigator cannot receive multiple live candidates
+
+Navigator's entire documented purpose (its own two large, as-yet-unused
+voice documents, noted in section 68's inventory) is post-decision
+EXECUTION support for a single, already-chosen path. If a user could
+reach Navigator while still holding 4-5 live candidates, that is proof
+the decision was never actually finished, not a case for Navigator to
+handle multiple options. **This settled that genuine triage/narrowing
+must complete as its own distinct step, fully separate from and prior
+to Representative Paths, not as a stronger version of an existing rule.**
+
+### The two-tier triage design that emerged
+
+**Tier 1 - revealed-preference gut-check (the default first move):**
+Grounded directly in this project's own founding premise (people usually
+already know their real answer) and confirmed live, in this very
+conversation, when the user was asked to consider their own real
+7-car list and immediately named a real 1-2 car preference without any
+elimination process at all. The correct first move for genuine triage is
+therefore a single, well-formed revealed-preference question in the
+Feynman/Human Consequence tradition (worked example, independently
+proposed by the user without invoking either label by name: "if all
+seven were in a showroom, which would you go and look at first?") -
+NOT a flat "which do you prefer" stated-preference question, and NOT a
+default assumption that elimination-by-category is always required.
+
+**Tier 2 - category-elimination (fallback only, for the genuine minority
+who don't already have a clear lean):** Feynman-style dealbreaker
+questions designed to eliminate multiple candidates AT ONCE where
+possible (e.g. "would you accept an import with no verifiable service
+history?" eliminates an entire category in one answer, not one
+candidate at a time) - a genuinely different Clarifier objective
+function than its normal one (find the single most valuable fact about
+one already-framed decision); triage-mode Clarifier should instead
+optimise for "the single question that eliminates the most currently-
+live candidates at once."
+
+### The stopping condition for triage - deliberately NOT open-ended
+
+A core, explicit product principle was stated directly and treated as
+non-negotiable: **"we are specifically designing an anti-LLM process...
+we aren't the talk-to-me-forever app, we're the 'you are going to take
+some responsibility for your decisions' app."** Endless, open-ended
+clarification is treated as a direct violation of the project's purpose,
+not a quality worth maximising.
+
+Resolved design: triage's stopping condition is a STRUCTURAL COUNT, not
+a re-use of Auditor's existing confidence-based `readinessScore` (which
+answers a different question - "do we have enough evidence about an
+already-framed decision" - not "how many live candidates remain").
+Triage's own readiness is: **has the count of genuinely distinct, still-
+live named candidates been reduced to 2, through real elimination (not
+arbitrary truncation)?** Backstopped by a hard round-cap regardless of
+whether the count target is reached, so the system is guaranteed to stop
+and proceed with whatever currently exists rather than continue
+indefinitely - honestly stating what remains unresolved rather than
+pretending completeness.
+
+**Directly confirmed as aligned with original project intent, not just a
+new idea:** independent re-reading of Chapter 12 found "high readiness
+suggests presentation may proceed" as Auditor's own documented purpose -
+matching the user's own recollection from the original ChatGPT-era
+design conversations that this was always the reason `readinessScore`
+was built. Genuine agreement between primary source and independent
+recollection, not another instance requiring the source-verification
+scepticism recorded in section 56.
+
+### The decline path - resolved as a standing option, not a triage target
+
+"Don't buy any of them" is explicitly NOT one of the candidates triage
+eliminates - it is structurally always available (subject to Reframer's
+own judgment about whether a specific prompt's framing has genuinely
+foreclosed it - see the SUGGEST_REFRAME connection below), independent
+of how many named alternatives exist or how triage narrows them.
+**Resolved target: triage narrows named alternatives to exactly 2, with
+decline added afterward as a free third slot** - deliberately fitting
+`PathId`'s existing, real, hard `"A" | "B" | "C"` type ceiling (section
+55) without needing to widen it. Explicitly NOT a confidence hedge (a
+weak third option added because the reasoning behind the top two might
+not feel bulletproof) - if the reasoning is genuinely strong, two
+well-evidenced finalists plus the always-available decline option is
+the correct, sufficient result; a hedge option undermines rather than
+reinforces confidence in the result.
+
+**Left genuinely open, not resolved:** whether the target should
+sometimes be 3 named finalists (not 2) when Reframer's own reading of a
+prompt has firmly foreclosed decline as a real option (e.g. "I've
+decided to become a pilot" vs. "which pilot school should I attend") -
+versus always reserving a decline slot as the simpler, safer default
+even when it turns out unused. Recorded as an open question.
+
+### A second concrete example surfaced for the standing SUGGEST_REFRAME investigation
+
+"I want a lever machine, which one?" was identified as potentially the
+same false-binary pattern that made SUGGEST_REFRAME fire reliably for
+the first time (section 67, the "scale back or pursue and risk the
+relationship" case) - a stated intention that may be silently
+foreclosing a real "don't get one at all" option, the same way "I want
+a third child" framings were examined in earlier sessions. Explicitly
+NOT resolved either way - genuinely uncertain whether "I want X" is firm
+enough to correctly treat as settled (closer to "I've decided to become
+a pilot") or should be tested for the same false-binary pattern. Worth
+testing directly whenever this work is picked up.
+
+### Whether this generalises beyond shopping
+
+Directly considered and concluded: the real trigger condition is not
+"shopping" as a category, but **"the person arrives already holding a
+pre-researched shortlist of more than 2-3 named options"** - common in
+shopping (especially after a prior LLM conversation, exactly matching
+how the user's own real 7-car list originated), but not exclusive to it;
+the same shape could arise with job offers, cities, schools, or any
+other prompt presenting several named alternatives at once.
+
+---
+
+## 75. A significant reframing of the project's own purpose - worth returning to repeatedly, not just a one-off insight
+
+In the course of the triage discussion, the user articulated something
+treated as significant enough to record as its own standing reference
+point, not folded into the technical design notes above.
+
+**The core statement, in the user's own words: "give me a reason to do
+the thing I know needs to be done anyway"** - proceeding from the
+observation, confirmed live in this very conversation (the user named
+their real preference among 7 cars instantly, unprompted, matching the
+project's own founding "recognition, not search" premise), that most
+people facing a decision already have a strong lean, and that the actual
+barrier is rarely information - it is the ability to justify having
+acted on that lean, to themselves or to others, with real, defensible
+reasoning rather than "I just felt like it."
+
+**Reframing, arrived at jointly and explicitly endorsed as accurate,
+not overstated:** this project may be better described as a PERMISSION
+MACHINE than a decision machine. Its function is not primarily to tell
+someone what to decide (most people, most of the time, do not need
+this) - it is to earn, or honestly withhold, the right to act on a
+decision already leaning strongly one way, by subjecting it to real,
+undodgeable scrutiny (Guardian's protected values, Pragmatist's
+requirements, Auditor's honest readiness assessment, Steelman building
+the actual case) rather than either rubber-stamping the existing lean or
+second-guessing it into paralysis.
+
+**Explicitly stated as NOT changing what any component does** - Guardian,
+Pragmatist, Empathiser, Auditor, Steelman all continue doing exactly
+what they have always done. What changes is the accuracy of the stated
+reason WHY each of them matters: the entire architecture's
+"validate-or-reject honestly, never simply flatter" discipline (built
+and defended repeatedly throughout this project, e.g. section on
+avoiding sycophancy, the repeated refusal to let any lens become a
+rubber stamp) is precisely what stops this reframing from collapsing
+into "just tell people what they want to hear" - without those
+safeguards, a permission machine would be indistinguishable from
+flattery, which is the one outcome the whole project has consistently
+built against.
+
+**Origin connection, volunteered directly and worth preserving as real
+project history:** this entire architecture traces back to the user
+manually running an equivalent process by hand, months before any of
+this code existed - independently having three different AIs (this
+model, ChatGPT, Gemini) each draft a full investment portfolio for a
+genuine, six-figure family financial decision, then have each blindly
+rate and re-rate the others' work, rewriting identified deficiencies,
+until the surviving result could withstand scrutiny from every angle.
+The stated reason: needing to be able to justify to himself, whatever
+the eventual outcome, that the best or least-worst decision had genuinely
+been made. **Decision Workspace is, in effect, an attempt to make that
+same manual, effortful cross-examination process repeatable, faster,
+and available for decisions far smaller than six figures** - the
+underlying human need it answers (being able to say "I did this
+properly, whatever happens next") does not only appear at high stakes,
+it is simply quieter at low ones.
+
+**Status: recorded as a standing reference point for this project, worth
+returning to when future design decisions are unclear - not a
+one-off insight to file away and forget.**

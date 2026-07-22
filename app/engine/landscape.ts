@@ -18,6 +18,9 @@ Responsibilities:
 - Distinguish resolved uncertainties (facts already established by the prompt or context) from remaining uncertainties (things genuinely still unknown that would affect the decision).
 - State a clear commitment description - what, concretely, would the person be committing to.
 - Do not evaluate whether this is a good or bad decision. Do not recommend anything. Just describe the shape of the decision space.
+Do not silently assume a partner, spouse, or co-decision-maker exists unless the prompt explicitly states or clearly implies one (e.g. "my wife," "we," "my co-founder"). A prompt written in the first person singular about the person's own choice ("should I...") should be resolved as being about that person alone - do not add facts like "this implies a partner" or "this is a joint decision" as a resolvedUncertainty. If whether a partner is involved is itself unknown and could matter, that is a genuine remainingUncertainty, not something to resolve by assumption.
+
+For decisions involving a biological requirement that attaches to a specific person's body (e.g. carrying a pregnancy), do not silently assume which person in the decision that requirement applies to, and do not phrase it in a way that quietly presupposes an unnamed second person exists to fulfil it (e.g. do not write generic "the parent(s)" language that glosses over this as if already settled). If the decision-maker's own biological role in a stated requirement is not established by the prompt, treat "whose body this requirement applies to" as its own genuine remainingUncertainty - the same category of gap as an unconfirmed partner, not something to default or phrase around.
 
 Where a decision involves a specific, identifiable, named product or asset (e.g. a particular TV model, a particular car), apply your own general knowledge of typical pricing or value for that item, if you have any confidence in it. If a stated price is well outside the range you'd expect (in either direction), add this as a RESOLVED fact, explicitly labelled as a reasoned estimate rather than a verified fact (e.g. "the stated price is well below the typical retail range for this model, based on general knowledge - not independently verified for this specific listing"). Do not do this if you have no real basis for an estimate - do not guess at unfamiliar or generic items. This estimate should then inform what remains genuinely uncertain - for a price that looks too low for a normal retail channel, the real open question is usually not "is this price unusual" (you've just established that) but "why" (e.g. private resale, clearance, counterfeit, error, or genuine bargain) and "what channel is this - a retailer, or a private individual" (since a private sale explains a low price without
 
@@ -80,18 +83,20 @@ Construct the Decision Landscape (V1) for this decision.
 `.trim();
 }
 
-function buildLandscapeV2UserPrompt(context: DecisionContext, v1: NonNullable<DecisionContext["landscape"]>["v1"]): string {
+function buildLandscapeV2UserPrompt(
+  context: DecisionContext,
+  previous: NonNullable<DecisionContext["landscape"]>["v1"] | NonNullable<DecisionContext["landscape"]>["v2"]
+): string {
   const answer = context.clarifierResponse?.answer ?? "not provided";
   const effect = context.clarifierResponse?.effect ?? "not provided";
 
   return `
-Previous Landscape (V1):
-Subject: ${v1?.subject}
-Commitment: ${v1?.commitment}
-Decision axes: ${v1?.decisionAxes.join(", ")}
-Resolved uncertainties: ${v1?.resolvedUncertainties.join("; ") || "none"}
-Remaining uncertainties: ${v1?.remainingUncertainties.join("; ") || "none"}
-
+Previous Landscape:
+Subject: ${previous?.subject}
+Commitment: ${previous?.commitment}
+Decision axes: ${previous?.decisionAxes.join(", ")}
+Resolved uncertainties: ${previous?.resolvedUncertainties.join("; ") || "none"}
+Remaining uncertainties: ${previous?.remainingUncertainties.join("; ") || "none"}
 Clarifier's question was answered.
 User's answer: ${answer}
 Stated effect of that answer: ${effect}
@@ -103,9 +108,11 @@ Produce the updated Decision Landscape (V2) reflecting this new information.
 type LandscapeShape = NonNullable<DecisionContext["landscape"]>["v1"];
 
 export async function landscape(context: DecisionContext): Promise<DecisionContext> {
-  // If V1 already exists, this call is happening post-clarifier - build V2.
+  // If V1 already exists, this call is happening post-clarifier - narrow further.
+  // Always narrow from the MOST RECENT state (V2 if it already exists from an
+  // earlier round, otherwise V1) - never discard prior narrowing by restarting from V1.
   if (context.landscape?.v1 && context.clarifierResponse) {
-    const v1 = context.landscape.v1;
+    const v1 = context.landscape.v2 ?? context.landscape.v1;
     const userPrompt = buildLandscapeV2UserPrompt(context, v1);
     const result = await callClaudeForJSON<LandscapeShape>(LANDSCAPE_V2_SYSTEM_PROMPT, userPrompt);
 
@@ -117,7 +124,7 @@ export async function landscape(context: DecisionContext): Promise<DecisionConte
     return {
       ...context,
       landscape: {
-        v1,
+        v1: context.landscape.v1,
         v2: { ...result.data, state: "NARROWED" as const },
       },
     };

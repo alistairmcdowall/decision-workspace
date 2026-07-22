@@ -484,6 +484,7 @@ export const sisterTestContext: DecisionContext = {
       readinessState: "AMBER",
     },
     clarifier: {
+      hasQuestion: true,
       target: "Seller channel and warranty/return protection",
       method: "ISOLATION",
       question: "Do you know whether this TV is being sold by an authorized retailer (with standard warranty/return rights) or by a private individual (with no such protection)?",
@@ -560,4 +561,34 @@ export const sisterTestContext: DecisionContext = {
         outcome: "Funds stay unspent; buyer keeps existing setup and forgoes this specific unit entirely.",
       },
     ],
+  };
+
+  export const messyRelationshipTestContext: DecisionContext = {
+    prompt:
+      "I've spent years building a life with Vera, carefully laying the bricks for a shared future where we're supposed to be in lockstep. But lately, I feel like I'm running at a totally different speed, and honestly, it's just a bit overwhelming to process day after day. This pull I have toward diving deep into AI evaluation and finally tackling the math I've been putting off - it's like a hunger, and it's dragging me in a direction she just isn't interested in going. I'm stuck in this loop, losing sleep over whether I should just dial it back, put my own ambitions on the shelf, and keep the peace at home, or if I should just stop pretending, chase what I actually want, and accept that I might end up being the person who wrecked us because I couldn't stay on the same path.",
+    decision: {
+      subject: "unclear - needs reframing",
+      kind: "GENERAL",
+    },
+    facts: {
+      userStated: { subject: "unclear - needs reframing" },
+      assumedForSlice: {},
+    },
+    panel: {},
+  };
+
+  export const espressoMachineDecisionContext: DecisionContext = {
+    prompt:
+      "I've got a Sage DTP but I want a lever machine and I can't decide between the Londinium Vectis, the Bezzera Strega and the Quick Mill Rapida - which one should I buy?",
+    decision: {
+      subject: "which lever espresso machine to buy: Londinium Vectis, Bezzera Strega, or Quick Mill Rapida",
+      kind: "PURCHASE",
+    },
+    facts: {
+      userStated: {
+        subject: "which lever espresso machine to buy: Londinium Vectis, Bezzera Strega, or Quick Mill Rapida",
+      },
+      assumedForSlice: {},
+    },
+    panel: {},
   };

@@ -12,9 +12,8 @@ import { clarifier } from "./clarifier";
 import { clarifierResponse } from "./clarifierResponse";
 import type { DecisionContext } from "./types";
 
-
-export async function runBraviaSlice(): Promise<DecisionContext> {
-  let context: DecisionContext = {
+function buildInitialContext(): DecisionContext {
+  return {
     prompt: "Should I buy the Sony Bravia 9 II for £2,000?",
     decision: {
       subject: "Sony Bravia 9 II",
@@ -35,7 +34,6 @@ export async function runBraviaSlice(): Promise<DecisionContext> {
       },
       assumedForSlice: {
         marketClass: "premium_flagship",
-        pricePosition: "materially_below_expected_market",
       },
     },
     panel: {},
@@ -46,11 +44,51 @@ export async function runBraviaSlice(): Promise<DecisionContext> {
       decisionTurn: "So the decision now turns on verification.",
     },
   };
+}
+
+async function rerunPanelAndAuditor(context: DecisionContext): Promise<DecisionContext> {
+  const [guardianResult, pragmatistResult, empathiserResult] = await Promise.all([
+    guardian(context),
+    pragmatist(context),
+    empathiser(context),
+  ]);
+
+  let updated: DecisionContext = {
+    ...context,
+    panel: {
+      ...guardianResult.panel,
+      ...pragmatistResult.panel,
+      ...empathiserResult.panel,
+    },
+  };
+
+  updated = await auditor(updated);
+  return updated;
+}
+
+async function finishBraviaSlice(context: DecisionContext): Promise<DecisionContext> {
+  let c = await paths(context);
+  c = await eventHorizons(c);
+
+  const [shotsResult, steelmanResult] = await Promise.all([
+    establishingShots(c),
+    steelman(c),
+  ]);
+
+  return {
+    ...c,
+    establishingShots: shotsResult.establishingShots,
+    steelman: steelmanResult.steelman,
+  };
+}
+
+// Phase 1: everything up to and including generating the FIRST clarifying question.
+export async function runBraviaSlicePhase1(initialContext?: DecisionContext): Promise<DecisionContext> {
+  let context = initialContext ?? buildInitialContext();
 
   context = await reframer(context);
   context = await landscape(context); // V1
 
-  // Guardian, Pragmatist, and Empathiser are independent of each other - run in parallel.
   const [guardianResult, pragmatistResult, empathiserResult] = await Promise.all([
     guardian(context),
     pragmatist(context),
@@ -66,55 +104,71 @@ export async function runBraviaSlice(): Promise<DecisionContext> {
     },
   };
 
-  // Two independent branches from here:
-  // - Auditor only needs Guardian/Pragmatist/Empathiser (already available).
-  // - Paths needs Landscape V2 (which needs the clarifier answer) and Pragmatist (already available).
-  // Neither branch needs the other's output, so they run in parallel.
-  async function runAuditorBranch(ctx: DecisionContext): Promise<DecisionContext> {
-    return await auditor(ctx);
-  }
+  context = await auditor(context);
+  context = await clarifier(context);
 
-  async function runPathsBranch(ctx: DecisionContext): Promise<DecisionContext> {
-    let c = await clarifier(ctx); // real - generates a genuine question and answerOptions each run
+  return context;
+}
 
-    // TEMPORARY placeholder until real UI collects an actual user selection:
-    // picks the first non-"Not sure" option as a stand-in answer, so the pipeline
-    // has something real and consistent with whatever question was actually asked.
-    const options = c.clarifier?.answerOptions ?? [];
-    const placeholderSelection =
-      options.find((o) => !o.toLowerCase().includes("not sure")) ?? options[0] ?? null;
+export type Phase2Result =
+  | { status: "awaiting_second_answer"; context: DecisionContext }
+  | { status: "complete"; context: DecisionContext };
 
-    c = await clarifierResponse(c, placeholderSelection);
-
-    c = await landscape(c); // V2
-    c = await paths(c);
-    c = await eventHorizons(c); // synchronous, no real API call
-
-    return c;
-  }
-
-  const [auditorBranch, pathsBranch] = await Promise.all([
-    runAuditorBranch(context),
-    runPathsBranch(context),
-  ]);
-
-  context = {
-    ...pathsBranch, // carries clarifier, clarifierResponse, landscape v2, representativePaths, eventHorizon
-    auditor: auditorBranch.auditor,
-  };
-
-  // Final stage: Establishing Shots and Steelman are also independent of each other -
-  // Establishing Shots needs Paths/Landscape/Event Horizon; Steelman needs Paths/Landscape/panel/Auditor.
-  const [shotsResult, steelmanResult] = await Promise.all([
-    establishingShots(context),
-    steelman(context),
-  ]);
+// Phase 2: answers round 1, re-evaluates everything, and checks whether a
+// genuine second round is warranted. If not, finishes the whole report here.
+export async function runBraviaSlicePhase2(
+  contextFromPhase1: DecisionContext,
+  selectedAnswer: string
+): Promise<Phase2Result> {
+  let context = await clarifierResponse(contextFromPhase1, selectedAnswer);
 
   context = {
     ...context,
-    establishingShots: shotsResult.establishingShots,
-    steelman: steelmanResult.steelman,
+    clarifierHistory: [
+      ...(contextFromPhase1.clarifierHistory ?? []),
+      {
+        question: contextFromPhase1.clarifier?.question ?? "",
+        answerOptions: contextFromPhase1.clarifier?.answerOptions ?? [],
+        selectedAnswer,
+        effect: context.clarifierResponse?.effect ?? "",
+        resolutionState: context.clarifierResponse?.resolutionState ?? "RESOLVED",
+      },
+    ],
   };
 
-  return context;
+  context = await landscape(context); // narrows using the most recent state
+  context = await rerunPanelAndAuditor(context);
+  context = await clarifier(context, true); // genuine round-2 check
+
+  if (context.clarifier?.hasQuestion === false) {
+    const finished = await finishBraviaSlice(context);
+    return { status: "complete", context: finished };
+  }
+
+  return { status: "awaiting_second_answer", context };
+}
+
+// Phase 3: answers round 2. Hard cap of 2 rounds - no further check, always finishes.
+export async function runBraviaSlicePhase3(
+  contextFromPhase2: DecisionContext,
+  secondAnswer: string
+): Promise<DecisionContext> {
+  let context = await clarifierResponse(contextFromPhase2, secondAnswer);
+
+  context = {
+    ...context,
+    clarifierHistory: [
+      ...(contextFromPhase2.clarifierHistory ?? []),
+      {
+        question: contextFromPhase2.clarifier?.question ?? "",
+        answerOptions: contextFromPhase2.clarifier?.answerOptions ?? [],
+        selectedAnswer: secondAnswer,
+        effect: context.clarifierResponse?.effect ?? "",
+        resolutionState: context.clarifierResponse?.resolutionState ?? "RESOLVED",
+      },
+    ],
+  };
+
+  context = await landscape(context); // narrows further from the current state
+  return await finishBraviaSlice(context);
 }

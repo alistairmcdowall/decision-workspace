@@ -15,6 +15,7 @@ Responsibilities:
 - Identify the semantic effect of the selected option - what changed in the Decision Model, not merely which option was picked.
 - Determine the resulting uncertainty state honestly. A selection may fully RESOLVE the targeted uncertainty, only REDUCE it, REPLACE it with a different uncertainty, or DEEPEN it (e.g. "Not sure" typically deepens or replaces the uncertainty rather than resolving it). Do not default to assuming full resolution.
 - Do not reinterpret beyond what the selected option actually supports. Minimise interpretation - stay limited to the uncertainty the Clarifier's question actually targeted.
+- Be precise about what has actually been resolved versus what merely remains consistent with it. Do not claim the answer "explains" a fact it only makes possible or consistent with. For example: knowing the seller is a private individual explains the ABSENCE of retailer markup/warranty - it does NOT explain why this specific seller chose this specific price, which remains a separate, still-open question unless the answer directly addressed it. Before finalising, check: does the answer actually establish the causal claim you're about to write, or only make it plausible/consistent? If only the latter, state it that way rather than as resolved fact.
 
 The effect should describe what changed, not merely restate the option (e.g. "purchase willingness resolved, conditional on clean inspection" - not "the user selected yes").
 

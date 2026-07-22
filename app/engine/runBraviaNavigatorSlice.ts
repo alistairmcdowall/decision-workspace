@@ -1,10 +1,30 @@
 // app/engine/runBraviaNavigatorSlice.ts
 
-import { runBraviaSlice } from "./runBraviaSlice";
+import { runBraviaSlicePhase1, runBraviaSlicePhase2, runBraviaSlicePhase3 } from "./runBraviaSlice";
 import type { DecisionContext } from "./types";
 
 export async function runBraviaNavigatorSlice(): Promise<DecisionContext> {
-  const context = await runBraviaSlice();
+  const phase1Context = await runBraviaSlicePhase1();
+
+  // TEMPORARY placeholder until real UI collects an actual user selection -
+  // same approach used elsewhere in the pipeline until the Clarifier UI exists.
+  const options1 = phase1Context.clarifier?.answerOptions ?? [];
+  const placeholder1 =
+    options1.find((o) => !o.toLowerCase().includes("not sure")) ?? options1[0] ?? "";
+
+  const phase2Result = await runBraviaSlicePhase2(phase1Context, placeholder1);
+
+  let context: DecisionContext;
+
+  if (phase2Result.status === "complete") {
+    context = phase2Result.context;
+  } else {
+    const options2 = phase2Result.context.clarifier?.answerOptions ?? [];
+    const placeholder2 =
+      options2.find((o) => !o.toLowerCase().includes("not sure")) ?? options2[0] ?? "";
+
+    context = await runBraviaSlicePhase3(phase2Result.context, placeholder2);
+  }
 
   return {
     ...context,

@@ -133,11 +133,12 @@ export type DecisionContext = {
     readinessState: ReadinessState;
   };
   clarifier?: {
-    target: string;
-    method: ClarifierMethod;
-    question: string;
-    rationale: string;
-    answerOptions: string[];
+    hasQuestion: boolean;
+    target?: string;
+    method?: ClarifierMethod;
+    question?: string;
+    rationale?: string;
+    answerOptions?: string[];
   };
 
   clarifierResponse?: {
@@ -145,6 +146,14 @@ export type DecisionContext = {
     effect: string;
     resolutionState: "RESOLVED" | "REDUCED" | "REPLACED" | "DEEPENED";
   };
+
+  clarifierHistory?: {
+    question: string;
+    answerOptions: string[];
+    selectedAnswer: string;
+    effect: string;
+    resolutionState: "RESOLVED" | "REDUCED" | "REPLACED" | "DEEPENED";
+  }[];
 
   representativePaths?: {
     id: PathId;

@@ -19,6 +19,8 @@ Responsibilities:
 
 Do not ask a question merely because it would be interesting to know. Do not ask multiple questions at once, or a question that tests more than one uncertainty simultaneously. Never mention internal component names (Guardian, Pragmatist, Empathiser, Auditor, Landscape) in the question or rationale.
 
+Auditor's blockingUncertainties are already ordered by priority - the first item is judged the single most foundational uncertainty, not merely the first one that happened to be listed. Do not override this ordering with your own independent judgment about what seems structurally important (e.g. reasoning that a factor like "does a partner exist" must be resolved first because it reshapes which paths are viable). If a later uncertainty would become entirely moot depending on the answer to an earlier one (e.g. another person's stance is irrelevant if the decision-maker doesn't want the thing at all), the earlier one is correctly prioritised for exactly that reason - respect Auditor's ordering rather than re-deriving your own.
+
 VOICE SELECTION - choose based on what kind of uncertainty you're addressing, not how emotional the topic is:
 
 Ask yourself: is the target uncertainty a FACT OR PROBABILITY about the world (even an emotionally loaded one - "will the child settle happily" is still a predictive fact, just one nobody can currently verify), or is it a PREFERENCE that has no existence until the person actually imagines living with it (e.g. genuine desire for something, which cannot be externally verified at all)?
@@ -54,13 +56,22 @@ When a prompt describes a threat or consequence, identify EXACTLY which of these
 
 "Let the company fold" describes the second kind, not the first - a legal dissolution agreement would not necessarily stop a co-founder from simply withdrawing effort and capital, since that requires no formal act at all. Before asking about legal/contractual protections, first check: does the described threat actually require a formal act this agreement could govern, or is it something no paperwork could prevent? If it's the passive kind, ask about that reality directly rather than defaulting to a legal-agreement question.
 
+FOLLOW-UP ROUND CHECK: if you are told this is a follow-up round (a first question has already been asked and answered), only propose a further question if it clearly clears the value bar above (a real, differentiated consequence for each plausible answer, genuinely changing which Representative Paths are relevant). If no further question meets that bar, say so honestly rather than manufacturing a marginal one - do not ask a second question just because one more round is technically permitted.
+
+If a follow-up round is warranted on substantially the SAME underlying target as a previous round (e.g. probing a vague or unresolved answer further), you must use a genuinely different angle, method, or specific scenario - never repeat the same imagined scenario or question shape a second time, even reworded. Re-asking the identical thing again is not a real second question, and the person will rightly feel unheard. If you cannot construct a genuinely different, more specific angle, that is itself a sign no real follow-up question exists - return hasQuestion: false instead.
+
 Output format:
 
-The person will answer via a small set of selectable options (like radio buttons), never free text - construct the question so a small, fixed set of answers genuinely covers the realistic possibilities. Usually 2-4 options, including "Not sure" whenever genuine uncertainty in the person's own answer is plausible. Before finalising, check every pair of options against each other - if two options would lead to the same semantic effect (e.g. "cannot verify who is selling it" and "not sure" both mean the person doesn't know), they are duplicates - merge them into one option ("Not sure" is almost always the better, plainer version to keep) rather than offering both.
+If you have judged that no further question is warranted (only relevant in a follow-up round), return exactly:
+{ "hasQuestion": false }
 
-Return ONLY valid JSON, no prose before or after, no markdown code fences. The JSON must be a single object with exactly this shape:
+Otherwise, the person will answer via a small set of selectable options...
+[keep the existing paragraph about radio-button-style options here]
+
+Return ONLY valid JSON, no prose before or after, no markdown code fences. When a question is warranted, the JSON must have exactly this shape:
 
 {
+  "hasQuestion": true,
   "target": "short label naming the specific uncertainty being addressed",
   "method": "ISOLATION" | "COMPARISON" | "PRIORITISATION" | "CONFIRMATION" | "DECOMPOSITION" | "THRESHOLD" | "COUNTERFACTUAL",
   "question": "the actual question to show the person - specific, answerable, neutral, no persuasion",
@@ -69,7 +80,7 @@ Return ONLY valid JSON, no prose before or after, no markdown code fences. The J
 }
 `.trim();
 
-function buildClarifierUserPrompt(context: DecisionContext): string {
+function buildClarifierUserPrompt(context: DecisionContext, isFollowUpRound: boolean): string {
   const subject = context.decision?.subject ?? context.facts?.userStated?.subject ?? "unknown subject";
   const governingObjective = context.reframer?.governingObjective ?? context.prompt;
   const landscape = context.landscape?.v2 ?? context.landscape?.v1;
@@ -94,17 +105,23 @@ Remaining uncertainties from Landscape: ${remainingUncertainties}
 ${auditorSection}
 Original prompt: ${context.prompt}
 
+${isFollowUpRound ? "This is a potential FOLLOW-UP round - a first question has already been asked and answered. Only propose a second question if it genuinely clears the value bar; otherwise say so honestly." : ""}
+
 Identify the single highest-value clarifying question for this decision.
 `.trim();
 }
 
 type ClarifierShape = NonNullable<DecisionContext["clarifier"]>;
 
-export async function clarifier(context: DecisionContext): Promise<DecisionContext> {
-  const userPrompt = buildClarifierUserPrompt(context);
+export async function clarifier(
+  context: DecisionContext,
+  isFollowUpRound: boolean = false
+): Promise<DecisionContext> {
+  const userPrompt = buildClarifierUserPrompt(context, isFollowUpRound);
   const result = await callClaudeForJSON<ClarifierShape>(CLARIFIER_SYSTEM_PROMPT, userPrompt);
 
   const fallback: ClarifierShape = {
+    hasQuestion: true,
     target: "Clarifier unavailable",
     method: "CONFIRMATION",
     question: "The reasoning service could not generate a clarifying question.",
@@ -117,6 +134,11 @@ export async function clarifier(context: DecisionContext): Promise<DecisionConte
   }
 
   const data = result.data;
+
+  if (data && data.hasQuestion === false) {
+    return { ...context, clarifier: { hasQuestion: false } };
+  }
+
   const validMethods = [
     "ISOLATION",
     "COMPARISON",
@@ -129,7 +151,7 @@ export async function clarifier(context: DecisionContext): Promise<DecisionConte
   const looksValid =
   data &&
   typeof data.target === "string" &&
-  validMethods.includes(data.method) &&
+  typeof data.method === "string" && validMethods.includes(data.method) &&
   typeof data.question === "string" &&
   typeof data.rationale === "string" &&
   Array.isArray(data.answerOptions) &&

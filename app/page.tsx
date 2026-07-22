@@ -1,5 +1,7 @@
 "use client";
 
+import { FullReasoningView } from "./ui/FullReasoningView";
+import type { DecisionContext } from "./engine/types";
 import { useEffect, useState } from "react";
 import { runSingaporeSlice } from "./engine/runSingaporeSlice";
 import { runPortfolioSlice } from "./engine/runPortfolioSlice";
@@ -12,7 +14,7 @@ import {
   type StructuredNavigator,
 } from "./engine/presentation/structuredReport";
 
-type SliceName = "bravia" | "bravia-navigator" | "singapore" | "portfolio";
+type SliceName = "bravia" | "bravia-navigator" | "espresso" | "singapore" | "portfolio";
 
 const slices: {
   id: SliceName;
@@ -26,18 +28,28 @@ const slices: {
     description: "A purchase decision with verification still unresolved.",
     mode: "Decision Exploration",
   },
+
   {
     id: "bravia-navigator",
     label: "Bravia + Navigator",
     description: "A selected purchase path with pre-payment execution checks.",
     mode: "Execution / Navigator",
   },
+
+  {
+    id: "espresso",
+    label: "Espresso machine",
+    description: "Choosing between three named lever espresso machines, no stated budget.",
+    mode: "Decision Exploration",
+  },
+
   {
     id: "singapore",
     label: "Singapore relocation",
     description: "A major family relocation decision.",
     mode: "Decision Exploration",
   },
+
   {
     id: "portfolio",
     label: "Retirement portfolio",
@@ -61,7 +73,7 @@ async function fetchWithTimeout(url: string, label: string): Promise<StructuredR
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
       throw new Error(
-        `${label} took longer than 90 seconds and was cancelled - this chain now makes several real reasoning calls in sequence, so a slow network or a cold dev-server start can occasionally exceed this. Try again.`
+        `${label} took longer than 180 seconds and was cancelled - this chain makes several real reasoning calls in sequence, so a slow network or a cold dev-server start can occasionally exceed this. Try again.`
       );
     }
     throw err;
@@ -70,12 +82,42 @@ async function fetchWithTimeout(url: string, label: string): Promise<StructuredR
   }
 }
 
+type BraviaPhase1Response = {
+  context: unknown;
+  clarifier?: {
+    target: string;
+    method: string;
+    question: string;
+    rationale: string;
+    answerOptions: string[];
+  };
+};
+
+async function fetchJsonWithTimeout<T>(url: string, label: string): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 180_000);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load ${label}: HTTP ${response.status}`);
+    }
+
+    return (await response.json()) as T;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(
+        `${label} took longer than 180 seconds and was cancelled. Try again.`
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 async function runSlice(sliceName: SliceName): Promise<StructuredReport> {
-  if (sliceName === "bravia") {
-    return await fetchWithTimeout("/api/run-bravia", "Bravia report");
-  }
-
   if (sliceName === "bravia-navigator") {
     return await fetchWithTimeout("/api/run-bravia-navigator", "Bravia + Navigator report");
   }
@@ -84,7 +126,6 @@ async function runSlice(sliceName: SliceName): Promise<StructuredReport> {
 
   return buildStructuredReport(context);
 }
-
 
 function ReportView({ report }: { report: StructuredReport }) {
   return (
@@ -365,20 +406,98 @@ function customDecisionLabel(report: StructuredReport): string {
 
   return "Custom decision";
 }
+
+function ClarifierWaitingCard({
+  question,
+  answerOptions,
+  onSelect,
+}: {
+  question: string;
+  answerOptions: string[];
+  onSelect: (option: string) => void;
+}) {
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6">
+        <p className="mb-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+          One quick question before we go further
+        </p>
+
+        <p className="mb-6 text-lg leading-7 text-slate-100">{question}</p>
+
+        <div className="flex flex-col gap-2">
+          {answerOptions.map((option) => (
+            <button
+              key={option}
+              onClick={() => onSelect(option)}
+              className="rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-left text-sm text-slate-200 transition hover:border-slate-400 hover:text-white"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function Home() {
   const [selectedSlice, setSelectedSlice] = useState<SliceName>("portfolio");
   const [customInput, setCustomInput] = useState("");
   const [useCustomInput, setUseCustomInput] = useState(false);
   const [showStructuredData, setShowStructuredData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  
+
   const [report, setReport] = useState<StructuredReport | null>(null);
+  const [fullContext, setFullContext] = useState<DecisionContext | null>(null);
+  const [showFullReasoning, setShowFullReasoning] = useState(false);
+
+  const [braviaPending, setBraviaPending] = useState<{
+    context: unknown;
+    question: string;
+    answerOptions: string[];
+    round: 1 | 2;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadReport() {
       setLoadError(null);
+      setBraviaPending(null);
+
+      if (!useCustomInput && (selectedSlice === "bravia" || selectedSlice === "espresso")) {
+        setReport(null);
+
+        const phase1Endpoint = selectedSlice === "bravia" ? "/api/run-bravia" : "/api/run-espresso";
+
+        try {
+          const data = await fetchJsonWithTimeout<BraviaPhase1Response>(
+            phase1Endpoint,
+            selectedSlice === "bravia" ? "Bravia clarifying question" : "Espresso machine clarifying question"
+          );
+
+          if (!cancelled) {
+            if (data.clarifier) {
+              setBraviaPending({
+                context: data.context,
+                question: data.clarifier.question,
+                answerOptions: data.clarifier.answerOptions,
+                round: 1,
+              });
+            } else {
+              throw new Error("No clarifying question was returned.");
+            }
+          }
+        } catch (err) {
+          if (!cancelled) {
+            const message = err instanceof Error ? err.message : "Unknown error loading report.";
+            setLoadError(message);
+          }
+        }
+
+        return;
+      }
 
       try {
         const nextReport =
@@ -404,6 +523,53 @@ export default function Home() {
     };
   }, [customInput, selectedSlice, useCustomInput]);
 
+  async function selectClarifierAnswer(answer: string) {
+    if (!braviaPending) return;
+
+    setLoadError(null);
+
+    const basePath = selectedSlice === "espresso" ? "/api/run-espresso" : "/api/run-bravia";
+    const endpoint = braviaPending.round === 1 ? `${basePath}/resume` : `${basePath}/resume2`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context: braviaPending.context, selectedAnswer: answer }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to resume Bravia report: HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status === "complete") {
+        setReport(data.report as StructuredReport);
+        setFullContext((data.fullContext as DecisionContext) ?? null);
+        setBraviaPending(null);
+        return;
+      }
+
+      // Only round 1's answer can produce a genuine round 2 - round 2 (resume2)
+      // always finishes, per the hard 2-round cap, regardless of what it returns.
+      if (braviaPending.round === 1 && data.clarifier?.hasQuestion) {
+        setBraviaPending({
+          context: data.context,
+          question: data.clarifier.question,
+          answerOptions: data.clarifier.answerOptions,
+          round: 2,
+        });
+        return;
+      }
+
+      throw new Error("Unexpected response shape from resume endpoint.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error resuming report.";
+      setLoadError(message);
+    }
+  }
+
   if (loadError) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
@@ -414,7 +580,17 @@ export default function Home() {
       </main>
     );
   }
-  
+
+  if (braviaPending) {
+    return (
+      <ClarifierWaitingCard
+        question={braviaPending.question}
+        answerOptions={braviaPending.answerOptions}
+        onSelect={selectClarifierAnswer}
+      />
+    );
+  }
+
   if (!report) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
@@ -427,7 +603,7 @@ export default function Home() {
       </main>
     );
   }
-  
+
   const currentSlice = selectedSliceMeta(selectedSlice);
 
   return (
@@ -448,37 +624,37 @@ export default function Home() {
         </div>
 
         <section className="mb-8 rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-  <h2 className="text-xl font-semibold text-slate-100">
-    Try a custom decision
-  </h2>
+          <h2 className="text-xl font-semibold text-slate-100">
+            Try a custom decision
+          </h2>
 
-  <p className="mt-2 text-sm leading-6 text-slate-400">
-  This is a simple deterministic prototype. It can recognise basic purchase, relocation, and portfolio decisions.
-  </p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            This is a simple deterministic prototype. It can recognise basic purchase, relocation, and portfolio decisions.
+          </p>
 
-  <textarea
-    value={customInput}
-    onChange={(event) => setCustomInput(event.target.value)}
-    placeholder="Should I buy a used Lexus GS for £6,500?"
-    className="mt-4 min-h-28 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 p-4 text-slate-100 outline-none placeholder:text-slate-500 focus:border-slate-400"
-  />
+          <textarea
+            value={customInput}
+            onChange={(event) => setCustomInput(event.target.value)}
+            placeholder="Should I buy a used Lexus GS for £6,500?"
+            className="mt-4 min-h-28 w-full resize-none rounded-xl border border-slate-700 bg-slate-950 p-4 text-slate-100 outline-none placeholder:text-slate-500 focus:border-slate-400"
+          />
 
-  <div className="mt-4 flex flex-wrap gap-3">
-    <button
-      onClick={() => setUseCustomInput(true)}
-      className="rounded-xl bg-slate-100 px-5 py-3 font-medium text-slate-950 transition hover:bg-white"
-    >
-      Build custom report
-    </button>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              onClick={() => setUseCustomInput(true)}
+              className="rounded-xl bg-slate-100 px-5 py-3 font-medium text-slate-950 transition hover:bg-white"
+            >
+              Build custom report
+            </button>
 
-    <button
-      onClick={() => setUseCustomInput(false)}
-      className="rounded-xl border border-slate-700 px-5 py-3 font-medium text-slate-200 transition hover:border-slate-400 hover:text-white"
-    >
-      Use example slices
-    </button>
-  </div>
-</section>
+            <button
+              onClick={() => setUseCustomInput(false)}
+              className="rounded-xl border border-slate-700 px-5 py-3 font-medium text-slate-200 transition hover:border-slate-400 hover:text-white"
+            >
+              Use example slices
+            </button>
+          </div>
+        </section>
 
         <section className="mb-8 grid gap-3 md:grid-cols-2">
           {slices.map((slice) => (
@@ -506,53 +682,68 @@ export default function Home() {
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl">
-        <div className="mb-4 flex flex-col gap-4 border-b border-slate-800 pb-4 md:flex-row md:items-center md:justify-between">
-  <div>
-    <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
-      Workspace Preview
-    </p>
+          <div className="mb-4 flex flex-col gap-4 border-b border-slate-800 pb-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
+                Workspace Preview
+              </p>
 
-    <h2 className="mt-1 text-2xl font-semibold">
-    {useCustomInput && customInput.trim()
-  ? customDecisionLabel(report)
-  : currentSlice.label}
-</h2>
+              <h2 className="mt-1 text-2xl font-semibold">
+                {useCustomInput && customInput.trim()
+                  ? customDecisionLabel(report)
+                  : currentSlice.label}
+              </h2>
 
-<p className="mt-2 text-sm leading-6 text-slate-400">
-  {useCustomInput && customInput.trim()
-    ? customInput.trim()
-    : currentSlice.description}
-</p>
-  </div>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                {useCustomInput && customInput.trim()
+                  ? customInput.trim()
+                  : currentSlice.description}
+              </p>
+            </div>
 
-  <div className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3">
-    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-      Mode
-    </p>
-    <p className="mt-1 font-semibold text-slate-100">
-    {useCustomInput && customInput.trim()
-  ? reportModeLabel(report)
-  : currentSlice.mode}
-    </p>
-  </div>
-</div>
+            <div className="rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                Mode
+              </p>
+              <p className="mt-1 font-semibold text-slate-100">
+                {useCustomInput && customInput.trim()
+                  ? reportModeLabel(report)
+                  : currentSlice.mode}
+              </p>
+            </div>
+          </div>
 
-<WorkspaceReportView report={report} />
+          {fullContext && (
+            <div className="mb-4 flex justify-end">
+              <button
+                onClick={() => setShowFullReasoning(!showFullReasoning)}
+                className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-400 hover:text-white"
+              >
+                {showFullReasoning ? "Show polished report" : "Show full reasoning (every step)"}
+              </button>
+            </div>
+          )}
 
-<section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
-  <button
-    onClick={() => setShowStructuredData(!showStructuredData)}
-    className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-400 hover:text-white"
-  >
-    {showStructuredData ? "Hide structured data" : "Show structured data"}
-  </button>
+          {showFullReasoning && fullContext ? (
+            <FullReasoningView context={fullContext} />
+          ) : (
+            <WorkspaceReportView report={report} />
+          )}
 
-  {showStructuredData && (
-    <pre className="mt-4 max-h-[32rem] overflow-auto rounded-xl bg-slate-950 p-5 text-xs leading-6 text-slate-300">
-      {JSON.stringify(report, null, 2)}
-    </pre>
-  )}
-</section>
+          <section className="mt-6 rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+            <button
+              onClick={() => setShowStructuredData(!showStructuredData)}
+              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-slate-400 hover:text-white"
+            >
+              {showStructuredData ? "Hide structured data" : "Show structured data"}
+            </button>
+
+            {showStructuredData && (
+              <pre className="mt-4 max-h-[32rem] overflow-auto rounded-xl bg-slate-950 p-5 text-xs leading-6 text-slate-300">
+                {JSON.stringify(report, null, 2)}
+              </pre>
+            )}
+          </section>
         </section>
       </section>
     </main>
