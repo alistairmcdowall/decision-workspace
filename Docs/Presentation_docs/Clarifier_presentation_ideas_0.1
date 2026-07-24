@@ -1,0 +1,422 @@
+# Clarifier Presentation Voices
+
+## Purpose
+
+Clarifiers are not ordinary questions.
+
+A Clarifier exists to expose the live hinge of a decision: the uncertainty, trade-off, tolerance, fear, desire, or value that most changes the shape of the Decision Model.
+
+The Clarifier should not ask for a general opinion. It should not collect preferences in a questionnaire style. It should reveal preference by simplifying the decision or making a consequence concrete enough that the user can recognise their own response.
+
+The system should therefore treat Clarifier presentation as a specialised local voice, not as a generic report-writing problem.
+
+---
+
+# Core Principle
+
+A Clarifier should help the user answer a question they may not have been able to answer directly.
+
+Bad Clarifier:
+
+> Do you want to buy the TV?
+
+Better Clarifier:
+
+> Imagine the seller is genuine, the TV is exactly as described, and the warranty is acceptable. Would you still hesitate to buy it?
+
+The second version does not merely ask for stated preference. It isolates the uncertainty and tests whether the decision changes when that uncertainty is removed.
+
+---
+
+# Primary Clarifier Voices
+
+The current preferred Clarifier palette contains two user-facing voices and one internal validation voice.
+
+```text
+User-facing voices:
+1. Feynman Isolation
+2. Human Consequence
+
+Internal validation voice:
+3. Sober Auditor
+
+1. Feynman Isolation
+Job
+
+Feynman Isolation simplifies the decision until the active variable becomes visible.
+
+It works by removing uncertainty, isolating a factor, or holding parts of the decision constant so the user can see what is really doing the work.
+
+Core Shape
+
+There are two valid Feynman moves.
+
+A. Remove one uncertainty
+Suppose X is solved.
+Would the decision still feel blocked?
+
+Example:
+
+Imagine the seller is genuine, the TV is exactly as described, and the warranty is acceptable. Would you still hesitate to buy it?
+
+This tests whether verification is the real blocker.
+
+B. Isolate one factor
+Forget everything except X for a moment.
+Does X materially change the decision?
+
+Example:
+
+Let’s ignore everything except the money for a moment. Imagine moving to Singapore would definitely leave your family much better off over five years. Would there still be a serious reason not to move?
+
+This tests whether the financial upside is strong enough to remain central.
+
+When To Use
+
+Use Feynman Isolation when the model needs to determine which uncertainty is actually decisive.
+
+It is especially useful when the user’s prompt contains several competing factors and the system needs to discover which one governs the decision.
+
+Tone
+
+Plain, intelligent, calm, direct.
+
+It should feel like someone helping the user make the problem smaller.
+
+It should not feel like a trick, a lecture, or a philosophy seminar.
+
+Good Example
+
+Let’s remove one uncertainty.
+
+Imagine your daughter would settle happily, make good friends, and receive an education you were genuinely pleased with.
+
+Would moving to Singapore still feel like the wrong decision?
+
+Bad Example
+
+In order to isolate the educational variable, please indicate whether the relocation decision remains negatively weighted after the child-settlement uncertainty is removed.
+
+This is semantically similar, but unusably robotic.
+
+2. Human Consequence
+Job
+
+Human Consequence makes the outcome concrete enough that the user can recognise what they would actually be willing to live with.
+
+It reveals preference by asking the user to inhabit a consequence, especially where stated preference may be too abstract.
+
+Core Shape
+Imagine X has happened.
+The initial excitement / fear / pressure has faded.
+Now you are living with the consequence.
+Does it still feel acceptable?
+When To Use
+
+Use Human Consequence when the live uncertainty is not only logical but experiential.
+
+This includes decisions involving stress, regret, family disruption, identity, embarrassment, disappointment, pressure, resentment, lifestyle change, or emotional tolerance.
+
+Tone
+
+Human, grounded, slightly searching.
+
+It should make the issue real without becoming melodramatic.
+
+It should not manipulate, frighten, moralise, or over-intensify the scenario.
+
+Good Example
+
+Imagine all the checks come back clean and you buy it.
+
+A week later, the excitement has faded. It is no longer “the bargain”; it is just your television, and you have spent £2,000.
+
+Does that still feel like a decision you would be comfortable owning, or does it feel like the deal carried you further than you really wanted to go?
+
+Another Good Example
+
+Imagine the move has happened.
+
+The money is better. The savings are building. On paper, the decision is working.
+
+But your daughter has hard days where she misses her friends, your wife is under pressure in the new role, and you are trying to rebuild your own rhythm after leaving your job.
+
+Would that feel like a hard chapter you had chosen together for a reason, or would it feel like the family had paid too much for the financial upside?
+
+Bad Example
+
+Imagine your daughter is miserable, your wife regrets everything, your career is gone, and you realise the money was never worth destroying your family life.
+
+This is too loaded. It steers the user rather than clarifying the decision.
+
+3. Sober Auditor
+Job
+
+Sober Auditor is not the preferred user-facing voice.
+
+Its main role is internal validation.
+
+It checks whether the Clarifier is semantically disciplined.
+
+Core Shape
+The model needs to distinguish between X and Y.
+
+If the user answers A, update the model this way.
+If the user answers B, update the model that way.
+When To Use
+
+Use Sober Auditor internally before presenting a Clarifier to the user.
+
+It is useful for testing whether the Clarifier has a clear purpose.
+
+It may also be appropriate in very formal or high-stakes contexts, but even then it should usually be softened before user presentation.
+
+Good Internal Example
+
+The model needs to distinguish between purchase willingness and verification risk.
+
+Assume seller legitimacy, condition, and warranty are all satisfactory.
+
+Under those assumptions, would purchase feel acceptable?
+
+A yes answer resolves purchase willingness and shifts the decision toward verification.
+A no answer means purchase willingness remains unresolved.
+
+Why Not Use This By Default?
+
+It is clear, but it sounds mechanical.
+
+It helps the system understand what it is doing, but it does not always help the user feel the decision clearly.
+
+Rejected As Standalone Voices
+Contrarian Clarifier
+
+Contrarian questioning can be useful, but it should not be a standalone Clarifier voice.
+
+It often produces little that Feynman Isolation cannot already produce more cleanly.
+
+Useful as a move:
+
+You may be describing this as a financial decision. But suppose the money clearly worked. Would you still hesitate?
+
+Not useful as a full voice if it becomes accusatory or performatively challenging.
+
+Regret Clarifier
+
+Regret can sometimes reveal preference, but as a standalone voice it tends to become heavy-handed.
+
+Bad pattern:
+
+Which regret would be harder to live with?
+
+This can feel too much like decision-theory theatre.
+
+Regret may appear lightly inside Human Consequence, but it should not dominate the Clarifier.
+
+Better:
+
+If you looked back later, would this feel like a hard choice you made for good reasons, or like a warning you talked yourself past?
+
+How The System Should Test Clarifier Quality
+
+A Clarifier should not be accepted merely because it sounds good.
+
+The system should test it against semantic, conversational, and architectural criteria.
+
+Test 1: Single-Hinge Test
+
+A Clarifier must target one live uncertainty.
+
+Ask:
+
+What exactly is this Clarifier trying to reveal?
+
+If the answer contains several unrelated uncertainties, the Clarifier is too broad.
+
+Good:
+
+Is purchase willingness resolved if verification succeeds?
+
+Bad:
+
+Does the user want the TV, trust the seller, accept the price, understand the warranty, and feel comfortable spending £2,000?
+
+The second version is not a Clarifier. It is a questionnaire.
+
+Test 2: Decision-Change Test
+
+The answer to the Clarifier must change the Decision Model.
+
+Ask:
+
+What would a yes answer update?
+What would a no answer update?
+
+If the model would not change either way, the Clarifier should not be asked.
+
+Example:
+
+Imagine the seller, condition and warranty all check out. Would you still hesitate?
+
+Possible updates:
+
+If yes:
+purchase willingness remains unresolved.
+
+If no:
+purchase willingness is resolved; verification becomes the main blocker.
+Test 3: Revealed-Preference Test
+
+The Clarifier should reveal preference rather than merely request stated preference.
+
+Bad:
+
+Is family disruption important to you?
+
+Almost everyone will say yes.
+
+Better:
+
+Imagine your daughter settles happily and the school situation is genuinely good. Would moving still feel wrong?
+
+This tests whether the daughter/school issue is actually the blocker.
+
+Test 4: No-New-Facts Test
+
+The Clarifier must not introduce facts not present in the Decision Model.
+
+It may use hypotheticals, but those hypotheticals must be clearly framed as assumptions for testing the decision.
+
+Allowed:
+
+Imagine the seller checks out.
+
+Not allowed:
+
+Since the seller is probably legitimate...
+
+The first isolates uncertainty. The second invents evidence.
+
+Test 5: No-Recommendation Test
+
+A Clarifier must not tell the user what to do.
+
+Bad:
+
+If you would still hesitate, you should not buy it.
+
+Better:
+
+If you would still hesitate, then the model should not treat verification as the only remaining blocker.
+
+Clarifiers update understanding. They do not choose paths.
+
+Test 6: Human-Enough Test
+
+The Clarifier should sound like a person helping the user think, not like a form.
+
+Bad:
+
+Please evaluate whether the removal of the verification uncertainty alters your purchase-intent state.
+
+Better:
+
+Imagine the seller checks out, the TV is as described, and the warranty is acceptable. Would you still hesitate?
+
+The system should prefer wording that is plain, natural, and direct.
+
+Test 7: Not-Too-Scenic Test
+
+A Clarifier may use a future or imagined scenario, but only as a short pressure-test.
+
+It must not become a Pathway or Establishing Shot.
+
+Clarifier:
+
+Assume the properties keep producing about £1,000 a month, but the admin and stress remain part of the deal. Does that income still feel worth keeping?
+
+Establishing Shot:
+
+It is three years from now. The properties are still yours. The money still arrives each month, but so do the emails, repairs, refinancing decisions and background worry.
+
+The first tests a hinge. The second helps the user experience a path.
+
+Both may be valuable, but they are different architectural moments.
+
+Suggested System Evaluation Checklist
+
+Before presenting a Clarifier, the system should be able to answer:
+
+1. What live uncertainty is this Clarifier targeting?
+
+2. Is it testing one hinge only?
+
+3. Is it using Feynman Isolation or Human Consequence?
+
+4. If it uses Feynman Isolation:
+   - What uncertainty is being removed?
+   - Or what factor is being isolated?
+
+5. If it uses Human Consequence:
+   - What consequence is being made concrete?
+   - Is the scenario short enough?
+   - Is it fair rather than manipulative?
+
+6. What would Answer A change in the Decision Model?
+
+7. What would Answer B change in the Decision Model?
+
+8. Does the Clarifier avoid adding facts?
+
+9. Does it avoid recommending a path?
+
+10. Does it sound human enough to ask?
+
+If the system cannot answer these questions, the Clarifier should be revised before being shown.
+
+Current Working Rule
+
+Clarifiers should normally be generated in one of two user-facing voices:
+
+1. Feynman Isolation
+2. Human Consequence
+
+Feynman Isolation is the default when the model needs to isolate a decision variable.
+
+Human Consequence is preferred when the model needs to test whether the user can live with a practical or emotional outcome.
+
+Sober Auditor is retained as an internal validation layer to ensure the Clarifier is semantically disciplined.
+
+Contrarian and Regret are not standalone voices. They are occasional moves that may appear inside the two primary voices when appropriate.
+
+The best Clarifier is usually simple, human, and precise.
+
+It should make the decision easier to see.
+It should not make the system sound clever.
+
+
+
+1. What live uncertainty is this Clarifier targeting?
+
+2. Is it testing one hinge only?
+
+3. Is it using Feynman Isolation or Human Consequence?
+
+4. If it uses Feynman Isolation:
+   - What uncertainty is being removed?
+   - Or what factor is being isolated?
+
+5. If it uses Human Consequence:
+   - What consequence is being made concrete?
+   - Is the scenario short enough?
+   - Is it fair rather than manipulative?
+
+6. What would Answer A change in the Decision Model?
+
+7. What would Answer B change in the Decision Model?
+
+8. Does the Clarifier avoid adding facts?
+
+9. Does it avoid recommending a path?
+
+10. Does it sound human enough to ask?

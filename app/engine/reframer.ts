@@ -31,14 +31,22 @@ ROUTE_TO_NAVIGATOR - the user has already made the decision and is asking how to
 
 PREREQUISITE_REQUIRED - a real decision exists, but the prompt is really asking for something that must happen first (e.g. understanding a document, gathering facts) before that decision could be meaningfully analysed.
 
+INSUFFICIENT_SPECIFICITY - the prompt names a broad category or general ambition with NO concrete, specific candidate anywhere in it (e.g. "which smartphone should I buy?", "where should I go on holiday?", "what should I study?" with no subject or institution named at all). This is different from CLARIFY (which handles a prompt containing multiple real, named things bundled together) - here, there is nothing concrete to work with at all. This is also different from a prompt with exactly one named thing (e.g. "should I buy this specific TV?") - one real candidate is enough to proceed as PASS. Do not use this status merely because a decision feels early-stage or under-researched - only use it when there is truly no concrete candidate, option, or specific named thing anywhere in the prompt for the rest of the pipeline to work with. Provide a short, honest, non-apologetic message in a new field, insufficientSpecificityMessage, explaining that this tool works best once at least one real, specific option exists, and that open-ended exploration is better done as an ordinary conversation first.
+
 Do not use CLARIFY or SUGGEST_REFRAME as a way to seem thorough - only use them when a real, material difference in the resulting analysis would follow from the alternative. But do not resolve genuine ambiguity yourself by silently picking the most natural reading - if a prompt could reasonably mean two materially different things, that is exactly what CLARIFY exists for. Err toward surfacing real ambiguity rather than quietly choosing an interpretation on the user's behalf.
+
+Additionally, for any PASS decision involving choosing among named options, determine whether declining entirely (choosing none of them) is a genuinely reasonable, undiscarded option given how the prompt is framed - or whether the prompt's own wording has already committed the person to acquiring/doing one of them (e.g. "I've decided to get a lever machine, which one" - decline is not really live; versus "which used car should I buy" - decline is genuinely live, since no purchase has been committed to yet). Record this as a boolean field, declineIsViableOption, alongside your normal output whenever the decision involves choosing among options.
+
+When determining declineIsViableOption, judge this ONLY by whether the prompt contains an explicit statement of want or commitment that is SEPARATE FROM AND PRIOR TO the specific comparison being asked about - never by whether the candidates are good enough to justify buying one (that is a quality judgment belonging to other components, not a scope judgment). Test: does the prompt state a want/decision on its own, before or outside of asking "which one" (e.g. "I want a lever machine, which one?" - the wanting is stated separately, decline is NOT viable) - or does the entire want exist only within the single question itself (e.g. "should I buy X?", or "which of these should I buy: A, B, C?" - decline IS viable, since nothing was stated as a separate, prior commitment).
+
+When the decision involves choosing among specifically named things, also populate namedCandidates with the exact names as genuinely stated in the prompt - only things being presented as OPTIONS TO CHOOSE FROM, never things mentioned as context, current possessions, or already-ruled-out items (e.g. "I've got a Sage DTP but I want a lever machine, deciding between the Vectis, Strega, and Rapida" - namedCandidates is ["Vectis", "Strega", "Rapida"], the Sage DTP is explicitly excluded since it is the person's current item, not a candidate). If genuinely no specific named candidates exist (the INSUFFICIENT_SPECIFICITY case), leave this empty.
 
 Output format:
 
 Return ONLY valid JSON, no prose before or after, no markdown code fences. The JSON must have exactly this shape:
 
 {
-  "status": "PASS" | "CLARIFY" | "SUGGEST_REFRAME" | "ROUTE_TO_NAVIGATOR" | "PREREQUISITE_REQUIRED",
+  "status": "PASS" | "CLARIFY" | "SUGGEST_REFRAME" | "ROUTE_TO_NAVIGATOR" | "PREREQUISITE_REQUIRED" | "INSUFFICIENT_SPECIFICITY",
   "governingObjective": "one sentence stating the real decision or objective to be analysed",
   "route": "DECISION_LANDSCAPE" | "NAVIGATOR" | "CLARIFIER" | "PREREQUISITE" | "NON_DECISION",
   "reason": {
@@ -48,7 +56,9 @@ Return ONLY valid JSON, no prose before or after, no markdown code fences. The J
     "pricePresent": <boolean>
   },
   "suggestedReframe": "only include this field if status is SUGGEST_REFRAME - the alternative framing as one sentence",
-  "clarifyOptions": ["only include this field if status is CLARIFY", "2-4 short distinct interpretations"]
+  "clarifyOptions": ["only include this field if status is CLARIFY", "2-4 short distinct interpretations"],
+  "insufficientSpecificityMessage": "only present if status is INSUFFICIENT_SPECIFICITY - a short, honest, confident message explaining the tool needs at least one concrete option to work with",
+  "namedCandidates": ["only include this field when choosing among specifically named things - the exact candidate names as stated, excluding current possessions or already-ruled-out items", "leave as an empty array if no specific candidates exist"]
 }
 `.trim();
 

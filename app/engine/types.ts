@@ -1,9 +1,4 @@
-export type ReframerStatus =
-  | "PASS"
-  | "CLARIFY"
-  | "SUGGEST_REFRAME"
-  | "ROUTE_TO_NAVIGATOR"
-  | "PREREQUISITE_REQUIRED";
+export type ReframerStatus = "PASS" | "CLARIFY" | "SUGGEST_REFRAME" | "ROUTE_TO_NAVIGATOR" | "PREREQUISITE_REQUIRED" | "INSUFFICIENT_SPECIFICITY";
 
 export type ReframerRoute =
   | "DECISION_LANDSCAPE"
@@ -80,6 +75,9 @@ export type DecisionContext = {
     };
     suggestedReframe?: string;
     clarifyOptions?: string[];
+    insufficientSpecificityMessage?: string;
+    declineIsViableOption?: boolean;
+    namedCandidates?: string[];
   };
 
   landscape?: {

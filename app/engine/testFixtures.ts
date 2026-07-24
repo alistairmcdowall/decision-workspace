@@ -592,3 +592,39 @@ export const sisterTestContext: DecisionContext = {
     },
     panel: {},
   };
+
+  export const jagVsLexusTensionContext: DecisionContext = {
+    prompt: "Should I buy a used Jaguar XJ 3.0 V6 (2013-2015) or a used Lexus GS450 (2013-2015)?",
+    decision: {
+      subject: "Jaguar XJ vs Lexus GS450, both used, 2013-2015",
+      kind: "PURCHASE",
+    },
+    facts: {
+      userStated: {
+        subject: "Jaguar XJ vs Lexus GS450, both used, 2013-2015",
+      },
+      assumedForSlice: {},
+    },
+    landscape: {
+      v1: {
+        subject: "Choosing between a used Jaguar XJ and a used Lexus GS450",
+        commitment: "Committing to purchase one specific used luxury sedan, accepting its particular reliability profile, running costs, and character.",
+        decisionAxes: [
+          "Reliability reputation and long-term ownership risk",
+          "Aesthetic appeal and emotional draw",
+          "Running and maintenance costs",
+          "Resale value and market liquidity",
+        ],
+        resolvedUncertainties: [
+          "The buyer finds the Jaguar XJ the most visually and aesthetically appealing of the two, and states it is the car they would genuinely want to buy if they found a good, well-maintained example",
+          "When forced to choose which to buy RIGHT NOW without further searching, the buyer's practical lean is toward the Lexus GS450, explicitly citing the Jaguar's weaker reliability reputation as the reason for not choosing it despite preferring its look and character",
+        ],
+        remainingUncertainties: [
+          "Whether a specific, well-vetted, reliable example of the Jaguar XJ is realistically findable within the buyer's timeframe",
+          "The buyer's actual risk tolerance for a car with a weaker reliability reputation if they genuinely love it",
+        ],
+        state: "BROAD",
+      },
+    },
+    panel: {},
+  };

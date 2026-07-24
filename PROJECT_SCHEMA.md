@@ -3478,3 +3478,844 @@ it is simply quieter at low ones.
 **Status: recorded as a standing reference point for this project, worth
 returning to when future design decisions are unclear - not a
 one-off insight to file away and forget.**
+
+---
+
+## 76. Triage Tier 1 (gut-check) built and tested against a real 7-car list
+
+A new, standalone component, `triageGutCheck.ts`, was built - deliberately
+separate from `clarifier.ts` rather than an extension of it, since its
+objective function is genuinely different (surface an existing instinctive
+lean across a LIST of named candidates, not resolve a single decision's
+uncertainty). Built directly from the design agreed in section 74: a
+single revealed-preference question in the Feynman/Human Consequence
+tradition, explicitly NOT a stated-preference "which do you prefer"
+question, with no price/spec language.
+
+**Tested directly against the user's real 7-car shortlist** (the same
+list from section 74's design conversation). The generated question -
+*"imagine all seven of these cars are parked side by side in a lot and
+you've got five minutes to kill - which one do you walk toward first?"*
+- was confirmed to correctly match the intended style: genuinely
+instinctive, correctly avoided price/spec/practical framing, listed all
+seven named candidates verbatim (correctly not collapsing near-duplicates
+itself - that remains a separate, upstream job).
+
+### Real-world answers gathered, and a genuinely useful finding about the mechanism's own limits
+
+Two real answers were gathered as an informal but genuine test: the
+user's daughter, shown photos with no context, answered "more than one
+appeals equally" (a legitimate result about visual appeal to a
+disinterested party, not a failure of the question). The user's own
+answer, based purely on how the cars looked lined up, was the Jaguar XJ -
+but when the same user was asked what they would actually buy if forced
+to choose right now, the answer changed to the Lexus GS450, explicitly
+citing the Jaguar's weaker reliability reputation as the reason.
+
+**This was examined directly rather than treated as the gut-check
+"failing":** the discrepancy reveals a genuine, real multi-layer
+preference structure (an honest aesthetic/aspirational lean, tempered by
+a real, correctly-recognised practical risk) rather than a false or
+unstable signal. Conclusion: the gut-check reliably surfaces a real
+instinctive layer of preference, but is not expected or intended to be
+the whole answer on its own - the existing panel (Guardian, Pragmatist,
+Empathiser) and Steelman still need to test whether that instinct
+survives real scrutiny, which is precisely the role they already play.
+This is treated as confirming rather than undermining the overall
+"permission machine" framing from section 75 - the gut-check finds the
+lean; the rest of the architecture earns or withholds permission to act
+on it.
+
+---
+
+## 77. A significant content-quality bug found and fixed: Empathiser's systematic bias toward risk over appeal
+
+Investigating the Jaguar/Lexus tension directly surfaced a real, general
+bug, found through careful isolation testing rather than assumed.
+
+### Methodology: testing "A vs B" against "A alone" and "B alone" separately
+
+A direct question was raised and taken seriously: is "Jag vs Lexus" a
+single combined comparison, or two independent assessments compared
+afterward? Tested empirically rather than assumed - a combined-context
+fixture (both cars named in one prompt) produced Guardian and Empathiser
+output that treated the Jaguar as the sole source of risk and the Lexus
+as an implicitly costless safe default. **The same test repeated with
+each car in complete isolation (each fixture mentioning only one car,
+zero knowledge the other existed) produced the SAME one-sided,
+risk-first pattern for BOTH cars independently** - disproving the
+initial hypothesis that combined framing was the cause, and correctly
+redirecting the investigation to a deeper, more general issue in
+Guardian and Empathiser's own prompts.
+
+**Worth recording as a standing methodological lesson, alongside the
+frozen-context and hand-typed-answer lessons already on file:** when
+investigating a suspected bias, test the isolated case before assuming
+the comparison itself is the cause - a bug that appears in a comparison
+may actually be present in each component part independently, and only
+isolation testing distinguishes the two.
+
+### Guardian correctly cleared of the bug - its narrow scope is by design, not a flaw
+
+Direct review confirmed Guardian's own documented purpose ("what must
+not be unintentionally sacrificed") is a genuinely single-purpose risk
+lens, the same way Pragmatist is genuinely feasibility-only. Guardian
+finding only risk is correct, intentional behaviour, not drift - adding
+positive-value language to Guardian would have been scope creep into
+territory belonging to other components.
+
+### The real, isolated bug: Empathiser
+
+Direct review of `empathiser.ts`'s actual prompt found two concrete
+causes: its own worked-example list of emotions ("excitement, fear of
+loss, scarcity pressure, regret, pride") was skewed 3-negative to
+2-positive, and nothing in the prompt explicitly validated genuine
+positive appeal as a standalone finding - even the one nominally
+positive example in real test output ("pride... which can make them
+discount inconvenient signs of risk") was pulled back into risk-framing
+rather than stated as legitimate on its own.
+
+**Fixed** with an explicit instruction to recognise emotional pressures
+in both directions equally, stating that genuine appeal is "itself a
+real finding worth naming in its own right, not merely a caveat about
+clouded judgement," plus an explicit instruction to actively look for
+real emotional upside where genuinely warranted, without manufacturing
+positives where none exist. **Confirmed fixed** - the following test
+produced a clean, unqualified positive finding ("there's genuine appeal
+in owning a distinctive, prestige-badged luxury sedan that can bring
+real pride and driving satisfaction distinct from cheaper, more common
+vehicles") with no risk-framing attached.
+
+---
+
+## 78. Steelman investigated directly ("does it do its job, or is it Navigator?") - resolved as a genuine upstream data-starvation problem, not a Steelman flaw
+
+A direct, healthy challenge was raised: does Steelman's actual output
+read as building a genuine case, or does its heavy reliance on a
+"supporting conditions" checklist make it read more like Navigator
+(execution support)? Compared directly against an external (Gemini)
+Steelman-style output for the same real car, which was notably more
+specific and richer.
+
+**Resolved: Steelman's documented structure (case + explicit supporting
+conditions) is correct per Chapter 18 - this is not scope creep into
+Navigator's territory.** The actual gap was a proportion/texture issue
+(the conditions list reading as equally weighted to the case itself)
+caused by a deeper, root problem: **Steelman can only build as rich a
+case as the material it's given, and Guardian/Pragmatist/Empathiser were
+never given permission to draw on real, specific product knowledge the
+way Landscape already was** (the Bravia pricing-inference fix from
+several sessions earlier, section 61, which was scoped narrowly to price
+and never extended to the panel).
+
+### Fix: the same product-knowledge permission extended to all three panel members
+
+Identical wording (adapted per component) added to Guardian, Pragmatist,
+and Empathiser's prompts: where genuine, well-founded knowledge of a
+specific named product/model exists (known failure points, parts-sharing,
+reliability patterns), draw on it confidently and specifically rather
+than defaulting to generic language - only where real confidence exists,
+never inventing specifics for unfamiliar items, matching the exact
+calibration already validated for Landscape.
+
+**Confirmed working, cleanly, across all three lenses converging
+independently on the same real, specific, correct facts** (this Jaguar
+XJ generation's known air suspension, timing chain, and electronics
+issues) without duplicating each other's exact wording - the "shared
+concern, different lens" discipline holding on genuinely specific
+material for the first time, not just generic risk language. Steelman's
+resulting case, with ZERO changes made to Steelman itself, became
+substantially richer purely as a downstream consequence - including an
+explicit, earned line directly answering the concern that started this
+whole investigation: *"that satisfaction is a legitimate value in its
+own right, not just a rationalization."*
+
+**Status: this fix is currently only applied and tested for the
+Jaguar/car-purchase domain test fixtures. Not yet re-verified against
+Bravia or other existing live fixtures** - worth a quick regression
+check next time this area is touched, to confirm the new permission
+doesn't produce unwanted speculative specificity on decisions where it
+isn't genuinely warranted.
+
+---
+
+## 79. Triage confirmed to generalise cleanly to a new domain (smartphones), with zero domain-specific patching needed
+
+`runTriage` (gut-check plus elimination, sections 76-78) was tested
+against a completely different product category - seven named
+smartphones - with no changes to any of the three fixes made earlier the
+same session for cars (JDM-import misclassification, silent market-
+context assumption, abstract/catalogue phrasing).
+
+**Result: all three fixes held as genuinely general principles, not
+car-specific patches.** The gut-check produced a correctly concrete,
+physical scene ("all seven phones laid out on a table, screens on -
+which do you reach for first?"), and elimination found a real, non-taste
+structural axis (iOS vs. Android ecosystem lock-in) using clean Feynman
+isolation, correctly splitting the field roughly in half in one round.
+This is treated as strong, direct evidence that today's earlier fixes
+addressed genuine, general failure modes in how these components reason
+and phrase questions, not narrow accidents of the car-testing domain.
+
+---
+
+## 80. A genuinely new architectural requirement found via a university-choice test: coupled axes need PRIORITISATION-first resolution, and secondary axes may require real research, not confident general knowledge
+
+A deliberately different kind of test case was constructed: an 18-year-old
+choosing both a degree subject (Economics, Computer Science, or PPE) and
+a country/institution (UK - Bristol, Durham, LSE - or abroad, US or
+Europe) - chosen specifically because, unlike every prior test, there is
+no pre-existing list of concrete named candidates at all, only two
+stated preference axes.
+
+### Reframer's PASS was investigated and found correct, not a bug
+
+Initial reaction was that Reframer should have flagged this as needing
+decomposition, the same way an earlier "kids and location" prompt
+correctly triggered CLARIFY. **On reflection, this was judged incorrect:
+subject and location are not independently resolvable the way kids and
+location were** - PPE is a near-exclusively British degree structure, so
+choosing it substantially settles the location question; the strongest
+Computer Science programmes skew toward the US. The two axes are
+genuinely coupled, not two separable decisions wearing one prompt.
+Reframer's `PASS` was therefore judged correct.
+
+### The real structure identified, and confirmed as an existing, already-validated mechanism
+
+Direct discussion established the real order of operations for a
+coupled-axis decision: **first determine which axis is more foundational
+to the user (subject or location), using a genuine PRIORITISATION-style
+clarifying question - then resolve the secondary axis in light of that
+answer.** This is not new machinery - PRIORITISATION is one of
+Clarifier's seven already-built, already-validated methods (the same one
+that surfaced "ease of use vs. control feel" for the espresso machines
+days earlier). The university case is simply the first time this project
+recognised that the SAME coupled-axis structure could apply to
+subject-vs-country, not just feature-tradeoffs within one product.
+
+**A genuinely new, distinct architectural requirement surfaces once the
+priority axis is resolved, however:** filling in the secondary axis
+("given Economics is the priority, which specific institutions - UK and
+international - are strongest for it, matched against this student's
+actual predicted grades") is NOT a reasoning or triage task at all - it
+is a real, verifiable RESEARCH task (current course rankings, entry
+requirements) that the architecture has no honest way to answer from
+confident general knowledge alone, unlike car reliability patterns or
+phone specs, which are low-stakes enough to reason about confidently.
+**This is recorded as a new, distinct gap from the already-known
+`market_price_comparison: "manual"` limitation** - not a duplicate of it,
+but a related instance of the same underlying truth: this architecture
+currently has no live research/verification capability wired in
+anywhere, and some secondary-axis resolutions (course rankings, unlike a
+car's known failure points) are high-stakes and current enough that they
+should not be answered without one.
+
+### A second, independently-confirmed instance of the "concrete over category-label" lesson
+
+While constructing a Feynman-isolation gut-check question for the
+priority axis, a real, revealing mix-up occurred: the user, in the
+course of writing the test question himself, was unaware that "Ivy
+League" is a specific, fixed set of eight universities that excludes
+peer institutions like Stanford and Berkeley. **This was treated as
+direct, first-hand evidence for a general principle already established
+with cars (section 76-78): if a knowledgeable adult deliberately trying
+to get a category label right can still get it wrong, an actual young
+user answering live is at even greater risk of the same confusion.**
+An intermediate revision (Russell Group vs. "mainstream US university")
+was also judged too poorly matched in tier and still taxonomy-dependent.
+
+**Final, correctly concrete version, confirmed as a strong resolution:**
+"picture two acceptance letters - one from a top-ranked university near
+home, surrounded by people you already know the culture of; one from an
+equally well-regarded university on the other side of the world, where
+everything would be new. Which one are you more excited to open?" - no
+institutional category labels at all, describing the lived experience
+directly. **This confirms the concrete-phrasing fix as a genuinely
+general, cross-domain principle, not a car-specific patch - now
+independently observed twice, in two unrelated domains.**
+
+### A deliberate decision not to over-engineer prestige-preference further
+
+Direct discussion concluded that further refining this specific gut-check
+question (e.g. attempting to strip out "prestige" as a confound
+entirely) is not worth pursuing. Reasoning: the population facing this
+choice splits into those who would take the most prestigious available
+option most of the time (well served by the concrete gut-check as
+written) and those whose preference is driven by genuinely idiosyncratic,
+unknowable-in-advance factors (a specific city, a research group, a gut
+feeling) that no clarifying question could productively anticipate.
+Attempting to model the second group further would repeat the exact kind
+of over-engineering already rejected elsewhere in this project (e.g. not
+forcing revealed-preference framing onto plain factual questions).
+
+### A standing principle restated and made explicit, per direct request
+
+**The gut-check is explicitly understood as just a kind of Clarifier
+question - not a separate class of mechanism with different rules.**
+This is why, per section 76's correction, a confident single gut-check
+answer must never independently finalise a decision on its own (the same
+as any single Clarifier answer never does) - it narrows, exactly as an
+ordinary clarifying answer would, and the rest of the architecture
+(Guardian, Pragmatist, Empathiser, Steelman) still does its full,
+undiminished job on whatever remains.
+
+---
+
+## 81. Distribution strategy - three real, unresolved options captured together, deliberately not chosen between yet
+
+A significant side conversation, prompted directly by reflecting on how
+the real car-shortlist test case actually originated (a prior ChatGPT
+conversation, not a cold visit to a standalone tool). All three options
+below are recorded together specifically because the user asked that
+none be prematurely favoured - this is an open strategic question, not a
+decision.
+
+**Option 1 - Standalone destination.** Full control over the entire
+experience, all UI/UX work already invested remains fully usable. Real
+cost: depends entirely on people already knowing to seek the tool out
+deliberately.
+
+**Option 2 - Connector/plugin, via Anthropic's MCP Connectors
+Directory.** Confirmed via direct research to be REAL, currently
+functioning infrastructure (300+ third-party MCP connectors listed,
+real submission and review process) - not speculative. **An important
+correction made during this same conversation, worth preserving
+precisely:** the initially proposed mechanism ("the AI spontaneously
+notices accumulating specificity across a conversation and chimes in
+unprompted") was found NOT to be accurately supported by the actual,
+documented trigger mechanism, which is reactive to the CURRENT message's
+expressed intent, not sustained cross-turn monitoring. The realistic,
+buildable version requires the user's own words to signal readiness in
+the moment ("help me stress-test this properly"), which then allows an
+AI with registry access to suggest the connector - not the AI
+proactively volunteering it from accumulated context alone. Not yet
+verified whether equivalent mechanisms exist for ChatGPT or Gemini
+specifically - explicitly flagged as unconfirmed, not assumed absent.
+
+**Option 3 - "Lurker" browser extension.** A user-proposed reframing,
+technically distinct from a connector: software running in-browser,
+observing chat interface content directly (the same general category as
+extensions like Grammarly), triggering on the product's own
+independently-defined criteria rather than depending on any AI platform's
+cooperation, review process, or judgment. Real advantage: full control,
+no platform dependency. Real, explicitly-flagged costs, not glossed over:
+a meaningfully more sensitive privacy/trust posture than a standalone
+app (reading the content of someone's private AI conversations, even if
+processed only locally and never transmitted without explicit
+confirmation) and a genuinely unresolved, unverified question about
+whether this would comply with the terms of service of the platforms
+being observed (Claude, ChatGPT, Gemini) - explicitly not yet checked.
+
+**Status: all three recorded as live, un-prioritised options.** Worth
+revisiting once there is a stronger sense of which population the
+product is actually reaching, rather than choosing based on today's
+conversation alone.
+
+---
+
+## 82. Scope boundary reconfirmed and given a name, not yet implemented
+
+Directly following from the "no smartphones test case" discussion earlier
+the same session: a firm, explicit decision was made that this
+architecture should NOT attempt to handle prompts naming zero concrete
+candidates within a category (e.g. the bare "which smartphone should I
+buy?", with no phones named at all) - not because the topic is
+unsuitable, but because Paths, Guardian, Pragmatist, and Steelman have
+nothing real to scrutinise without at least one concrete, named thing
+already on the table, and fabricating candidates would violate the
+long-standing no-invention rule (section 31).
+
+**Proposed, not yet built: a new Reframer state (tentatively
+`INSUFFICIENT_SPECIFICITY` or similar)** recognising this shape of
+prompt and returning an honest, confident message rather than a silent
+failure or a forced, low-quality result - proposed wording, not final:
+"this tool works best once you've got at least one real option in
+mind... a regular conversation is genuinely the better tool for that
+first step." Explicitly deferred rather than built now, given the
+volume of other confirmed, higher-priority work already recorded this
+session - captured here so the decision and its reasoning are not lost.
+
+---
+
+## 83. Reframer's sixth state built: INSUFFICIENT_SPECIFICITY
+
+Following section 82's proposed but undeferred boundary, a real sixth
+Reframer state was built and tested. `ReframerStatus` widened to include
+`INSUFFICIENT_SPECIFICITY`; the type gained a new optional field,
+`insufficientSpecificityMessage`, for the honest, non-apologetic message
+shown when triggered.
+
+**Tested against three deliberately discriminating cases in one route:**
+a bare "which smartphone should I buy?" (no candidates named at all), a
+single named phone, and three named phones. **Result: clean, correct
+discrimination across all three** - the bare prompt correctly triggered
+`INSUFFICIENT_SPECIFICITY` with a genuine, confident message ("this tool
+works best once at least one real, specific option is on the table...");
+both the single- and multiple-named-candidate prompts correctly stayed
+`PASS`, confirming this new state does not over-trigger on ordinary
+multi-candidate decisions - exactly the case triage (sections 76-82) is
+built to handle, not a new problem.
+
+---
+
+## 84. Full live wiring built: Reframer gate to triage to reconstructed pipeline
+
+A complete, real end-to-end route was built: initial Reframer gate check
+-> `runTriage` (gut-check, then elimination fallback) -> construction of
+a brand new `DecisionContext` explicitly comparing whatever finalists
+triage produced -> the full existing, already-validated pipeline
+(Reframer again, Landscape, panel, Auditor, Paths, Establishing Shots,
+Steelman, Event Horizon) run fresh on that reconstructed decision.
+
+`runTriage`'s elimination loop was generalised to accept a `targetCount`
+parameter (previously hardcoded to 2), allowing the calling code to
+request either 2 or 3 final candidates depending on whether a decline
+slot needs to be reserved.
+
+**Confirmed working end-to-end on the real 7-car scenario** across
+several iterations, catching and fixing genuine bugs at each stage (see
+sections 85-86) rather than a single clean pass.
+
+---
+
+## 85. A significant, multi-round investigation into declineIsViableOption - two real self-corrections along the way, worth recording honestly
+
+### The mechanism built and its first real bug
+
+`declineIsViableOption` was added to Reframer's output, intended to
+determine whether "decline entirely" is a genuinely reasonable path
+given how a prompt is framed - contrasted against decisions where the
+prompt's own wording has already committed the person to acquiring
+something (the standing example: "I've got a Sage DTP but I want a
+lever machine, which one?" - decline not viable, versus "should I buy
+this specific TV?" - decline viable).
+
+**First test result: the original 7-car prompt returned
+`declineIsViableOption: false`.** This was investigated at length rather
+than accepted at face value, since it directly determined whether
+triage should target 2 or 3 finalists.
+
+### Cross-checking Gemini surfaced a real error in Gemini's own reasoning, worth recording as a further confirmed instance of "verify, don't trust an external model's confident claim"
+
+Gemini was asked to analyse the Bravia, lever-machine, and 7-car prompts
+under "stripped of all domain knowledge" constraints. Its refined
+analysis of Bravia and the lever machine correctly identified the real
+distinguishing mechanism (an explicit, separate prior statement of want,
+e.g. "I want a lever machine," versus none) - a genuine improvement over
+its own first pass, which had conflated the SCOPE question (is decline
+structurally available) with a QUALITY question (are the candidates good
+enough to justify buying one).
+
+**However, when applying its own newly-derived rule to the 7-car prompt,
+Gemini's analysis silently invented a premise that does not exist in the
+actual text** ("the user has established a category goal: 'I want to buy
+a used luxury sedan'" - this phrase never appears in the prompt) and used
+its own fabrication to justify treating the car prompt like the lever
+machine (decline not viable). **Checked directly against the actual
+prompt text and found to be a genuine error**, not a defensible reading
+- the car prompt, like Bravia, contains no separate prior want statement,
+only a single "which... should I buy" question. This is recorded as
+directly analogous to two earlier confirmed instances of exactly this
+failure mode (section 56's Reframer-ownership claim, and the never-
+verified "House of Horrors" citation) - now a third, independently
+observed case, this time from Gemini rather than ChatGPT, reinforcing
+that the "verify against primary source, do not trust confident external
+claims" discipline applies to every external model, not just one.
+
+### The corrected rule, written into Reframer's prompt and confirmed working
+
+`declineIsViableOption` should be judged ONLY by whether the prompt
+contains an explicit statement of want/commitment SEPARATE FROM AND
+PRIOR TO the comparison itself - never by candidate quality (a judgment
+belonging to Guardian/Pragmatist/Steelman downstream, not to Reframer's
+scope-gating job). **Confirmed fixed on retest: the original 7-car
+prompt correctly returned `declineIsViableOption: true`** once this
+precise instruction was added.
+
+### A genuine regression surfaced once decline was made viable, and Claude's own first read of the result was wrong
+
+With `declineIsViableOption: true`, the reconstructed prompt correctly
+included "or neither," and Paths produced three paths - but **the third
+path's outcome was "retain funds and continue researching or wait" -
+directly violating Rule 1 (terminal state), a pattern specifically
+tested and eliminated five separate times in an earlier session (section
+31, 36-37).** This was initially, incorrectly reported by Claude as a
+success (a "correctly thin" Steelman case for decline) - a real
+analytical error, corrected only once directly challenged. **Worth
+recording plainly: this was not simply an overlooked detail, it was a
+misreading of the user's own explicit prior argument** (a pub-conversation
+analogy specifically constructed to argue that a generic "don't buy any
+of them" path, offered after genuine triage has already happened, is
+substantively empty and unhelpful - the opposite of what Claude's first
+response concluded).
+
+### The final, correct principle - reached independently by the user and Claude from different directions, and confirmed to agree
+
+**Decline is only a valid, terminable path when the underlying WANT
+itself is genuinely optional - not merely when the specific instance
+being chosen is still open.** "Should I buy a TV at all?" - the want
+itself is optional, decline is a real, stable, terminal state. "Which of
+these cars should I buy?" - wanting *a* car is already effectively
+settled by the prompt's own framing; declining these two specific
+finalists does not terminate anything, because the actual alternative is
+an unbounded continuation of the same search - exactly the open-ended
+process Rule 1 was built to exclude. **This retroactively explains,
+rather than merely fixes, the "wait" regression: the model was not
+behaving randomly, it was correctly sensing that no genuine terminal
+decline state existed here, and expressing that correct instinct through
+the one (banned) pattern available to it.**
+
+**Corrected design: a forced decline slot should not be built into the
+reconstructed prompt at all whenever the underlying category want is
+already fixed by the original prompt's framing** - Auditor and Paths
+should be left to settle honestly at however many paths are genuinely
+earned (which, for a "which specific one" decision, is normally just the
+named finalists), rather than being forced to invent content for a
+slot that doesn't structurally exist.
+
+---
+
+## 86. Navigator's scope boundary crystallised via a concrete worked example
+
+Directly connected to the decline-path investigation: once genuine
+named finalists exist (e.g. Jaguar XJ, Lexus LS460), what should the
+system do next, given it correctly cannot invent a specific real-world
+listing (exact trim, mileage, condition, price) to recommend?
+
+**Confirmed, via a precise worked example the user constructed himself:
+Navigator inventing a specific listing ("buy a 2014 XJ Portfolio, 72,356
+miles, silver, cream interior...") would be a direct violation of the
+same no-invention principle (Rule 2) that has governed Paths since day
+one - just applied one level up in specificity.** Navigator's correct,
+legitimate job is to translate already-earned reasoning (Pragmatist's
+real requirements, Guardian's real concerns) into a genuine search and
+inspection brief - what to look for, what to negotiate on, what would be
+an immediate red flag - while a real, existing listing the user actually
+finds is what supplies the one thing the system genuinely cannot
+manufacture. If the user brings back one specific real listing, it
+re-enters the pipeline exactly like the original single-item Bravia flow
+- a clean, natural handoff requiring no new mechanism, not a special
+case.
+
+**This also confirms, rather than replaces, the previously-designed
+"bring back a discarded option" mechanism (section 81) as the genuinely
+valuable "third thing" available at this stage** - not a generic decline
+path, but an explicit invitation to reconsider one of the candidates
+narrowed out earlier (Century, Q70, Legend, Crown Majesta), using the
+real triage-and-comparison history that already exists as a natural
+prompt for a second, later revealed-preference check.
+
+**Status: Navigator itself remains entirely unbuilt.** This section
+records a confirmed scope boundary and worked example for its eventual
+construction, not an implementation.
+
+---
+
+## 87. The decline-slot fix implemented and confirmed, closing out section 85's open regression
+
+Following section 85's diagnosis, the fix was implemented directly: the
+reconstructed-context builder no longer forces a decline slot into the
+prompt or targets 3 finalists based on `declineIsViableOption`. Target
+count is now always 2 named finalists; whether decline itself earns a
+real path is left entirely to Auditor and Paths to determine honestly,
+matching the corrected principle from section 85.
+
+**Confirmed fixed on retest:** Paths correctly produced exactly 2 real
+paths (Buy Jaguar XJ / Buy Lexus LS460), both with genuine, specific
+requiredConditions, no "wait/continue researching" filler and no
+generic third slot dragging down overall quality - matching the
+pub-conversation reasoning precisely: when left free to decide honestly,
+the system settled on 2, not 3, because decline genuinely had nothing
+substantive to say once real triage had already happened.
+
+---
+
+## 88. Bring-back mechanism built, then refined twice through real testing
+
+`triageBringBack.ts` was built - given the real finalists and the actual
+elimination history (not a generic template), it constructs one honest
+question inviting reconsideration of anything narrowed out earlier,
+referencing the REAL reason each candidate was removed.
+
+### First version tested and found substantively correct, but two real refinements identified through direct use
+
+**Refinement 1 - individual listing, not grouped.** The first version
+grouped candidates by shared elimination reason (e.g. "bring back the
+Toyota Century and/or Crown Majesta"), creating real ambiguity about
+which specific car, or both, a selection meant. **Fixed: each discarded
+candidate is now offered as its own separate, individually-selectable
+option.**
+
+**Refinement 2 - scoped to only fire when genuinely needed, solving a
+real scalability problem as a side effect.** Direct discussion
+established that bring-back is only meaningful when the system's
+structural reasoning actually overrode the person's own stated
+instinct (their gut-check pick) - if their pick survives triage
+unchanged, there is nothing to second-guess. **Fixed: bring-back now
+only fires if the person's simulated/real gut-check pick was itself
+eliminated during the elimination rounds; if it survived, no bring-back
+question is generated at all.** This also solves a genuine scalability
+concern the user identified: scoping to "just the gut-check pick, if
+lost" keeps bring-back to exactly one candidate and one explanation
+regardless of whether the original list had 5 candidates or 50 - a full
+"here is everyone we cut and why" version would not scale cleanly to a
+much larger original list.
+
+**Confirmed working via direct testing: two separate real runs both had
+the simulated gut-check pick (Jaguar XJ) survive triage, and both
+correctly returned no bring-back question at all** (`bringBackQuestion:
+null`) rather than an unnecessary one. **Explicitly flagged as not yet
+tested: the "override" branch, where the gut-check pick genuinely IS
+eliminated and bring-back should fire referencing only that one car** -
+the code path exists and is believed correct by construction, but has
+not yet been exercised by a real run where the simulated pick actually
+lost.
+
+---
+
+## 89. A second, confirmed instance of the "verify factual elimination claims across ALL remaining candidates" bug - found, root-caused, and fixed
+
+While reviewing real elimination output, a specific round eliminated the
+Jaguar XJ on the grounds of "dependency on a specialist European
+maintenance network" while simultaneously retaining the Infiniti Q70 in
+the same round. **This was flagged as suspicious and checked directly
+rather than accepted** - web search confirmed Infiniti fully withdrew
+from the UK and Western Europe in 2020, closing all six UK dealerships
+and ceasing official retail operations entirely, while Jaguar retains a
+full, current, official JLR dealer network across the UK. **The
+elimination was therefore factually backwards** - the car being
+penalised for network dependency has the more robust real network of
+the two.
+
+**Root cause, identified precisely: the axis was not a genuinely,
+independently-motivated structural fact - it was the model reaching for
+whichever difference happened to exist among the specific candidates
+still in the room at that point** (one European marque against two
+Japanese ones), then presenting that opportunistic distinction as if it
+were a general principle. A second, separate issue was also raised and
+addressed: conflating "specialist expertise exists and may be
+preferable" with "you would be dependent on a narrow network with no
+real alternative" - the former is true of almost any car and is not a
+genuine dealbreaker, the latter is a real, sometimes-true structural
+fact that should not be overstated as always true.
+
+**Fixed with an explicit, concrete instruction** (matching the
+now-repeatedly-confirmed pattern that concrete, named worked examples
+succeed where abstract cautions fail): before finalising ANY factual
+elimination claim, check whether it is genuinely MORE true of the
+candidate being eliminated than of every candidate being retained,
+using the real Jaguar/Infiniti case as the explicit worked example of
+the failure to avoid. **Confirmed fixed on two full reruns: the
+specialist-network axis did not reappear at all, in any form, across
+several complete elimination chains** - a stronger, cleaner result than
+a rephrased-but-still-flawed version reappearing would have been,
+suggesting the underlying claim was recognised as unsound rather than
+merely rewritten.
+
+---
+
+## 90. A significant sequencing conversation: where does budget actually belong, and the "trying hard to help, never inventing reality" principle
+
+A real, substantial design conversation was prompted by reviewing
+elimination output that consistently drifted toward preference/taste
+axes (legroom, drivetrain layout, powertrain type) while never touching
+budget - checked against a real-world car-buying framework the user
+supplied (Tier 1 dealbreakers including budget/practical fit/condition,
+Tier 2 ownership-cost calculations, Tier 3 taste-based tie-breakers).
+
+### Why budget cannot simply be added as a triage elimination axis
+
+Direct discussion established a genuine, structural distinction between
+new and used vehicles: for a NEW car, budget is a clean Tier-1 filter
+that eliminates entire MODELS outright (a known, single real price
+exists). For a USED car, budget does not discriminate between models at
+all - it constrains which SPECIFIC EXAMPLE of a given model is
+realistically available (the same model name can span an enormous
+condition/mileage/price range - the user's own example: a Bentley can
+be bought for as little as £5,000, at real but different cost). Asking
+`triageCategoryElimination` to reason about budget would therefore be a
+genuine category error for used-vehicle decisions, not simply poor
+sequencing.
+
+**Recognised as the SAME underlying gap already found twice earlier the
+same day** (the university course-rankings requirement, section 80) -
+translating a stated budget into "what specific real condition/mileage
+this money actually buys today" requires live, current market
+verification this architecture has no way to perform honestly.
+
+### The resolution: a revealed-preference TOLERANCE question, not a market-data lookup
+
+The user proposed, and it was confirmed as a genuinely elegant solution:
+rather than needing to know what a budget actually buys (unanswerable
+without real research), ask a pure tolerance question the person can
+answer from their own values alone - e.g. "if your budget meant you
+could only realistically get a 20-year-old, high-mileage example, would
+that still be acceptable?" This sidesteps the unavailable market-data
+requirement entirely, the same technique already validated for the
+espresso machines' Feynman-style questions.
+
+**Resolved placement: NOT inside triage elimination at all** (since
+budget does not discriminate between used-car models the way it does
+for new cars) - **instead, a single, ordinary Clarifier question, fired
+once real finalists exist (after triage completes), before the deep
+pipeline (Steelman, Establishing Shots) commits further effort to them.**
+
+### What happens if the tolerance answer is negative - resolved into two distinct outcomes, neither requiring new architecture
+
+**Outcome 1 (the common case): the negative answer applies specifically
+to the current finalists, not the whole original category.** Resolved
+by re-triggering the already-built bring-back mechanism (section 88)
+with a SECOND, legitimate trigger condition alongside "gut-check pick
+was overridden": "budget reality means the current finalists aren't
+realistically viable, but an earlier-discarded candidate might be" -
+using the exact same mechanism, not a new one.
+
+**Outcome 2 (a genuine edge case): NO candidate from the entire original
+list, including everything already discarded, would be realistically
+viable at the real budget.** Resolved as NOT inventing a new terminal
+path (no "wait," no forced "don't buy" state) - instead, an honest,
+direct finding stated plainly, in the same spirit as any other genuine
+readiness problem Auditor already surfaces, rather than manufactured
+into a fake destination that doesn't actually exist.
+
+### A standing principle, explicitly named and endorsed, tying together three separate findings from the same session
+
+**"Trying hard to help, but never inventing reality."** Directly
+connects three separate findings from this session that might otherwise
+read as unrelated: the university course-rankings gap (section 80),
+Navigator's confirmed refusal to invent a specific real-world listing
+(section 86), and this budget/used-car pricing gap. In each case, the
+resolved design pushes as far as genuinely possible using real
+reasoning, real revealed-preference questions, and real, already-earned
+findings - and stops cleanly and honestly the exact moment further
+progress would require inventing a fact about the real world the
+system cannot actually verify, rather than quietly guessing or
+fabricating specificity to appear more capable than it is.
+
+**Status: this entire section (budget-tolerance question placement,
+bring-back's second trigger condition, and the explicit "never invent
+reality" principle) is confirmed, agreed design - NONE of it has been
+implemented in code yet.** Recorded here so it is available in full,
+precise form whenever this part of the pipeline is next built.
+
+---
+
+## 91. A further elimination-quality fix: distinguishing genuine absence from mere difference of degree
+
+Following section 89's Jaguar/Infiniti fix, a related but distinct
+problem was found: an elimination round removed the Jaguar XJ for
+"dependency on a smaller specialist maintenance network" relative to
+Lexus - a claim that, unlike the Infiniti case, may well be factually
+true, but was challenged on different grounds by the user (the "KFC
+has fewer restaurants than McDonald's" analogy): a difference of degree
+between two options that are BOTH realistically accessible is not the
+same as a genuine, severe access problem, and should not be used as a
+dealbreaker regardless of whether the underlying comparative fact is
+accurate.
+
+**Fixed with an explicit addition to the elimination consistency
+instruction** (section 89), requiring the model to distinguish genuine
+structural absence (no official network exists at all, a true JDM-only
+import) from mere relative scarcity between two options that are both,
+practically, fine - only the former is legitimate dealbreaker grounds.
+**Confirmed fixed across two full reruns: the network-degree axis did
+not reappear in either chain, in any form**, alongside continued correct
+behaviour on the already-fixed JDM-misclassification and cross-candidate
+consistency checks - three separate elimination-quality fixes now
+confirmed holding together on the same real test case.
+
+---
+
+## 92. Bring-back mechanism: a structural fix ensuring only the actual gut-check pick is ever offered
+
+Direct testing of the "override" branch (section 88's untested case)
+revealed a real bug once finally exercised: when an elimination round
+removed the gut-check pick together with a second candidate in the same
+round (a common occurrence, e.g. both Toyota Century and Crown Majesta
+eliminated together on the JDM axis), the original round-level filtering
+correctly identified the relevant round but then let BOTH eliminated
+candidates leak into the bring-back question and options - not just the
+one the person actually picked. The model itself noticed the
+inconsistency in its own output but did not correct it.
+
+**Fixed structurally, not just via prompt instruction: a new function,
+`triageBringBackForGutCheckPick`, rewrites the relevant history entry's
+`eliminatedCandidates` down to a single-item array containing only the
+actual gut-check pick before it is ever passed to the underlying
+question-generation prompt** - the model has no way to reference a
+sibling candidate it was never shown. **Confirmed fixed via a
+hand-constructed test** (deliberately bypassing reliance on a live run
+happening to produce the right scenario): the resulting question and
+options referenced the Toyota Century only, with Crown Majesta
+completely absent, despite both having been eliminated in the same
+underlying round for the same reason.
+
+**Status: both the "pick survived" (section 88) and "pick was
+eliminated" (this section) branches of the gut-check-scoped bring-back
+mechanism are now confirmed working correctly.**
+
+---
+
+## 93. Budget-tolerance question built and confirmed working
+
+Following section 90's design (a revealed-preference tolerance question
+rather than an unavailable market-data lookup), `budgetTolerance.ts` was
+built and tested directly. **Confirmed working correctly on first test**:
+given real finalists and a stated budget, it produced an honest
+tolerance question ("...realistically more likely to have higher
+mileage, an older registration, some cosmetic wear... would that
+trade-off still be acceptable?") without ever asserting a specific
+invented price, mileage figure, or availability claim as fact - exactly
+matching the "trying hard to help, never inventing reality" principle
+from section 90.
+
+**Status: built and validated in isolation. Not yet wired into the live
+triage pipeline** - section 90's full design (firing once after triage
+completes, before deep pipeline development, feeding a negative answer
+back into bring-back as its second legitimate trigger condition) remains
+unimplemented as an integrated flow.
+
+---
+
+## 94. Candidate extraction resolved as a Reframer field addition, not a new component
+
+Rather than building a separate extraction component, it was recognised
+that Reframer's existing `subjectCount` field already implies correct,
+working candidate identification as part of its normal reasoning - the
+gap was a missing output field, not a missing capability. A new optional
+field, `namedCandidates?: string[]`, was added to Reframer's output.
+
+**Tested against two cases, one deliberately hard.** The clean case (the
+7-car prompt) correctly extracted all seven names in order. **The hard
+case (the lever-machine prompt) was chosen specifically because it
+requires distinguishing a genuine candidate from a mentioned current
+possession** ("I've got a Sage DTP but I want a lever machine... Vectis,
+Strega, Rapida") - **confirmed correct: `namedCandidates` returned
+exactly the three lever machines, with the Sage DTP correctly excluded**
+entirely, alongside `declineIsViableOption: false` also correctly held
+on the same prompt.
+
+**Status: built and validated in isolation via Reframer directly. Not
+yet wired into the live triage entry point** (i.e. a real user typing one
+free-form prompt and having candidates automatically extracted to feed
+`runTriage`, rather than a hardcoded array) - that integration remains
+the next step whenever this is picked up again.
+
+---
+
+## 95. Session close - four real pieces of work completed and confirmed, Navigator deferred to next session
+
+This session's concrete, tested deliverables: the decline-slot
+regression fixed (section 87), the bring-back mechanism fully built and
+validated including both branches (sections 88, 92), two further
+elimination-quality bugs found and fixed (sections 89, 91), the
+budget-tolerance question built and validated (section 93), and
+candidate extraction resolved via a Reframer field addition and
+validated against a deliberately hard case (section 94).
+
+**Explicitly deferred to the next session: Navigator.** Two substantial,
+unused voice documents have sat ready since section 68's original
+inventory; genuine uncertainty was expressed about how much unexpected
+depth may be lurking there, and it was deliberately not started today to
+avoid it consuming the remainder of a session already rich with other
+confirmed, closed-out work.
